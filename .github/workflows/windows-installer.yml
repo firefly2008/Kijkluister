@@ -27,20 +27,22 @@ jobs:
       - name: Rooktest (start de app op de runner)
         shell: pwsh
         run: |
-          $env:BIGSCREEN_SELFTEST = 'appmenu'
-          $p = Start-Process dist\bigscreen-host.exe -PassThru
-          Start-Sleep 12
-          # Schermafdruk als base64 in het log, zodat het resultaat te bekijken is
           Add-Type -AssemblyName System.Windows.Forms, System.Drawing
-          $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
-          $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
-          [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen(0, 0, 0, 0, $bmp.Size)
-          $bmp.Save("$env:RUNNER_TEMP\shot.png", [System.Drawing.Imaging.ImageFormat]::Png)
-          "SHOT-BEGIN"; [Convert]::ToBase64String([IO.File]::ReadAllBytes("$env:RUNNER_TEMP\shot.png"), 'InsertLineBreaks'); "SHOT-END"
-          if ($p.HasExited) { "RESULT: EXITED code {0} (0x{0:X8})" -f $p.ExitCode } else { "RESULT: RUNNING"; Stop-Process -Id $p.Id -Force }
           $log = "$env:LOCALAPPDATA\BigscreenHost\bigscreen-host.log"
-          if (Test-Path $log) { "--- log ---"; Get-Content $log } else { "NO LOG FILE" }
-          if (-not (Test-Path $log) -or -not (Select-String -Path $log -Pattern "Window shown" -Quiet)) { throw "Rooktest mislukt: venster niet getoond" }
+          foreach ($mode in 'home', 'addtile') {
+            $env:BIGSCREEN_SELFTEST = $mode
+            $p = Start-Process dist\bigscreen-host.exe -PassThru
+            Start-Sleep 12
+            # Schermafdruk als base64 in het log, zodat het resultaat te bekijken is
+            $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
+            $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
+            [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen(0, 0, 0, 0, $bmp.Size)
+            $bmp.Save("$env:RUNNER_TEMP\shot.png", [System.Drawing.Imaging.ImageFormat]::Png)
+            "SHOT-BEGIN-$mode"; [Convert]::ToBase64String([IO.File]::ReadAllBytes("$env:RUNNER_TEMP\shot.png"), 'InsertLineBreaks'); "SHOT-END"
+            if ($p.HasExited) { "RESULT: EXITED code {0} (0x{0:X8})" -f $p.ExitCode } else { "RESULT: RUNNING"; Stop-Process -Id $p.Id -Force }
+            if (Test-Path $log) { "--- log ---"; Get-Content $log } else { "NO LOG FILE" }
+            if (-not (Test-Path $log) -or -not (Select-String -Path $log -Pattern "Window shown" -Quiet)) { throw "Rooktest mislukt: venster niet getoond" }
+          }
       - uses: actions/upload-artifact@v4
         with:
           name: BigscreenHost-setup

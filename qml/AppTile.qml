@@ -26,6 +26,20 @@ Item {
         Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         Behavior on color { ColorAnimation { duration: 120 } }
 
+        // Nog geen pictogram (site-logo niet opgehaald): gekleurd vlak met beginletter
+        Rectangle {
+            anchors.fill: icon
+            visible: tile.iconSource === "" || icon.status === Image.Error
+            radius: width * 0.2
+            color: Qt.hsla((tile.name.length * 47 % 360) / 360, 0.45, 0.4, 1)
+            Text {
+                anchors.centerIn: parent
+                color: "white"
+                font.pixelSize: parent.height * 0.55
+                text: tile.name.charAt(0).toUpperCase()
+            }
+        }
+
         Image {
             id: icon
             anchors.horizontalCenter: parent.horizontalCenter

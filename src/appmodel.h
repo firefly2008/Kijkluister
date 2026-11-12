@@ -6,6 +6,7 @@
 
 #include <QAbstractListModel>
 #include <QList>
+#include <QNetworkAccessManager>
 #include <QSettings>
 #include <QString>
 #include <QUrl>
@@ -20,8 +21,10 @@ class AppModel : public QAbstractListModel
 
 public:
     enum Roles { NameRole = Qt::UserRole + 1, PathRole, IconRole, CustomIconRole };
+    // Apps: snelkoppelingen uit het Startmenu. Web: streamingdiensten en andere websites.
+    enum Kind { Apps, Web };
 
-    explicit AppModel(QObject *parent = nullptr);
+    explicit AppModel(Kind kind, QObject *parent = nullptr);
 
     int rowCount(const QModelIndex &parent = {}) const override;
     QVariant data(const QModelIndex &index, int role) const override;
@@ -38,6 +41,7 @@ public:
 
     // Tegels aanpassen
     Q_INVOKABLE void hide(int row);
+    Q_INVOKABLE bool addTile(const QString &name, const QString &target);
     Q_INVOKABLE void restoreHidden();
     Q_INVOKABLE bool setCustomIcon(int row, const QUrl &imageFile);
     Q_INVOKABLE void clearCustomIcon(int row);
@@ -53,8 +57,18 @@ Q_SIGNALS:
 private:
     struct App {
         QString name;
-        QString path;
+        QString path; // pad van snelkoppeling/programma, of URL bij een web-tegel
+        bool custom = false; // door de gebruiker zelf toegevoegd
     };
+    QString key(const char *name) const;
+    QList<App> customTiles() const;
+    void saveCustomTiles(const QList<App> &tiles);
+    QString faviconFile(const QString &url) const;
+    void fetchFavicons();
+    bool launchWeb(const QString &url);
+
+    Kind m_kind;
+    QNetworkAccessManager m_network;
     QString importImage(const QUrl &source, const QString &baseName);
 
     QList<App> m_apps;

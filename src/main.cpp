@@ -145,7 +145,8 @@ int main(int argc, char *argv[])
 
     // Gamepad-navigatie (SDL3) en de lijst met toepassingen voor de startpagina
     GamepadNavigator gamepad;
-    AppModel appModel;
+    AppModel appModel(AppModel::Apps);
+    AppModel webModel(AppModel::Web);
 
     auto inputSystem = createInputSystem();
     Q_UNUSED(inputSystem); // in dit skeleton nog niet aan QML-signalen gekoppeld
@@ -165,6 +166,7 @@ int main(int argc, char *argv[])
     QObject::connect(view.engine(), &QQmlEngine::quit, &app, &QCoreApplication::quit);
     view.engine()->addImageProvider(QStringLiteral("appicon"), new AppIconProvider);
     view.rootContext()->setContextProperty(QStringLiteral("appModel"), &appModel);
+    view.rootContext()->setContextProperty(QStringLiteral("webModel"), &webModel);
     view.rootContext()->setContextProperty(QStringLiteral("gamepad"), &gamepad);
     // Alleen voor de geautomatiseerde test: opent bij het starten een menu
     view.rootContext()->setContextProperty(QStringLiteral("selfTest"), qEnvironmentVariable("BIGSCREEN_SELFTEST"));

@@ -9,7 +9,7 @@ project(bigscreen-host LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.8 CONFIG REQUIRED COMPONENTS Core Gui Quick Qml)
+find_package(Qt6 6.8 CONFIG REQUIRED COMPONENTS Core Gui Quick Qml Network)
 qt_standard_project_setup(REQUIRES 6.8)
 find_package(SDL3 CONFIG REQUIRED)
 
@@ -39,7 +39,7 @@ else()
 endif()
 
 # Zonder alias komt het bestand in de resources onder .../host/qml/Main.qml terecht
-set(BIGSCREEN_QML_FILES qml/Main.qml qml/AppTile.qml qml/QuickTile.qml qml/MenuOverlay.qml)
+set(BIGSCREEN_QML_FILES qml/Main.qml qml/AppTile.qml qml/QuickTile.qml qml/MenuOverlay.qml qml/AddTileOverlay.qml)
 foreach(qml_file IN LISTS BIGSCREEN_QML_FILES)
     get_filename_component(qml_name ${qml_file} NAME)
     set_source_files_properties(${qml_file} PROPERTIES QT_RESOURCE_ALIAS ${qml_name})
@@ -57,6 +57,7 @@ target_link_libraries(bigscreen-host PRIVATE
     Qt6::Gui
     Qt6::Quick
     Qt6::Qml
+    Qt6::Network
     SDL3::SDL3
 )
 
