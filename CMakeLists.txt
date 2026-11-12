@@ -32,6 +32,9 @@ else()
     )
 endif()
 
+# Zonder alias komt het bestand in de resources onder .../host/qml/Main.qml terecht
+set_source_files_properties(qml/Main.qml PROPERTIES QT_RESOURCE_ALIAS Main.qml)
+
 qt_add_qml_module(bigscreen-host
     URI org.kde.plasma.bigscreen.host
     VERSION 1.0

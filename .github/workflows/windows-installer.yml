@@ -25,7 +25,6 @@ jobs:
         shell: pwsh
         run: .\scripts\build-installer.ps1 -QtDir "$env:QT_ROOT_DIR" -VcpkgRoot "$env:VCPKG_INSTALLATION_ROOT"
       - name: Rooktest (start de app op de runner)
-        if: always()
         shell: pwsh
         run: |
           Get-ChildItem dist | Select-Object Name, Length | Format-Table -AutoSize
@@ -35,6 +34,7 @@ jobs:
           if ($p.HasExited) { "RESULT: EXITED code {0} (0x{0:X8})" -f $p.ExitCode } else { "RESULT: RUNNING"; Stop-Process -Id $p.Id -Force }
           $log = "$env:LOCALAPPDATA\BigscreenHost\bigscreen-host.log"
           if (Test-Path $log) { "--- log ---"; Get-Content $log } else { "NO LOG FILE" }
+          if (-not (Test-Path $log) -or -not (Select-String -Path $log -Pattern "Window shown" -Quiet)) { throw "Rooktest mislukt: venster niet getoond" }
       - uses: actions/upload-artifact@v4
         with:
           name: BigscreenHost-setup
