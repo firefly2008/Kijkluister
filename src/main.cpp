@@ -38,7 +38,7 @@
 namespace {
 
 // De app is een GUI-programma zonder console: zonder logbestand verdwijnen alle
-// foutmeldingen. Log staat in %LOCALAPPDATA%\\KDE\\Bigscreen Host\\bigscreen-host.log
+// foutmeldingen. Log staat in %LOCALAPPDATA%\\BigscreenHost\\bigscreen-host.log
 QString g_logPath;
 QMutex g_logMutex;
 
@@ -104,6 +104,21 @@ std::unique_ptr<InputSystem> createInputSystem()
 
 int main(int argc, char *argv[])
 {
+    // Log zo vroeg mogelijk opzetten, nog voor QGuiApplication, zodat ook een
+    // mislukte start van Qt zelf (platform-plugin, grafische backend) in het log komt.
+    {
+        QString base = qEnvironmentVariable("LOCALAPPDATA");
+        if (base.isEmpty()) {
+            base = QDir::tempPath();
+        }
+        const QString logDir = base + QStringLiteral("/BigscreenHost");
+        QDir().mkpath(logDir);
+        g_logPath = logDir + QStringLiteral("/bigscreen-host.log");
+        QFile::remove(g_logPath);
+        qInstallMessageHandler(logHandler);
+        qInfo() << "main() reached; Qt" << qVersion();
+    }
+
     QGuiApplication::setHighDpiScaleFactorRoundingPolicy(
         Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
 
@@ -111,12 +126,7 @@ int main(int argc, char *argv[])
     QGuiApplication::setApplicationName(QStringLiteral("Bigscreen Host"));
     QGuiApplication::setOrganizationName(QStringLiteral("KDE"));
 
-    const QString logDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
-    QDir().mkpath(logDir);
-    g_logPath = logDir + QStringLiteral("/bigscreen-host.log");
-    QFile::remove(g_logPath);
-    qInstallMessageHandler(logHandler);
-    qInfo() << "Bigscreen Host starting; Qt" << qVersion() << "platform" << QGuiApplication::platformName();
+    qInfo() << "QGuiApplication created; platform" << QGuiApplication::platformName();
 
     QCommandLineParser parser;
     parser.setApplicationDescription(
