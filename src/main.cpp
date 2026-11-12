@@ -8,6 +8,11 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 
 #include <QCommandLineParser>
+#include <QFile>
+#include <QMutex>
+#include <QQmlEngine>
+#include <QQmlError>
+#include <QTextStream>
 #include <QDateTime>
 #include <QDir>
 #include <QGuiApplication>
@@ -19,6 +24,10 @@
 
 #include <SDL3/SDL.h>
 
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
+
 #include "inputsystem.h"
 #ifdef BIGSCREEN_HAVE_WIN32_INPUT
 #include "win32inputsystem.h"
@@ -27,6 +36,30 @@
 #endif
 
 namespace {
+
+// De app is een GUI-programma zonder console: zonder logbestand verdwijnen alle
+// foutmeldingen. Log staat in %LOCALAPPDATA%\\KDE\\Bigscreen Host\\bigscreen-host.log
+QString g_logPath;
+QMutex g_logMutex;
+
+void logHandler(QtMsgType type, const QMessageLogContext &, const QString &msg)
+{
+    static const char *names[] = {"DEBUG", "WARN", "CRIT", "FATAL", "INFO"};
+    QMutexLocker lock(&g_logMutex);
+    QFile f(g_logPath);
+    if (f.open(QIODevice::Append | QIODevice::Text)) {
+        QTextStream(&f) << QDateTime::currentDateTime().toString(Qt::ISODate) << " [" << names[type] << "] " << msg << "\n";
+    }
+}
+
+void showFatal(const QString &text)
+{
+    qCritical().noquote() << text;
+#ifdef Q_OS_WIN
+    const QString full = text + QStringLiteral("\n\nLog: ") + g_logPath;
+    MessageBoxW(nullptr, reinterpret_cast<LPCWSTR>(full.utf16()), L"Bigscreen Host", MB_OK | MB_ICONERROR);
+#endif
+}
 
 std::unique_ptr<InputSystem> createInputSystem()
 {
@@ -78,6 +111,13 @@ int main(int argc, char *argv[])
     QGuiApplication::setApplicationName(QStringLiteral("Bigscreen Host"));
     QGuiApplication::setOrganizationName(QStringLiteral("KDE"));
 
+    const QString logDir = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
+    QDir().mkpath(logDir);
+    g_logPath = logDir + QStringLiteral("/bigscreen-host.log");
+    QFile::remove(g_logPath);
+    qInstallMessageHandler(logHandler);
+    qInfo() << "Bigscreen Host starting; Qt" << qVersion() << "platform" << QGuiApplication::platformName();
+
     QCommandLineParser parser;
     parser.setApplicationDescription(
         QStringLiteral("Plasma Bigscreen Windows-host (PoC skeleton, Optie A)"));
@@ -106,22 +146,32 @@ int main(int argc, char *argv[])
         : QGuiApplication::primaryScreen();
 
     QQuickView view;
-    view.setFlags(Qt::FramelessWindowHint | Qt::WindowStaysOnTopHint);
+    view.setFlags(Qt::FramelessWindowHint); // StaysOnTop bewust uit tijdens de PoC-fase
     view.setResizeMode(QQuickView::SizeRootObjectToView);
     view.setScreen(targetScreen);
     view.setGeometry(targetScreen->geometry());
     view.setColor(Qt::black);
+    QObject::connect(view.engine(), &QQmlEngine::quit, &app, &QCoreApplication::quit);
+    qInfo() << "Target screen" << targetScreen->name() << targetScreen->geometry();
     view.setSource(QUrl(QStringLiteral("qrc:/qt/qml/org/kde/plasma/bigscreen/host/Main.qml")));
 
-    if (view.status() == QQuickView::Error) {
-        qCritical() << "Could not load Main.qml";
+    if (view.status() != QQuickView::Ready) {
+        QString details = QStringLiteral("Main.qml kon niet geladen worden.");
+        const auto errors = view.errors();
+        for (const QQmlError &e : errors) {
+            details += QStringLiteral("\n") + e.toString();
+        }
+        showFatal(details);
         return 1;
     }
 
     view.showFullScreen();
+    view.raise();
+    view.requestActivate();
+    qInfo() << "Window shown" << view.geometry() << "visible" << view.isVisible();
 
     QObject::connect(&view, &QQuickWindow::sceneGraphError, &view, [](QQuickWindow::SceneGraphError, const QString &message) {
-        qWarning() << "Scene graph error:" << message;
+        showFatal(QStringLiteral("Grafische fout (scene graph): ") + message);
     });
 
     QObject::connect(&app, &QGuiApplication::lastWindowClosed, [] {
