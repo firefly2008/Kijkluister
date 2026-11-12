@@ -3,6 +3,7 @@
 // Eigen QtQuick-versie van containments/homescreen (die aan Plasma vastzit).
 // SPDX-License-Identifier: GPL-2.0-or-later
 import QtQuick
+import QtQuick.Dialogs
 
 Rectangle {
     id: root
@@ -13,6 +14,93 @@ Rectangle {
     gradient: Gradient {
         GradientStop { position: 0.0; color: "#16233a" }
         GradientStop { position: 1.0; color: "#0b1220" }
+    }
+
+    // Rij van de tegel waarvoor het aanpas-menu of de bestandskiezer open staat
+    property int editRow: -1
+
+    function openAppMenu(row) {
+        if (row < 0) {
+            return
+        }
+        editRow = row
+        const entries = [{ label: "Pictogram wijzigen…", action: "icon" }]
+        if (appModel.hasCustomIcon(row)) {
+            entries.push({ label: "Standaardpictogram herstellen", action: "icon-reset" })
+        }
+        entries.push({ label: "Van startpagina verwijderen", action: "hide" })
+        entries.push({ label: "Annuleren", action: "" })
+        menu.open(appModel.nameAt(row), entries, appGrid)
+    }
+
+    function openPersonalizeMenu() {
+        const entries = [{ label: "Achtergrond kiezen…", action: "background" }]
+        if (appModel.background !== "") {
+            entries.push({ label: "Standaardachtergrond herstellen", action: "background-reset" })
+        }
+        if (appModel.hiddenCount > 0) {
+            entries.push({ label: "Verwijderde toepassingen terugzetten (" + appModel.hiddenCount + ")", action: "unhide" })
+        }
+        entries.push({ label: "Sluiten", action: "" })
+        menu.open("Aanpassen", entries, quickRow)
+    }
+
+    function handleMenuAction(action) {
+        if (action === "icon") {
+            imageDialog.purpose = "icon"
+            imageDialog.title = "Pictogram kiezen voor " + appModel.nameAt(editRow)
+            imageDialog.open()
+        } else if (action === "icon-reset") {
+            appModel.clearCustomIcon(editRow)
+        } else if (action === "hide") {
+            const name = appModel.nameAt(editRow)
+            appModel.hide(editRow)
+            showToast(name + " verwijderd · terugzetten via Aanpassen")
+        } else if (action === "background") {
+            imageDialog.purpose = "background"
+            imageDialog.title = "Achtergrond kiezen"
+            imageDialog.open()
+        } else if (action === "background-reset") {
+            appModel.clearBackground()
+        } else if (action === "unhide") {
+            appModel.restoreHidden()
+            showToast("Alle toepassingen staan weer op de startpagina")
+        }
+    }
+
+    Component.onCompleted: {
+        if (selfTest === "appmenu") {
+            openAppMenu(0)
+        }
+    }
+
+    // Eigen achtergrond, met een donkere laag erover zodat tekst leesbaar blijft
+    Image {
+        anchors.fill: parent
+        visible: appModel.background !== ""
+        source: appModel.background
+        fillMode: Image.PreserveAspectCrop
+        asynchronous: true
+        cache: false
+        Rectangle { anchors.fill: parent; color: "#66000000" }
+    }
+
+    FileDialog {
+        id: imageDialog
+        property string purpose
+        nameFilters: ["Afbeeldingen (*.png *.jpg *.jpeg *.bmp *.gif *.webp *.ico *.svg)"]
+        onAccepted: {
+            const ok = purpose === "icon" ? appModel.setCustomIcon(root.editRow, selectedFile)
+                                          : appModel.setBackground(selectedFile)
+            if (!ok) {
+                root.showToast("Deze afbeelding kon niet gebruikt worden")
+            }
+        }
+    }
+
+    MenuOverlay {
+        id: menu
+        onChosen: (action) => root.handleMenuAction(action)
     }
 
     function showToast(message) {
@@ -96,6 +184,8 @@ Rectangle {
             const item = quickModel.get(index)
             if (item.uri === "") {
                 Qt.quit()
+            } else if (item.uri === "personalize") {
+                root.openPersonalizeMenu()
             } else {
                 appModel.openUri(item.uri)
                 root.showToast(item.label + " openen…")
@@ -103,11 +193,11 @@ Rectangle {
         }
 
         delegate: QuickTile {
-            width: root.unit * 30
+            width: root.unit * 27
             height: quickRow.height
             selected: quickRow.activeFocus && quickRow.currentIndex === index
             onActivated: { quickRow.currentIndex = index; quickRow.trigger(index) }
-            onHovered: { quickRow.currentIndex = index; quickRow.forceActiveFocus() }
+            onHovered: { if (!menu.visible) { quickRow.currentIndex = index; quickRow.forceActiveFocus() } }
         }
 
         Keys.onReturnPressed: trigger(currentIndex)
@@ -153,7 +243,7 @@ Rectangle {
             if (index < 0) {
                 return
             }
-            const name = appModel.data(appModel.index(index, 0), Qt.UserRole + 1)
+            const name = appModel.nameAt(index)
             if (appModel.launch(index)) {
                 root.showToast(name + " starten…")
             } else {
@@ -166,11 +256,19 @@ Rectangle {
             height: appGrid.cellHeight
             selected: appGrid.activeFocus && appGrid.currentIndex === index
             onActivated: { appGrid.currentIndex = index; appGrid.trigger(index) }
-            onHovered: { appGrid.currentIndex = index; appGrid.forceActiveFocus() }
+            onHovered: { if (!menu.visible) { appGrid.currentIndex = index; appGrid.forceActiveFocus() } }
+            onMenuRequested: { appGrid.currentIndex = index; root.openAppMenu(index) }
         }
 
         Keys.onReturnPressed: trigger(currentIndex)
         Keys.onEnterPressed: trigger(currentIndex)
+        Keys.onMenuPressed: root.openAppMenu(currentIndex)
+        Keys.onPressed: (event) => {
+            if (event.key === Qt.Key_F2) {
+                root.openAppMenu(currentIndex)
+                event.accepted = true
+            }
+        }
         Keys.onUpPressed: (event) => {
             if (currentIndex < root.columns) {
                 quickRow.forceActiveFocus()
@@ -196,7 +294,7 @@ Rectangle {
         color: "#6f819c"
         font.pixelSize: root.unit * 2
         text: (gamepad.connectedCount > 0 ? "Controller verbonden  ·  " : "")
-              + "Pijltjes / D-pad: navigeren  ·  Enter / A: openen  ·  Afsluiten via de knop bovenaan of Alt+F4"
+              + "Pijltjes / D-pad: navigeren  ·  Enter / A: openen  ·  F2, rechtermuisknop of X: tegel aanpassen"
     }
 
     // --- Korte melding bij starten ---

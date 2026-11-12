@@ -166,6 +166,8 @@ int main(int argc, char *argv[])
     view.engine()->addImageProvider(QStringLiteral("appicon"), new AppIconProvider);
     view.rootContext()->setContextProperty(QStringLiteral("appModel"), &appModel);
     view.rootContext()->setContextProperty(QStringLiteral("gamepad"), &gamepad);
+    // Alleen voor de geautomatiseerde test: opent bij het starten een menu
+    view.rootContext()->setContextProperty(QStringLiteral("selfTest"), qEnvironmentVariable("BIGSCREEN_SELFTEST"));
     QObject::connect(&gamepad, &GamepadNavigator::homeRequested, &view, [&view] {
         view.showFullScreen();
         view.raise();

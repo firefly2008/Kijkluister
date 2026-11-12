@@ -11,6 +11,7 @@ Item {
     required property string iconSource
     property bool selected: false
     signal activated()
+    signal menuRequested()
     signal hovered()
 
     Rectangle {
@@ -57,7 +58,15 @@ Item {
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
         onEntered: tile.hovered()
-        onClicked: tile.activated()
+        onClicked: (mouse) => {
+            if (mouse.button === Qt.RightButton) {
+                tile.menuRequested()
+            } else {
+                tile.activated()
+            }
+        }
+        onPressAndHold: tile.menuRequested()
     }
 }

@@ -27,6 +27,7 @@ jobs:
       - name: Rooktest (start de app op de runner)
         shell: pwsh
         run: |
+          $env:BIGSCREEN_SELFTEST = 'appmenu'
           $p = Start-Process dist\bigscreen-host.exe -PassThru
           Start-Sleep 12
           # Schermafdruk als base64 in het log, zodat het resultaat te bekijken is

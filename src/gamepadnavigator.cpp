@@ -82,6 +82,10 @@ void GamepadNavigator::handleButton(int button, bool pressed)
     case SDL_GAMEPAD_BUTTON_EAST: // B / rondje
         sendKey(Qt::Key_Escape, pressed);
         break;
+    case SDL_GAMEPAD_BUTTON_WEST: // X / vierkantje: tegel aanpassen
+    case SDL_GAMEPAD_BUTTON_START:
+        sendKey(Qt::Key_Menu, pressed);
+        break;
     case SDL_GAMEPAD_BUTTON_GUIDE: // Home-knop: Bigscreen naar voren halen
         if (pressed) {
             Q_EMIT homeRequested();

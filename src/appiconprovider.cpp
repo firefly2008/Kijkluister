@@ -11,6 +11,23 @@
 #include <shlobj.h>
 #endif
 
+#ifdef Q_OS_WIN
+static bool contentIsTiny(const QImage &source)
+{
+    const QImage image = source.convertToFormat(QImage::Format_ARGB32);
+    const int limit = image.width() / 3;
+    for (int y = 0; y < image.height(); ++y) {
+        const QRgb *line = reinterpret_cast<const QRgb *>(image.constScanLine(y));
+        for (int x = (y < limit ? limit : 0); x < image.width(); ++x) {
+            if (qAlpha(line[x]) > 16) {
+                return false;
+            }
+        }
+    }
+    return true;
+}
+#endif
+
 AppIconProvider::AppIconProvider()
     : QQuickImageProvider(QQuickImageProvider::Image)
 {
@@ -37,6 +54,11 @@ QImage AppIconProvider::requestImage(const QString &id, QSize *size, const QSize
                 DestroyIcon(icon);
             }
             list->Release();
+            // Programma's zonder groot pictogram leveren een klein plaatje in de hoek
+            // van een leeg 256px-vlak: dan liever het 48px-formaat gebruiken.
+            if (listId == SHIL_JUMBO && !image.isNull() && contentIsTiny(image)) {
+                image = QImage();
+            }
             if (!image.isNull()) {
                 break;
             }
