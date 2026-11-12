@@ -1,0 +1,30 @@
+# Bouwt de installer in de cloud (geen lokale toolchain nodig).
+# Zet deze map in een GitHub-repo -> Actions -> "Windows installer" -> download het artifact.
+name: Windows installer
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: windows-2022
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ilammy/msvc-dev-cmd@v1
+        with:
+          arch: x64
+      - name: Qt installeren
+        uses: jurplel/install-qt-action@v4
+        with:
+          version: "6.8.3"
+          arch: win64_msvc2022_64
+          cache: true
+      - name: Inno Setup
+        run: choco install innosetup -y --no-progress
+      - name: Bouwen + installer maken
+        shell: pwsh
+        run: .\scripts\build-installer.ps1 -QtDir "$env:QT_ROOT_DIR" -VcpkgRoot "$env:VCPKG_INSTALLATION_ROOT"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: BigscreenHost-setup
+          path: out/*.exe
