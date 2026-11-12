@@ -103,9 +103,6 @@ Rectangle {
         }
 
         delegate: QuickTile {
-            required property int index
-            required property string label
-            required property string glyph
             width: root.unit * 30
             height: quickRow.height
             selected: quickRow.activeFocus && quickRow.currentIndex === index
@@ -165,9 +162,6 @@ Rectangle {
         }
 
         delegate: AppTile {
-            required property int index
-            required property string name
-            required property string iconSource
             width: appGrid.cellWidth
             height: appGrid.cellHeight
             selected: appGrid.activeFocus && appGrid.currentIndex === index

@@ -5,8 +5,10 @@ import QtQuick
 Item {
     id: tile
 
-    property string label
-    property string glyph
+    // Ingevuld door de view vanuit het model
+    required property int index
+    required property string label
+    required property string glyph
     property bool selected: false
     signal activated()
     signal hovered()
