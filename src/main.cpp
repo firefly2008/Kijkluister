@@ -10,6 +10,7 @@
 #include <QCommandLineParser>
 #include <QFile>
 #include <QMutex>
+#include <QQmlContext>
 #include <QQmlEngine>
 #include <QQmlError>
 #include <QTextStream>
@@ -22,7 +23,9 @@
 #include <QStandardPaths>
 #include <QtQml>
 
-#include <SDL3/SDL.h>
+#include "appiconprovider.h"
+#include "appmodel.h"
+#include "gamepadnavigator.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -140,11 +143,9 @@ int main(int argc, char *argv[])
     parser.addOption(screenOption);
     parser.process(app);
 
-    // SDL3 init: alleen het gamepad-subsysteem, zoals inputhandler/sdlcontroller.cpp
-    // dat al cross-platform deed -- dit stuk hoeft nauwelijks aangepast te worden.
-    if (!SDL_Init(SDL_INIT_GAMEPAD)) {
-        qWarning() << "SDL_Init(SDL_INIT_GAMEPAD) failed:" << SDL_GetError();
-    }
+    // Gamepad-navigatie (SDL3) en de lijst met toepassingen voor de startpagina
+    GamepadNavigator gamepad;
+    AppModel appModel;
 
     auto inputSystem = createInputSystem();
     Q_UNUSED(inputSystem); // in dit skeleton nog niet aan QML-signalen gekoppeld
@@ -162,6 +163,14 @@ int main(int argc, char *argv[])
     view.setGeometry(targetScreen->geometry());
     view.setColor(Qt::black);
     QObject::connect(view.engine(), &QQmlEngine::quit, &app, &QCoreApplication::quit);
+    view.engine()->addImageProvider(QStringLiteral("appicon"), new AppIconProvider);
+    view.rootContext()->setContextProperty(QStringLiteral("appModel"), &appModel);
+    view.rootContext()->setContextProperty(QStringLiteral("gamepad"), &gamepad);
+    QObject::connect(&gamepad, &GamepadNavigator::homeRequested, &view, [&view] {
+        view.showFullScreen();
+        view.raise();
+        view.requestActivate();
+    });
     qInfo() << "Target screen" << targetScreen->name() << targetScreen->geometry();
     view.setSource(QUrl(QStringLiteral("qrc:/qt/qml/org/kde/plasma/bigscreen/host/Main.qml")));
 
@@ -179,13 +188,14 @@ int main(int argc, char *argv[])
     view.raise();
     view.requestActivate();
     qInfo() << "Window shown" << view.geometry() << "visible" << view.isVisible();
+    QObject::connect(view.engine(), &QQmlEngine::warnings, &view, [](const QList<QQmlError> &warnings) {
+        for (const QQmlError &w : warnings) {
+            qWarning().noquote() << "QML:" << w.toString();
+        }
+    });
 
     QObject::connect(&view, &QQuickWindow::sceneGraphError, &view, [](QQuickWindow::SceneGraphError, const QString &message) {
         showFatal(QStringLiteral("Grafische fout (scene graph): ") + message);
-    });
-
-    QObject::connect(&app, &QGuiApplication::lastWindowClosed, [] {
-        SDL_Quit();
     });
 
     // takeScreenshot(&view) wordt in de echte app getriggerd door een QML-signaal

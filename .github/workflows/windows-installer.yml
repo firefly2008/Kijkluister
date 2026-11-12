@@ -27,8 +27,6 @@ jobs:
       - name: Rooktest (start de app op de runner)
         shell: pwsh
         run: |
-          Get-ChildItem dist | Select-Object Name, Length | Format-Table -AutoSize
-          Get-ChildItem dist -Recurse -Directory | Select-Object -First 40 FullName
           $p = Start-Process dist\bigscreen-host.exe -PassThru
           Start-Sleep 12
           if ($p.HasExited) { "RESULT: EXITED code {0} (0x{0:X8})" -f $p.ExitCode } else { "RESULT: RUNNING"; Stop-Process -Id $p.Id -Force }

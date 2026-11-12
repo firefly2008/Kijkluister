@@ -15,6 +15,12 @@ find_package(SDL3 CONFIG REQUIRED)
 
 qt_add_executable(bigscreen-host WIN32
     src/main.cpp
+    src/appmodel.cpp
+    src/appmodel.h
+    src/appiconprovider.cpp
+    src/appiconprovider.h
+    src/gamepadnavigator.cpp
+    src/gamepadnavigator.h
 )
 
 if(WIN32)
@@ -33,13 +39,17 @@ else()
 endif()
 
 # Zonder alias komt het bestand in de resources onder .../host/qml/Main.qml terecht
-set_source_files_properties(qml/Main.qml PROPERTIES QT_RESOURCE_ALIAS Main.qml)
+set(BIGSCREEN_QML_FILES qml/Main.qml qml/AppTile.qml qml/QuickTile.qml)
+foreach(qml_file IN LISTS BIGSCREEN_QML_FILES)
+    get_filename_component(qml_name ${qml_file} NAME)
+    set_source_files_properties(${qml_file} PROPERTIES QT_RESOURCE_ALIAS ${qml_name})
+endforeach()
 
 qt_add_qml_module(bigscreen-host
     URI org.kde.plasma.bigscreen.host
     VERSION 1.0
     QML_FILES
-        qml/Main.qml
+        ${BIGSCREEN_QML_FILES}
 )
 
 target_link_libraries(bigscreen-host PRIVATE
@@ -51,7 +61,7 @@ target_link_libraries(bigscreen-host PRIVATE
 )
 
 if(WIN32)
-    target_link_libraries(bigscreen-host PRIVATE user32)
+    target_link_libraries(bigscreen-host PRIVATE user32 shell32 ole32 comctl32)
 endif()
 
 # Installatie: alles plat in een map, zodat windeployqt + Inno Setup er een installer van maken
