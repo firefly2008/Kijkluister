@@ -59,7 +59,15 @@ void AppModel::refresh()
     QList<App> apps;
     QSet<QString> seen;
     // Op Windows: Startmenu\Programma's van de gebruiker en van alle gebruikers
-    const QStringList roots = QStandardPaths::standardLocations(QStandardPaths::ApplicationsLocation);
+    QStringList roots = QStandardPaths::standardLocations(QStandardPaths::ApplicationsLocation);
+#ifdef Q_OS_WIN
+    // Qt geeft alleen het Startmenu van de gebruiker; de meeste programma's staan
+    // in het gedeelde Startmenu onder ProgramData.
+    const QString programData = qEnvironmentVariable("ProgramData");
+    if (!programData.isEmpty()) {
+        roots.append(QDir::fromNativeSeparators(programData) + QStringLiteral("/Microsoft/Windows/Start Menu/Programs"));
+    }
+#endif
     for (const QString &root : roots) {
         QDirIterator it(root, {QStringLiteral("*.lnk")}, QDir::Files, QDirIterator::Subdirectories);
         while (it.hasNext()) {
