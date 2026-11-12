@@ -16,9 +16,46 @@ Rectangle {
     property var editModel: appModel
     property int editRow: -1
 
-    gradient: Gradient {
-        GradientStop { position: 0.0; color: "#16233a" }
-        GradientStop { position: 1.0; color: "#0b1220" }
+    color: "#0b0c0f"
+
+    // Naam en soort van de tegel die nu focus heeft (voor het grote tekstvlak bovenaan)
+    readonly property string focusName: streamRow.activeFocus ? webModel.nameAt(streamRow.currentIndex)
+                                       : appGrid.activeFocus ? appModel.nameAt(appGrid.currentIndex)
+                                       : quickRow.activeFocus ? quickModel.get(quickRow.currentIndex).label : ""
+    readonly property string focusKind: streamRow.activeFocus ? "Streaming  ·  Enter om te openen"
+                                       : appGrid.activeFocus ? "Toepassing  ·  Enter om te starten"
+                                       : quickRow.activeFocus ? "Instellingen" : ""
+    // Sfeerkleur van de achtergrond, afgeleid van de tegel met focus
+    readonly property color accent: focusName === "" ? "#2b5fa8"
+                                   : Qt.hsla(((focusName.charCodeAt(0) * 37 + focusName.length * 53) % 360) / 360, 0.55, 0.38, 1)
+    // Het tekstvlak klapt in zodra je door de toepassingen bladert
+    readonly property bool heroShown: !appGrid.activeFocus
+
+    // Achtergrond: donker, met een zachte kleurgloed rechtsboven
+    Rectangle {
+        anchors.top: parent.top
+        anchors.left: parent.left
+        anchors.right: parent.right
+        height: parent.height * 0.75
+        visible: appModel.background === ""
+        gradient: Gradient {
+            orientation: Gradient.Horizontal
+            GradientStop { position: 0.0; color: "#0b0c0f" }
+            GradientStop { position: 0.35; color: "#0b0c0f" }
+            GradientStop {
+                position: 1.0
+                color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.85)
+                Behavior on color { ColorAnimation { duration: 500 } }
+            }
+        }
+        Rectangle {
+            anchors.fill: parent
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: "#000b0c0f" }
+                GradientStop { position: 0.55; color: "#a00b0c0f" }
+                GradientStop { position: 1.0; color: "#0b0c0f" }
+            }
+        }
     }
 
     function showToast(message) {
@@ -109,7 +146,24 @@ Rectangle {
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
         cache: false
-        Rectangle { anchors.fill: parent; color: "#66000000" }
+        // Links en onder donkerder, zodat tekst en tegels leesbaar blijven
+        Rectangle {
+            anchors.fill: parent
+            gradient: Gradient {
+                orientation: Gradient.Horizontal
+                GradientStop { position: 0.0; color: "#d00b0c0f" }
+                GradientStop { position: 0.6; color: "#500b0c0f" }
+                GradientStop { position: 1.0; color: "#200b0c0f" }
+            }
+        }
+        Rectangle {
+            anchors.fill: parent
+            gradient: Gradient {
+                GradientStop { position: 0.0; color: "#000b0c0f" }
+                GradientStop { position: 0.45; color: "#600b0c0f" }
+                GradientStop { position: 1.0; color: "#e80b0c0f" }
+            }
+        }
     }
 
     ListModel {
@@ -123,40 +177,39 @@ Rectangle {
         ListElement { label: "Afsluiten"; code: 0xE7E8; uri: "" }
     }
 
-    // --- Kop: titel links, klok en datum rechts ---
+    // --- Bovenbalk: naam links, snelknoppen in het midden, klok rechts ---
     Item {
         id: header
         anchors.top: parent.top
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.margins: root.unit * 3
-        height: root.unit * 8
+        height: root.unit * 6
 
         Text {
+            id: brand
             anchors.left: parent.left
             anchors.verticalCenter: parent.verticalCenter
             color: "white"
-            font.pixelSize: root.unit * 5
-            font.weight: Font.Light
+            font.pixelSize: root.unit * 3.2
+            font.weight: Font.DemiBold
             text: "Bigscreen"
         }
 
-        Column {
+        Text {
+            id: clock
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
-
-            Text {
-                id: clock
-                anchors.right: parent.right
-                color: "white"
-                font.pixelSize: root.unit * 4.5
-            }
-            Text {
-                id: dateLabel
-                anchors.right: parent.right
-                color: "#9fb4d0"
-                font.pixelSize: root.unit * 2.2
-            }
+            color: "white"
+            font.pixelSize: root.unit * 3.2
+        }
+        Text {
+            id: dateLabel
+            anchors.right: clock.left
+            anchors.rightMargin: root.unit * 2
+            anchors.baseline: clock.baseline
+            color: "#b0b4bb"
+            font.pixelSize: root.unit * 2
         }
     }
 
@@ -169,16 +222,15 @@ Rectangle {
         }
     }
 
-    // --- Snelknoppen: altijd allemaal zichtbaar, breedte verdeeld over het scherm ---
+    // --- Snelknoppen in de bovenbalk ---
     ListView {
         id: quickRow
-        anchors.top: header.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.leftMargin: root.unit * 3
-        anchors.rightMargin: root.unit * 3
-        anchors.topMargin: root.unit
-        height: root.unit * 7
+        anchors.verticalCenter: header.verticalCenter
+        anchors.left: header.left
+        anchors.leftMargin: brand.width + root.unit * 4
+        width: Math.min(root.unit * 19 * quickModel.count,
+                        header.width - brand.width - clock.width - dateLabel.width - root.unit * 10)
+        height: root.unit * 5.6
         orientation: ListView.Horizontal
         model: quickModel
         keyNavigationEnabled: true
@@ -201,6 +253,7 @@ Rectangle {
             glyph: String.fromCharCode(code)
             width: quickRow.width / quickModel.count
             height: quickRow.height
+            compact: width < root.unit * 16
             selected: quickRow.activeFocus && quickRow.currentIndex === index
             onActivated: { quickRow.currentIndex = index; quickRow.trigger(index) }
             onHovered: { if (!menu.visible && !addOverlay.visible) { quickRow.currentIndex = index; quickRow.forceActiveFocus() } }
@@ -211,18 +264,56 @@ Rectangle {
         Keys.onDownPressed: (webModel.count > 0 ? streamRow : appGrid).forceActiveFocus()
     }
 
+    // --- Groot tekstvlak: wat heeft nu focus ---
+    Item {
+        id: hero
+        anchors.top: header.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.leftMargin: root.unit * 4
+        anchors.rightMargin: root.unit * 4
+        height: root.heroShown ? root.unit * 24 : 0
+        opacity: root.heroShown ? 1 : 0
+        clip: true
+        Behavior on height { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+        Behavior on opacity { NumberAnimation { duration: 180 } }
+
+        Column {
+            anchors.left: parent.left
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: root.unit * 2
+            width: parent.width * 0.6
+            spacing: root.unit
+
+            Text {
+                width: parent.width
+                color: "white"
+                font.pixelSize: root.unit * 7.5
+                font.weight: Font.DemiBold
+                elide: Text.ElideRight
+                text: root.focusName
+            }
+            Text {
+                color: "#c4c7cc"
+                font.pixelSize: root.unit * 2.4
+                text: root.focusKind
+            }
+        }
+    }
+
     // --- Streaming ---
     Text {
         id: streamTitle
-        anchors.top: quickRow.bottom
+        anchors.top: hero.bottom
         anchors.left: parent.left
-        anchors.topMargin: root.unit * 2
+        anchors.topMargin: root.unit * 1.5
         anchors.leftMargin: root.unit * 4
         visible: webModel.count > 0
         height: visible ? implicitHeight : 0
-        color: "#9fb4d0"
-        font.pixelSize: root.unit * 2.4
-        text: "Streaming (" + webModel.count + ")"
+        color: "white"
+        font.pixelSize: root.unit * 2.6
+        font.weight: Font.DemiBold
+        text: "Streaming"
     }
 
     ListView {
@@ -233,7 +324,8 @@ Rectangle {
         anchors.leftMargin: root.unit * 3
         anchors.rightMargin: root.unit * 3
         visible: webModel.count > 0
-        height: visible ? root.unit * 19 : 0
+        height: visible ? root.unit * 21 : 0
+        focus: webModel.count > 0
         orientation: ListView.Horizontal
         model: webModel
         keyNavigationEnabled: true
@@ -252,7 +344,7 @@ Rectangle {
         }
 
         delegate: AppTile {
-            width: streamRow.height * 1.2
+            width: streamRow.height * 1.45
             height: streamRow.height
             selected: streamRow.activeFocus && streamRow.currentIndex === index
             onActivated: { streamRow.currentIndex = index; streamRow.trigger(index) }
@@ -280,9 +372,10 @@ Rectangle {
         anchors.left: parent.left
         anchors.topMargin: root.unit * 1.5
         anchors.leftMargin: root.unit * 4
-        color: "#9fb4d0"
-        font.pixelSize: root.unit * 2.4
-        text: "Toepassingen (" + appModel.count + ")"
+        color: "white"
+        font.pixelSize: root.unit * 2.6
+        font.weight: Font.DemiBold
+        text: "Toepassingen"
     }
 
     GridView {
@@ -298,7 +391,7 @@ Rectangle {
         cellWidth: Math.floor(width / root.columns)
         cellHeight: cellWidth * 0.8
         model: appModel
-        focus: true
+        focus: webModel.count === 0
         clip: true
         keyNavigationEnabled: true
         highlightMoveDuration: 150
@@ -355,7 +448,7 @@ Rectangle {
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottomMargin: root.unit * 1.5
-        color: "#6f819c"
+        color: "#7d8188"
         font.pixelSize: root.unit * 2
         text: (gamepad.connectedCount > 0 ? "Controller verbonden  ·  " : "")
               + "Pijltjes / D-pad: navigeren  ·  Enter / A: openen  ·  F2, rechtermuisknop of X: tegel aanpassen"

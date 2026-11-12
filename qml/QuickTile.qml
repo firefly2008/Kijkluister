@@ -10,6 +10,8 @@ Item {
     required property string label
     required property string glyph
     property bool selected: false
+    // Te weinig ruimte: alleen het pictogram, de naam verschijnt bij focus
+    property bool compact: false
     signal activated()
     signal hovered()
 
@@ -17,9 +19,7 @@ Item {
         anchors.fill: parent
         anchors.margins: 6
         radius: height / 2
-        color: tile.selected ? "#3d6fb4" : "#22ffffff"
-        border.width: tile.selected ? 3 : 0
-        border.color: "white"
+        color: tile.selected ? "#e8eaed" : "#33ffffff"
         Behavior on color { ColorAnimation { duration: 120 } }
 
         Row {
@@ -28,15 +28,16 @@ Item {
 
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                color: "white"
+                color: tile.selected ? "#111318" : "white"
                 font.family: "Segoe MDL2 Assets"
                 font.pixelSize: tile.height * 0.36
                 text: tile.glyph
             }
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                color: "white"
-                font.pixelSize: tile.height * 0.3
+                color: tile.selected ? "#111318" : "white"
+                font.pixelSize: tile.height * 0.34
+                visible: !tile.compact
                 text: tile.label
             }
         }

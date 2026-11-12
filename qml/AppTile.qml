@@ -18,11 +18,11 @@ Item {
         id: card
         anchors.fill: parent
         anchors.margins: parent.width * 0.06
-        radius: width * 0.08
-        color: tile.selected ? "#3d6fb4" : "#22ffffff"
-        border.width: tile.selected ? Math.max(3, width * 0.02) : 0
+        radius: height * 0.09
+        color: tile.selected ? "#3b3e45" : "#cc1f2126"
+        border.width: tile.selected ? Math.max(3, height * 0.025) : 0
         border.color: "white"
-        scale: tile.selected ? 1.08 : 1.0
+        scale: tile.selected ? 1.09 : 1.0
         Behavior on scale { NumberAnimation { duration: 120; easing.type: Easing.OutCubic } }
         Behavior on color { ColorAnimation { duration: 120 } }
 
