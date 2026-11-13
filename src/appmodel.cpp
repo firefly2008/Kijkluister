@@ -354,9 +354,10 @@ QColor AppModel::accentFor(const App &app) const
 
     // Zonder logo: vaste kleur per naam
     QColor result = QColor::fromHslF(((app.name.size() * 47 + app.name.at(0).unicode() * 13) % 360) / 360.0, 0.45, 0.32);
-    const QImage image = QImage(file).scaled(24, 24, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
-                             .convertToFormat(QImage::Format_ARGB32);
-    if (!image.isNull()) {
+    const QImage source = QFile::exists(file) ? QImage(file) : QImage();
+    if (!source.isNull()) {
+        const QImage image = source.scaled(24, 24, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
+                                 .convertToFormat(QImage::Format_ARGB32);
         // Gemiddelde van de pixels, gewogen naar verzadiging: een rood logo op wit
         // geeft rood, geen roze. Is alles grijs/zwart/wit, dan blijft het donkergrijs.
         double r = 0, g = 0, b = 0, weight = 0;

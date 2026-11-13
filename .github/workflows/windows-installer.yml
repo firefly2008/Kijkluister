@@ -3,7 +3,13 @@
 name: Windows installer
 on:
   push:
+    branches: ['**']
+    tags: ['v*']
   workflow_dispatch:
+
+# Nodig om bij een versie-tag de installer als Release te bewaren
+permissions:
+  contents: write
 
 jobs:
   build:
@@ -23,7 +29,10 @@ jobs:
         run: choco install innosetup -y --no-progress
       - name: Bouwen + installer maken
         shell: pwsh
-        run: .\scripts\build-installer.ps1 -QtDir "$env:QT_ROOT_DIR" -VcpkgRoot "$env:VCPKG_INSTALLATION_ROOT"
+        run: |
+          # Versie-tag (v2.0.0) bepaalt het versienummer; gewone pushes heten "dev"
+          $version = if ($env:GITHUB_REF -like 'refs/tags/v*') { $env:GITHUB_REF_NAME.Substring(1) } else { 'dev' }
+          .\scripts\build-installer.ps1 -QtDir "$env:QT_ROOT_DIR" -VcpkgRoot "$env:VCPKG_INSTALLATION_ROOT" -Version $version
       - name: Rooktest (start de app op de runner)
         shell: pwsh
         run: |
@@ -47,3 +56,10 @@ jobs:
         with:
           name: BigscreenHost-setup
           path: out/*.exe
+      # Versie-tags worden een Release: die blijft bewaard en wordt niet overschreven
+      - name: Release maken
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: out/*.exe
+          generate_release_notes: true
