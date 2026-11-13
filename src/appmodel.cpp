@@ -73,6 +73,16 @@ const WebDefault webDefaults[] = {
     {"ESPN", "https://www.espn.nl/watch/"},
     {"Twitch", "https://www.twitch.tv"},
     {"Plex", "https://app.plex.tv"},
+    // Muziek en luisterboeken
+    {"Spotify", "https://open.spotify.com"},
+    {"YouTube Music", "https://music.youtube.com"},
+    {"Apple Music", "https://music.apple.com/nl"},
+    {"Deezer", "https://www.deezer.com/nl"},
+    {"Tidal", "https://listen.tidal.com"},
+    {"Amazon Music", "https://music.amazon.com"},
+    {"Qobuz", "https://play.qobuz.com"},
+    {"SoundCloud", "https://soundcloud.com"},
+    {"Storytel", "https://www.storytel.com/nl"},
 };
 
 AppModel::AppModel(Kind kind, QObject *parent)
