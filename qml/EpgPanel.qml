@@ -10,6 +10,7 @@ FocusScope {
     property var channel: ({})
     property Item returnFocusTo: null
     property var programmes: []
+    property int startIndex: 0       // handleiding: ander programma voorselecteren
 
     anchors.fill: parent
     visible: false
@@ -20,7 +21,7 @@ FocusScope {
         channel = ch
         returnFocusTo = focusItem
         refresh()
-        list.currentIndex = 0
+        list.currentIndex = Math.min(startIndex, Math.max(0, programmes.length - 1))
         visible = true
         list.forceActiveFocus()
     }

@@ -16,6 +16,8 @@ FocusScope {
     property string errorText: ""
     property bool pinInfo: false           // test: balk blijft staan
     property bool autoGuide: false         // test: gids openen na afspelen
+    property string demo: ""               // schermafbeeldingen voor de handleiding
+    property alias guideStart: guidePanel.startIndex
     // Gids van de zender die nu speelt; ververst als er nieuwe gidsgegevens zijn
     readonly property var nowNext: (iptv.epgRevision, epgClock.tick, playingRow >= 0 ? iptv.nowNext(playingRow) : ({}))
     // De speler bestaat alleen tijdens het kijken (snellere start, decoder weer vrij)
@@ -41,6 +43,35 @@ FocusScope {
 
     function openSources() {
         sources.open()
+    }
+
+    // Schermen klaarzetten voor de handleiding (alleen via BIGSCREEN_SELFTEST)
+    Timer {
+        id: demoTimer
+        interval: 7000
+        running: tv.demo !== "" && tv.visible
+        onTriggered: {
+            if (tv.demo === "m-channels") {
+                grid.currentIndex = 6
+                grid.forceActiveFocus()
+            } else if (tv.demo === "m-search") {
+                searchField.text = "tv"
+                searchField.forceActiveFocus()
+            } else if (tv.demo === "m-favorites") {
+                for (const r of [0, 3, 5, 8]) iptv.toggleFavorite(r)
+                iptv.group = "Favorieten"
+                grid.currentIndex = 1
+                grid.forceActiveFocus()
+            } else if (tv.demo === "m-sources") {
+                sources.open()
+            } else if (tv.demo === "m-xtream") {
+                sources.open()
+                sources.demoXtream()
+            } else if (tv.demo === "m-guidelist") {
+                grid.currentIndex = 2
+                tv.openGuide(2)
+            }
+        }
     }
 
     function close() {

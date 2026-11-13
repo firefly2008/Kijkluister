@@ -290,6 +290,22 @@ Rectangle {
             iptvScreen.pinInfo = selfTest === "iptvbar"
             iptvScreen.autoGuide = selfTest === "iptvepg"
             iptvScreen.open(mediaGrid())
+        } else if (selfTest.startsWith("m-")) {
+            // Schermafbeeldingen voor de handleiding
+            if (iptv.sources.length === 0) {
+                iptv.addSource("m3u-file", "Nederlandse zenders", selfTestM3u, "", "")
+            }
+            if (selfTest === "m-home") {
+                const media = sectionDefs.findIndex(d => d.model === appModel)
+                focusSection(media, 2, false)
+                return
+            }
+            iptvScreen.demo = selfTest
+            iptvScreen.autoPlay = selfTest === "m-bar" || selfTest.startsWith("m-guide") && selfTest !== "m-guidelist"
+            iptvScreen.pinInfo = selfTest === "m-bar"
+            iptvScreen.autoGuide = selfTest === "m-guide" || selfTest === "m-guide2"
+            iptvScreen.guideStart = selfTest === "m-guide2" ? 3 : 0
+            iptvScreen.open(mediaGrid())
         } else if (selfTest === "librarysetup") {
             libraryScreen.open("movies", mediaGrid())
             libraryScreen.openSetup()

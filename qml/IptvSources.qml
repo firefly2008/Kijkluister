@@ -44,6 +44,16 @@ FocusScope {
         }
     }
 
+    // Voorbeeld voor de handleiding
+    function demoXtream() {
+        addType = "xtream"
+        nameField.text = "Mijn abonnement"
+        urlField.text = "http://voorbeeld.tv:8080"
+        userField.text = "gebruiker"
+        passwordField.text = "geheim123"
+        addButton.forceActiveFocus()
+    }
+
     Keys.onEscapePressed: close()
 
     // Invoerveld dat met pijltjes bereikbaar is

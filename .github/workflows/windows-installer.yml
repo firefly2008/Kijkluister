@@ -55,7 +55,7 @@ jobs:
           $lines = @(Get-Content -Encoding UTF8 "$tv\nl.m3u" | ForEach-Object { $_.Trim() })
           $guideUrl = "file:///" + ("$tv\guide.xml.gz" -replace '\\','/')
           $m3u = @("#EXTM3U url-tvg=`"$guideUrl`""); $n = 0
-          for ($i = 0; $i -lt $lines.Count -and $n -lt 6; $i++) {
+          for ($i = 0; $i -lt $lines.Count -and $n -lt 40; $i++) {
             if ($lines[$i] -like '#EXTINF*') {
               $url = ($lines[($i+1)..($i+4)] | Where-Object { $_ -and -not $_.StartsWith('#') } | Select-Object -First 1)
               $n++; $m3u += ($lines[$i] -replace ' tvg-id="[^"]*"', '') -replace '^#EXTINF:-1', "#EXTINF:-1 tvg-id=`"ch$n`""; $m3u += $url
@@ -64,12 +64,22 @@ jobs:
           $m3u -join "`r`n" | Set-Content -Encoding UTF8 "$tv\test.m3u"
           $now = [DateTime]::UtcNow; $start = $now.Date.AddHours($now.Hour - 1)
           $titles = 'Journaal', 'Het Weer', 'Natuur in Nederland', 'Koken met Kim', 'De Avondshow', 'Documentaire: De Noordzee', 'Sportnieuws', 'Filmavond'
+          $descs = @{
+            'Journaal' = 'Het laatste nieuws uit binnen- en buitenland, met achtergronden en reportages van onze correspondenten.'
+            'Het Weer' = 'De weersverwachting voor vandaag en de komende dagen, met uitleg over de buien en de temperatuur.'
+            'Natuur in Nederland' = 'Een boswachter neemt je mee door de Veluwe in de herfst: edelherten in de bronst, paddenstoelen en trekvogels.'
+            'Koken met Kim' = 'Kim maakt een stevige stamppot met boerenkool en een snelle appeltaart. Met tips om vooruit te koken.'
+            'De Avondshow' = 'Talkshow met gasten uit de muziek, sport en cultuur, en een live optreden van een Nederlandse band.'
+            'Documentaire: De Noordzee' = 'Onder water bij de Noordzee: van zeehonden bij de Waddeneilanden tot scheepswrakken vol leven.'
+            'Sportnieuws' = 'Samenvattingen van de wedstrijden van vandaag, met reacties van spelers en trainers.'
+            'Filmavond' = 'Een Nederlandse speelfilm over een familie die samen een oude boerderij opknapt, met alle verwikkelingen van dien.'
+          }
           $x = @('<?xml version="1.0" encoding="UTF-8"?>', '<tv>')
-          for ($c = 1; $c -le 6; $c++) {
+          for ($c = 1; $c -le $n; $c++) {
             $x += "<channel id=`"ch$c`"><display-name>Zender $c</display-name></channel>"
             for ($k = 0; $k -lt 16; $k++) {
               $s = $start.AddMinutes(30 * $k); $e = $s.AddMinutes(30); $t = $titles[($k + $c) % $titles.Count]
-              $x += "<programme start=`"$($s.ToString('yyyyMMddHHmmss')) +0000`" stop=`"$($e.ToString('yyyyMMddHHmmss')) +0000`" channel=`"ch$c`"><title>$t</title><desc>Uitgebreide beschrijving van $t op zender $c. Hier staat wat er in deze uitzending te zien is, wie er meedoen en waarom het de moeite waard is om te kijken.</desc><category>Informatief</category></programme>"
+              $x += "<programme start=`"$($s.ToString('yyyyMMddHHmmss')) +0000`" stop=`"$($e.ToString('yyyyMMddHHmmss')) +0000`" channel=`"ch$c`"><title>$t</title><desc>$($descs[$t])</desc><category>Informatief</category></programme>"
             }
           }
           $x += '</tv>'
@@ -78,20 +88,45 @@ jobs:
           $gz.Write($bytes, 0, $bytes.Length); $gz.Close(); $fs.Close()
           $env:BIGSCREEN_TEST_M3U = "$tv\test.m3u"
           Get-Content "$tv\test.m3u"
-          foreach ($mode in 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile') {
+          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile'
+          $manual = '${{ github.ref }}' -like 'refs/heads/screenshots/*'
+          if ($manual) {
+            # Schermafbeeldingen voor de handleiding, op Full HD
+            $modes = 'm-home', 'm-channels', 'm-search', 'm-favorites', 'm-sources', 'm-xtream', 'm-bar', 'm-guide', 'm-guide2', 'm-guidelist'
+            Add-Type @"
+          using System; using System.Runtime.InteropServices;
+          public class Disp {
+            [StructLayout(LayoutKind.Sequential, CharSet=CharSet.Ansi)] public struct DEVMODE {
+              [MarshalAs(UnmanagedType.ByValTStr, SizeConst=32)] public string dmDeviceName; public short dmSpecVersion, dmDriverVersion, dmSize, dmDriverExtra; public int dmFields, dmPositionX, dmPositionY, dmDisplayOrientation, dmDisplayFixedOutput; public short dmColor, dmDuplex, dmYResolution, dmTTOption, dmCollate;
+              [MarshalAs(UnmanagedType.ByValTStr, SizeConst=32)] public string dmFormName; public short dmLogPixels; public int dmBitsPerPel, dmPelsWidth, dmPelsHeight, dmDisplayFlags, dmDisplayFrequency, dmICMMethod, dmICMIntent, dmMediaType, dmDitherType, dmReserved1, dmReserved2, dmPanningWidth, dmPanningHeight; }
+            [DllImport("user32.dll")] public static extern bool EnumDisplaySettings(string d, int m, ref DEVMODE dm);
+            [DllImport("user32.dll")] public static extern int ChangeDisplaySettings(ref DEVMODE dm, int f);
+            public static int Set(int w, int h) { var dm = new DEVMODE(); dm.dmSize = (short)Marshal.SizeOf(dm); EnumDisplaySettings(null, -1, ref dm); dm.dmPelsWidth = w; dm.dmPelsHeight = h; dm.dmFields = 0x80000 | 0x100000; return ChangeDisplaySettings(ref dm, 0); }
+          }
+          "@
+            "Resolutie: " + [Disp]::Set(1920, 1080)
+            New-Item -ItemType Directory -Force shots | Out-Null
+          }
+          foreach ($mode in $modes) {
             $env:BIGSCREEN_SELFTEST = $mode
             $p = Start-Process dist\Kijkluister.exe -PassThru
-            Start-Sleep 14
+            Start-Sleep $(if ($manual) { 18 } else { 14 })
             # Schermafdruk als base64 in het log, zodat het resultaat te bekijken is
             $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
             $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
             [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen(0, 0, 0, 0, $bmp.Size)
             $bmp.Save("$env:RUNNER_TEMP\shot.png", [System.Drawing.Imaging.ImageFormat]::Png)
+            if ($manual) { Copy-Item "$env:RUNNER_TEMP\shot.png" "shots\$mode.png"; if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }; Start-Sleep 2; continue }
             "SHOT-BEGIN-$mode"; [Convert]::ToBase64String([IO.File]::ReadAllBytes("$env:RUNNER_TEMP\shot.png"), 'InsertLineBreaks'); "SHOT-END"
             if ($p.HasExited) { "RESULT: EXITED code {0} (0x{0:X8})" -f $p.ExitCode } else { "RESULT: RUNNING"; Stop-Process -Id $p.Id -Force }
             if (Test-Path $log) { "--- log ---"; Get-Content $log } else { "NO LOG FILE" }
             if (-not (Test-Path $log) -or -not (Select-String -Path $log -Pattern "Window shown" -Quiet)) { throw "Rooktest mislukt: venster niet getoond" }
           }
+      - uses: actions/upload-artifact@v4
+        if: startsWith(github.ref, 'refs/heads/screenshots/')
+        with:
+          name: schermafbeeldingen
+          path: shots/*.png
       - uses: actions/upload-artifact@v4
         with:
           name: Kijkluister-setup
