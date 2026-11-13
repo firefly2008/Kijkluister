@@ -143,7 +143,7 @@ FocusScope {
                 FocusButton {
                     unit: picker.unit
                     text: "Verplaatsen"
-                    color: "#e8eaed"
+                    checked: true
                     onClicked: picker.confirm()
                 }
                 FocusButton {
