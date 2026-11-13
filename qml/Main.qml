@@ -33,7 +33,7 @@ Rectangle {
     // Achtergrondkleur: de kleur van het logo van de streamingdienst met focus
     readonly property color accent: streamGrid.activeFocus && streamGrid.currentIndex >= 0
                                     ? (webModel.revision, webModel.accentAt(streamGrid.currentIndex)) : "#1d3557"
-    readonly property bool heroShown: true
+    readonly property bool heroShown: appModel.showHero
 
     // Achtergrond: neemt de kleur van de gekozen streamingdienst aan, naar onder donker
     Rectangle {
@@ -66,21 +66,44 @@ Rectangle {
         if (model.hasCustomIcon(row)) {
             entries.push({ label: "Standaardpictogram herstellen", action: "icon-reset" })
         }
-        if (row > 0) {
-            entries.push({ label: "Naar links verplaatsen", action: "move-left" })
-        }
-        if (row < model.count - 1) {
-            entries.push({ label: "Naar rechts verplaatsen", action: "move-right" })
+        for (const dir of ["left", "right", "up", "down"]) {
+            if (root.moveLimit(model, row, dir) > 0) {
+                entries.push({ label: root.moveLabels[dir] + " verplaatsen…", action: "move-" + dir })
+            }
         }
         entries.push({ label: "Van startpagina verwijderen", action: "hide" })
         entries.push({ label: "Annuleren", action: "" })
         menu.open(model.nameAt(row), entries, focusItem)
     }
 
+    readonly property var moveLabels: ({ left: "Naar links", right: "Naar rechts", up: "Naar boven", down: "Naar onder" })
+
+    // Hoeveel plaatsen een tegel maximaal kan schuiven (omhoog/omlaag: in rijen)
+    function moveLimit(model, row, dir) {
+        const last = model.count - 1
+        if (dir === "left") return row
+        if (dir === "right") return last - row
+        if (dir === "up") return Math.floor(row / root.columns)
+        return Math.ceil((last - row) / root.columns)
+    }
+
+    function moveTile(model, row, dir, places) {
+        const step = dir === "left" ? -1 : dir === "right" ? 1 : dir === "up" ? -root.columns : root.columns
+        const to = Math.max(0, Math.min(model.count - 1, row + step * places))
+        if (to === row) {
+            return
+        }
+        model.move(row, to)
+        const grid = model === webModel ? streamGrid : appGrid
+        grid.currentIndex = to
+        grid.forceActiveFocus()
+    }
+
     function openPersonalizeMenu() {
         const entries = [
             { label: "Tegel toevoegen…", action: "add" },
-            { label: "Achtergrond kiezen…", action: "background" }
+            { label: "Achtergrond kiezen…", action: "background" },
+            { label: appModel.showHero ? "Grote naam en logo linksboven verbergen" : "Grote naam en logo linksboven tonen", action: "toggle-hero" }
         ]
         if (appModel.background !== "") {
             entries.push({ label: "Standaardachtergrond herstellen", action: "background-reset" })
@@ -100,11 +123,17 @@ Rectangle {
             imageDialog.open()
         } else if (action === "icon-reset") {
             editModel.clearCustomIcon(editRow)
-        } else if (action === "move-left" || action === "move-right") {
-            const to = editRow + (action === "move-left" ? -1 : 1)
-            editModel.move(editRow, to)
+        } else if (action.startsWith("move-")) {
+            const dir = action.substring(5)
             const grid = editModel === webModel ? streamGrid : appGrid
-            grid.currentIndex = to
+            placesPicker.open(editModel.nameAt(editRow) + ": " + moveLabels[dir].toLowerCase(),
+                              dir === "up" || dir === "down" ? "rijen" : "plaatsen",
+                              moveLimit(editModel, editRow, dir), grid)
+            placesPicker.model = editModel
+            placesPicker.row = editRow
+            placesPicker.direction = dir
+        } else if (action === "toggle-hero") {
+            appModel.showHero = !appModel.showHero
         } else if (action === "hide") {
             const name = editModel.nameAt(editRow)
             editModel.hide(editRow)
@@ -139,6 +168,12 @@ Rectangle {
     Component.onCompleted: {
         if (selfTest === "addtile") {
             addOverlay.open(quickRow)
+        } else if (selfTest === "moveask") {
+            streamGrid.currentIndex = 2
+            streamGrid.forceActiveFocus()
+            editModel = webModel
+            editRow = 2
+            handleMenuAction("move-down")
         } else if (selfTest === "library") {
             libraryScreen.open("shows", appGrid)
         } else if (selfTest === "librarymovies") {
@@ -578,6 +613,14 @@ Rectangle {
         title: "Programma kiezen"
         nameFilters: ["Programma's en snelkoppelingen (*.exe *.lnk *.bat *.cmd *.url)", "Alle bestanden (*)"]
         onAccepted: addOverlay.targetText = selectedFile.toString()
+    }
+
+    PlacesPicker {
+        id: placesPicker
+        property var model: null
+        property int row: -1
+        property string direction: ""
+        onAccepted: (places) => root.moveTile(model, row, direction, places)
     }
 
     MenuOverlay {

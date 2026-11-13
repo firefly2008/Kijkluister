@@ -49,7 +49,7 @@ jobs:
           }
           New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\BigscreenHost" | Out-Null
           "[library]`r`nmoviesFolder=$($films -replace '\\','/')`r`nshowsFolder=$($series -replace '\\','/')`r`n" | Set-Content "$env:LOCALAPPDATA\BigscreenHost\settings.ini"
-          foreach ($mode in 'home', 'library', 'librarydetail', 'iptv', 'iptvplay', 'iptvsources', 'addtile') {
+          foreach ($mode in 'home', 'moveask', 'library', 'iptvplay', 'addtile') {
             $env:BIGSCREEN_SELFTEST = $mode
             $p = Start-Process dist\bigscreen-host.exe -PassThru
             Start-Sleep 14

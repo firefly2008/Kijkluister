@@ -25,6 +25,8 @@ class AppModel : public QAbstractListModel
     Q_PROPERTY(QString background READ background NOTIFY backgroundChanged)
     // Telt op zodra een pictogram (en daarmee een kleur) verandert, zodat QML opnieuw opvraagt
     Q_PROPERTY(int revision READ revision NOTIFY revisionChanged)
+    // Grote naam en logo linksboven op de startpagina
+    Q_PROPERTY(bool showHero READ showHero WRITE setShowHero NOTIFY showHeroChanged)
 
 public:
     enum Roles { NameRole = Qt::UserRole + 1, PathRole, IconRole, CustomIconRole, AccentRole };
@@ -40,6 +42,14 @@ public:
     int hiddenCount() const { return m_hidden.size(); }
     QString background() const { return m_background; }
     int revision() const { return m_revision; }
+    bool showHero() const { return m_settings.value(QStringLiteral("showHero"), true).toBool(); }
+    void setShowHero(bool show)
+    {
+        if (show != showHero()) {
+            m_settings.setValue(QStringLiteral("showHero"), show);
+            Q_EMIT showHeroChanged();
+        }
+    }
 
     Q_INVOKABLE void refresh();
     Q_INVOKABLE bool launch(int row);
@@ -67,6 +77,7 @@ Q_SIGNALS:
     // Tegel die een scherm binnen Bigscreen opent (bigscreen:movies, bigscreen:shows)
     void internalRequested(const QString &target);
     void revisionChanged();
+    void showHeroChanged();
 
 private:
     struct App {
