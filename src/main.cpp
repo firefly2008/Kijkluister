@@ -186,7 +186,10 @@ int main(int argc, char *argv[])
     // Gamepad-navigatie (SDL3) en de lijst met toepassingen voor de startpagina
     GamepadNavigator gamepad;
     AppModel appModel(AppModel::Apps);
-    AppModel webModel(AppModel::Web);
+    AppModel webVideo(AppModel::Web, QStringLiteral("video"));
+    AppModel webMusic(AppModel::Web, QStringLiteral("muziek"));
+    AppModel webBooks(AppModel::Web, QStringLiteral("luisterboeken"));
+    AppModel webPodcasts(AppModel::Web, QStringLiteral("podcasts"));
     MediaLibrary library(appDataDir());
     IptvModel iptv(appDataDir());
 
@@ -208,7 +211,10 @@ int main(int argc, char *argv[])
     QObject::connect(view.engine(), &QQmlEngine::quit, &app, &QCoreApplication::quit);
     view.engine()->addImageProvider(QStringLiteral("appicon"), new AppIconProvider);
     view.rootContext()->setContextProperty(QStringLiteral("appModel"), &appModel);
-    view.rootContext()->setContextProperty(QStringLiteral("webModel"), &webModel);
+    view.rootContext()->setContextProperty(QStringLiteral("webVideo"), &webVideo);
+    view.rootContext()->setContextProperty(QStringLiteral("webMusic"), &webMusic);
+    view.rootContext()->setContextProperty(QStringLiteral("webBooks"), &webBooks);
+    view.rootContext()->setContextProperty(QStringLiteral("webPodcasts"), &webPodcasts);
     view.rootContext()->setContextProperty(QStringLiteral("library"), &library);
     view.rootContext()->setContextProperty(QStringLiteral("iptv"), &iptv);
     view.engine()->setNetworkAccessManagerFactory(new CachingNetworkFactory(appDataDir() + QStringLiteral("/imagecache")));

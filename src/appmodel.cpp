@@ -119,9 +119,10 @@ QString mpcHcPath()
     return QStringLiteral("mpc-hc64.exe");
 }
 
-AppModel::AppModel(Kind kind, QObject *parent)
+AppModel::AppModel(Kind kind, const QString &category, QObject *parent)
     : QAbstractListModel(parent)
     , m_kind(kind)
+    , m_category(category.isEmpty() ? QStringLiteral("video") : category)
     , m_settings(dataDir() + QStringLiteral("/settings.ini"), QSettings::IniFormat)
 {
     m_hidden = m_settings.value(key("hiddenApps")).toStringList();
@@ -132,7 +133,14 @@ AppModel::AppModel(Kind kind, QObject *parent)
 
 QString AppModel::key(const char *name) const
 {
-    return (m_kind == Web ? QStringLiteral("web/") : QString()) + QLatin1String(name);
+    // Elke rij eigen instellingen; "video" houdt de sleutels van eerdere versies
+    if (m_kind != Web) {
+        return QLatin1String(name);
+    }
+    if (m_category == QLatin1String("video")) {
+        return QStringLiteral("web/") + QLatin1String(name);
+    }
+    return QStringLiteral("web/%1/").arg(m_category) + QLatin1String(name);
 }
 
 QList<AppModel::App> AppModel::customTiles() const

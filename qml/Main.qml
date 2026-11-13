@@ -1,5 +1,5 @@
-// Startpagina van Bigscreen voor Windows: klok, snelknoppen, een rij met
-// streamingdiensten en een raster met toepassingen. Volledig te bedienen met
+// Startpagina van Bigscreen voor Windows: klok, snelknoppen en rijen onder elkaar
+// (Video, Muziek, Luisterboeken, Podcasts, Media) die meescrollen. Volledig te bedienen met
 // pijltjestoetsen, Enter en een gamepad.
 // Eigen QtQuick-versie van containments/homescreen (die aan Plasma vastzit).
 // SPDX-License-Identifier: GPL-2.0-or-later
@@ -18,23 +18,34 @@ Rectangle {
 
     color: "#0b0c0f"
 
+    // De rijen op de startpagina, van boven naar beneden
+    readonly property var sectionDefs: [
+        { title: "Video", model: webVideo },
+        { title: "Muziek", model: webMusic },
+        { title: "Luisterboeken", model: webBooks },
+        { title: "Podcasts", model: webPodcasts },
+        { title: "Media", model: appModel }
+    ]
+    readonly property var webModels: [webVideo, webMusic, webBooks, webPodcasts]
+
+    // Rij en tegel die nu focus hebben
+    property Item currentSection: null
+    readonly property bool tilesFocused: currentSection !== null && currentSection.grid.activeFocus
+    readonly property var focusModel: tilesFocused ? currentSection.model : null
+    readonly property int focusRow: tilesFocused ? currentSection.grid.currentIndex : -1
+    readonly property bool focusIsWeb: focusModel !== null && focusModel !== appModel
+
     // Naam en soort van de tegel die nu focus heeft (voor het grote tekstvlak bovenaan)
-    readonly property string focusName: streamTitle.activeFocus && streamTitle.currentIndex >= 0 ? streamTitle.model[streamTitle.currentIndex].label
-                                       : streamGrid.activeFocus ? webModel.nameAt(streamGrid.currentIndex)
-                                       : appGrid.activeFocus ? appModel.nameAt(appGrid.currentIndex)
+    readonly property string focusName: tilesFocused ? focusModel.nameAt(focusRow)
                                        : quickRow.activeFocus ? quickModel.get(quickRow.currentIndex).label : ""
-    readonly property string focusKind: streamTitle.activeFocus ? "Kies met links en rechts, omlaag naar de tegels"
-                                       : streamGrid.activeFocus ? "Streaming  ·  Enter om te openen"
-                                       : appGrid.activeFocus ? "Media  ·  Enter om te openen"
+    readonly property string focusKind: tilesFocused ? currentSection.title + "  ·  Enter om te openen"
                                        : quickRow.activeFocus ? "Instellingen" : ""
     // (revision in de binding: opnieuw opvragen zodra een logo binnen is of wijzigt)
-    readonly property string focusIconRaw: streamGrid.activeFocus ? (webModel.revision, webModel.iconAt(streamGrid.currentIndex))
-                                          : appGrid.activeFocus ? (appModel.revision, appModel.iconAt(appGrid.currentIndex)) : ""
+    readonly property string focusIconRaw: tilesFocused ? (focusModel.revision, focusModel.iconAt(focusRow)) : ""
     // Pictogrammen uit het lettertype (Films, Series) niet als afbeelding laden
     readonly property string focusIcon: focusIconRaw.startsWith("glyph:") ? "" : focusIconRaw
-    // Achtergrondkleur: de kleur van het logo van de streamingdienst met focus
-    readonly property color accent: streamGrid.activeFocus && streamGrid.currentIndex >= 0
-                                    ? (webModel.revision, webModel.accentAt(streamGrid.currentIndex)) : "#1d3557"
+    // Achtergrondkleur: de kleur van het logo van de dienst met focus
+    readonly property color accent: focusIsWeb && focusRow >= 0 ? (focusModel.revision, focusModel.accentAt(focusRow)) : "#1d3557"
     readonly property bool heroShown: appModel.showHero
 
     // Achtergrond: neemt de kleur van de gekozen streamingdienst aan, naar onder donker
@@ -51,6 +62,57 @@ Rectangle {
                 GradientStop { position: 1.0; color: "#f20b0c0f" }
             }
         }
+    }
+
+    function sectionFor(model) {
+        for (let i = 0; i < sections.count; ++i) {
+            const item = sections.itemAt(i)
+            if (item && item.model === model) {
+                return item
+            }
+        }
+        return null
+    }
+
+    function mediaGrid() {
+        const media = sectionFor(appModel)
+        return media ? media.grid : quickRow
+    }
+
+    // Focus naar rij i; lege (verborgen) rijen worden overgeslagen
+    function focusSection(i, column, fromBelow) {
+        while (i >= 0 && i < sections.count) {
+            const item = sections.itemAt(i)
+            if (item && item.enter(column, fromBelow)) {
+                return
+            }
+            i += fromBelow ? -1 : 1
+        }
+        if (i < 0) {
+            quickRow.forceActiveFocus()
+            page.contentY = 0
+        }
+    }
+
+    // Pagina zo scrollen dat de gekozen tegel (en bij de eerste rij de titel) in beeld is
+    function scrollTo(section) {
+        const g = section.grid
+        const row = Math.floor(Math.max(0, g.currentIndex) / root.columns)
+        const top = row === 0 ? section.y : section.y + g.y + g.topMargin + row * g.cellHeight - root.unit * 2
+        const bottom = section.y + g.y + g.topMargin + (row + 1) * g.cellHeight + root.unit * 2
+        if (top < page.contentY) {
+            page.contentY = Math.max(0, top)
+        } else if (bottom > page.contentY + page.height) {
+            page.contentY = Math.max(0, Math.min(page.contentHeight - page.height, bottom - page.height))
+        }
+    }
+
+    function launch(model, row) {
+        if (row < 0) {
+            return
+        }
+        const name = model.nameAt(row)
+        showToast(model.launch(row) ? name + " openen…" : name + " kon niet geopend worden")
     }
 
     function showToast(message) {
@@ -96,9 +158,11 @@ Rectangle {
             return
         }
         model.move(row, to)
-        const grid = model === webModel ? streamGrid : appGrid
-        grid.currentIndex = to
-        grid.forceActiveFocus()
+        const section = sectionFor(model)
+        if (section) {
+            section.grid.currentIndex = to
+            section.grid.forceActiveFocus()
+        }
     }
 
     function openPersonalizeMenu() {
@@ -110,7 +174,10 @@ Rectangle {
         if (appModel.background !== "") {
             entries.push({ label: "Standaardachtergrond herstellen", action: "background-reset" })
         }
-        const hidden = appModel.hiddenCount + webModel.hiddenCount
+        let hidden = appModel.hiddenCount
+        for (const m of webModels) {
+            hidden += m.hiddenCount
+        }
         if (hidden > 0) {
             entries.push({ label: "Verwijderde tegels terugzetten (" + hidden + ")", action: "unhide" })
         }
@@ -127,7 +194,8 @@ Rectangle {
             editModel.clearCustomIcon(editRow)
         } else if (action.startsWith("move-")) {
             const dir = action.substring(5)
-            const grid = editModel === webModel ? streamGrid : appGrid
+            const section = sectionFor(editModel)
+            const grid = section ? section.grid : quickRow
             placesPicker.open(editModel.nameAt(editRow) + ": " + moveLabels[dir].toLowerCase(),
                               dir === "up" || dir === "down" ? "rijen" : "plaatsen",
                               moveLimit(editModel, editRow, dir), grid)
@@ -150,7 +218,9 @@ Rectangle {
             appModel.clearBackground()
         } else if (action === "unhide") {
             appModel.restoreHidden()
-            webModel.restoreHidden()
+            for (const m of webModels) {
+                m.restoreHidden()
+            }
             showToast("Alle tegels staan weer op de startpagina")
         }
     }
@@ -159,7 +229,9 @@ Rectangle {
         // Een pad naar een bestand is een programma; al het andere een webadres
         const isFile = /^[a-zA-Z]:[\\/]/.test(target.trim()) || target.trim().startsWith("\\\\")
                        || target.trim().startsWith("\"") || target.trim().startsWith("file:")
-        const ok = isFile ? appModel.addTile(name, target) : webModel.addTile(name, target)
+        // Website: in de rij waar je het laatst was (Muziek, Podcasts, ...), anders bij Video
+        const webTarget = currentSection && currentSection.model !== appModel ? currentSection.model : webVideo
+        const ok = isFile ? appModel.addTile(name, target) : webTarget.addTile(name, target)
         if (!ok) {
             showToast("Toevoegen mislukt: controleer het adres of pad (of de tegel bestaat al)")
         } else {
@@ -168,36 +240,35 @@ Rectangle {
     }
 
     Component.onCompleted: {
+        focusSection(0, 0, false)
         if (selfTest === "addtile") {
             addOverlay.open(quickRow)
         } else if (selfTest === "podcasts") {
-            webModel.category = "podcasts"
-            streamTitle.forceActiveFocus()
+            Qt.callLater(() => focusSection(3, 1, false))
         } else if (selfTest === "moveask") {
-            streamGrid.currentIndex = 2
-            streamGrid.forceActiveFocus()
-            editModel = webModel
+            focusSection(0, 2, false)
+            editModel = webVideo
             editRow = 2
             Qt.callLater(() => handleMenuAction("move-down"))
         } else if (selfTest === "library") {
-            libraryScreen.open("shows", appGrid)
+            libraryScreen.open("shows", mediaGrid())
         } else if (selfTest === "librarymovies") {
-            libraryScreen.open("movies", appGrid)
+            libraryScreen.open("movies", mediaGrid())
         } else if (selfTest === "librarydetail") {
             libraryScreen.autoOpen = "detail"
-            libraryScreen.open("shows", appGrid)
+            libraryScreen.open("shows", mediaGrid())
         } else if (selfTest === "iptv" || selfTest === "iptvplay" || selfTest === "iptvsources") {
             // Test: openbare lijst met vrij beschikbare Nederlandse zenders (iptv-org)
             if (iptv.sources.length === 0) {
                 iptv.addSource("m3u-url", "Test", "https://iptv-org.github.io/iptv/countries/nl.m3u", "", "")
             }
             iptvScreen.autoPlay = selfTest === "iptvplay"
-            iptvScreen.open(appGrid)
+            iptvScreen.open(mediaGrid())
             if (selfTest === "iptvsources") {
                 iptvScreen.openSources()
             }
         } else if (selfTest === "librarysetup") {
-            libraryScreen.open("movies", appGrid)
+            libraryScreen.open("movies", mediaGrid())
             libraryScreen.openSetup()
         }
     }
@@ -325,7 +396,7 @@ Rectangle {
 
         Keys.onReturnPressed: trigger(currentIndex)
         Keys.onEnterPressed: trigger(currentIndex)
-        Keys.onDownPressed: (webModel.count > 0 ? streamGrid : appGrid).forceActiveFocus()
+        Keys.onDownPressed: root.focusSection(0, 0, false)
     }
 
     // --- Groot tekstvlak: wat heeft nu focus ---
@@ -379,241 +450,51 @@ Rectangle {
         }
     }
 
-    // --- Streaming: tabbladen Video, Muziek, Luisterboeken, Podcasts ---
-    ListView {
-        id: streamTitle
+    // --- Rijen onder elkaar: Video, Muziek, Luisterboeken, Podcasts, Media (scrollt) ---
+    Flickable {
+        id: page
         anchors.top: hero.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.topMargin: root.unit * 1.5
-        anchors.leftMargin: root.unit * 3
-        height: root.unit * 4.6
-        orientation: ListView.Horizontal
-        spacing: root.unit
-        interactive: false
-        keyNavigationEnabled: true
-        currentIndex: model.findIndex(t => t.key === webModel.category)
-        model: [
-            { key: "video", label: "Video" },
-            { key: "muziek", label: "Muziek" },
-            { key: "luisterboeken", label: "Luisterboeken" },
-            { key: "podcasts", label: "Podcasts" }
-        ]
-
-        delegate: Rectangle {
-            id: tab
-            required property int index
-            required property var modelData
-            readonly property bool chosen: webModel.category === modelData.key
-            readonly property bool focused: streamTitle.activeFocus && streamTitle.currentIndex === index
-            width: tabLabel.implicitWidth + root.unit * 4
-            height: streamTitle.height
-            radius: height / 2
-            color: focused ? "#e8eaed" : chosen ? "#40ffffff" : "transparent"
-            Text {
-                id: tabLabel
-                anchors.centerIn: parent
-                color: tab.focused ? "#111318" : tab.chosen ? "white" : "#c4c7cc"
-                font.pixelSize: root.unit * 2.4
-                font.weight: tab.chosen ? Font.DemiBold : Font.Normal
-                text: tab.modelData.label
-            }
-            MouseArea {
-                anchors.fill: parent
-                onClicked: {
-                    webModel.category = tab.modelData.key
-                    streamGrid.currentIndex = 0
-                    streamGrid.forceActiveFocus()
-                }
-            }
-        }
-
-        // Links/rechts wisselt meteen van tabblad
-        onCurrentIndexChanged: {
-            if (activeFocus && currentIndex >= 0) {
-                webModel.category = model[currentIndex].key
-            }
-        }
-        Keys.onUpPressed: quickRow.forceActiveFocus()
-        Keys.onDownPressed: {
-            streamGrid.currentIndex = 0
-            streamGrid.forceActiveFocus()
-        }
-        Keys.onReturnPressed: {
-            streamGrid.currentIndex = 0
-            streamGrid.forceActiveFocus()
-        }
-    }
-
-    GridView {
-        id: streamGrid
-        // Marge rondom, zodat de vergrote gekozen tegel niet wordt afgesneden
-        readonly property real pad: root.unit * 2.2
-        anchors.top: streamTitle.bottom
-        anchors.left: parent.left
-        anchors.right: parent.right
-        anchors.leftMargin: root.unit * 1.5
-        anchors.rightMargin: root.unit * 1.5
-        visible: webModel.count > 0
-        leftMargin: pad
-        rightMargin: pad
-        topMargin: pad * 0.6
-        bottomMargin: pad * 0.6
-        cellWidth: Math.floor((width - pad * 2) / root.columns)
-        cellHeight: cellWidth * 0.46
-        // Vult de ruimte tussen het tekstvlak en de rij Media
-        anchors.bottom: sectionTitle.top
-        anchors.bottomMargin: root.unit * 0.5
-        focus: webModel.count > 0
-        model: webModel
-        keyNavigationEnabled: true
-        clip: true
-        highlightMoveDuration: 150
-
-        function trigger(index) {
-            if (index < 0) {
-                return
-            }
-            const name = webModel.nameAt(index)
-            root.showToast(webModel.launch(index) ? name + " openen… (sluiten met Alt+F4)" : name + " kon niet geopend worden")
-        }
-
-        delegate: BannerTile {
-            width: streamGrid.cellWidth
-            height: streamGrid.cellHeight
-            selected: streamGrid.activeFocus && streamGrid.currentIndex === index
-            onActivated: { streamGrid.currentIndex = index; streamGrid.trigger(index) }
-            onHovered: { if (!menu.visible && !addOverlay.visible) { streamGrid.currentIndex = index; streamGrid.forceActiveFocus() } }
-            onMenuRequested: { streamGrid.currentIndex = index; root.openTileMenu(webModel, index, streamGrid) }
-            // Slepen: de tegel neemt de plek in van de tegel waar de muis boven hangt
-            onDragMoved: (x, y) => {
-                const pos = mapToItem(streamGrid.contentItem, x, y)
-                const to = streamGrid.indexAt(pos.x, pos.y)
-                if (to >= 0 && to !== index) {
-                    webModel.move(index, to)
-                    streamGrid.currentIndex = to
-                }
-            }
-        }
-
-        move: Transition { NumberAnimation { properties: "x,y"; duration: 160; easing.type: Easing.OutCubic } }
-        displaced: Transition { NumberAnimation { properties: "x,y"; duration: 160; easing.type: Easing.OutCubic } }
-
-        Keys.onReturnPressed: trigger(currentIndex)
-        Keys.onEnterPressed: trigger(currentIndex)
-        Keys.onMenuPressed: root.openTileMenu(webModel, currentIndex, streamGrid)
-        Keys.onUpPressed: (event) => {
-            if (currentIndex < root.columns) {
-                streamTitle.forceActiveFocus()
-            } else {
-                event.accepted = false
-            }
-        }
-        Keys.onDownPressed: (event) => {
-            if (currentIndex + root.columns >= count) {
-                appGrid.forceActiveFocus()
-            } else {
-                event.accepted = false
-            }
-        }
-        Keys.onPressed: (event) => {
-            if (event.key === Qt.Key_F2) {
-                root.openTileMenu(webModel, currentIndex, streamGrid)
-                event.accepted = true
-            }
-        }
-    }
-
-    // --- Raster met toepassingen ---
-    Text {
-        id: sectionTitle
-        anchors.bottom: appGrid.top
-        anchors.left: parent.left
-        anchors.topMargin: root.unit * 1.5
-        anchors.leftMargin: root.unit * 4
-        color: "white"
-        font.pixelSize: root.unit * 2.6
-        font.weight: Font.DemiBold
-        text: "Media"
-    }
-
-    GridView {
-        id: appGrid
-        // Een rij onderaan: mappen Muziek/Video's/Afbeeldingen, MPC-HC en eigen programma's
-        height: cellHeight + pad * 1.2
         anchors.bottom: hint.top
         anchors.left: parent.left
         anchors.right: parent.right
-        readonly property real pad: root.unit * 2.2
+        anchors.topMargin: root.unit
         anchors.leftMargin: root.unit * 1.5
         anchors.rightMargin: root.unit * 1.5
-        anchors.bottomMargin: root.unit * 0.5
-        leftMargin: pad
-        rightMargin: pad
-        topMargin: pad * 0.6
-        bottomMargin: pad * 0.6
-        cellWidth: Math.floor((width - pad * 2) / root.columns)
-        cellHeight: cellWidth * 0.46
-        model: appModel
-        focus: webModel.count === 0
+        contentWidth: width
+        contentHeight: sectionColumn.height
         clip: true
-        keyNavigationEnabled: true
-        highlightMoveDuration: 150
-        // Ruimte houden zodat de geselecteerde tegel niet tegen de rand plakt
+        boundsBehavior: Flickable.StopAtBounds
+        Behavior on contentY { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
 
-        function trigger(index) {
-            if (index < 0) {
-                return
-            }
-            const name = appModel.nameAt(index)
-            root.showToast(appModel.launch(index) ? name + " openen…" : name + " is niet gevonden op deze pc")
-        }
+        Column {
+            id: sectionColumn
+            width: page.width
+            spacing: root.unit * 0.5
 
-        delegate: BannerTile {
-            width: appGrid.cellWidth
-            height: appGrid.cellHeight
-            selected: appGrid.activeFocus && appGrid.currentIndex === index
-            onActivated: { appGrid.currentIndex = index; appGrid.trigger(index) }
-            onHovered: { if (!menu.visible && !addOverlay.visible) { appGrid.currentIndex = index; appGrid.forceActiveFocus() } }
-            onMenuRequested: { appGrid.currentIndex = index; root.openTileMenu(appModel, index, appGrid) }
-            // Slepen: de tegel neemt de plek in van de tegel waar de muis boven hangt
-            onDragMoved: (x, y) => {
-                const pos = mapToItem(appGrid.contentItem, x, y)
-                const to = appGrid.indexAt(pos.x, pos.y)
-                if (to >= 0 && to !== index) {
-                    appModel.move(index, to)
-                    appGrid.currentIndex = to
+            Repeater {
+                id: sections
+                model: root.sectionDefs
+                delegate: SectionGrid {
+                    id: sectionItem
+                    required property int index
+                    required property var modelData
+                    width: sectionColumn.width
+                    title: modelData.title
+                    model: modelData.model
+                    columns: root.columns
+                    unit: root.unit
+                    dialogOpen: menu.visible || addOverlay.visible || placesPicker.visible
+                    onExitUp: (column) => root.focusSection(index - 1, column, true)
+                    onExitDown: (column) => root.focusSection(index + 1, column, false)
+                    onLaunchRequested: (row) => root.launch(sectionItem.model, row)
+                    onMenuRequested: (row) => root.openTileMenu(sectionItem.model, row, sectionItem.grid)
+                    onTileFocused: {
+                        root.currentSection = sectionItem
+                        root.scrollTo(sectionItem)
+                    }
                 }
             }
         }
-
-        move: Transition { NumberAnimation { properties: "x,y"; duration: 160; easing.type: Easing.OutCubic } }
-        displaced: Transition { NumberAnimation { properties: "x,y"; duration: 160; easing.type: Easing.OutCubic } }
-
-        Keys.onReturnPressed: trigger(currentIndex)
-        Keys.onEnterPressed: trigger(currentIndex)
-        Keys.onMenuPressed: root.openTileMenu(appModel, currentIndex, appGrid)
-        Keys.onPressed: (event) => {
-            if (event.key === Qt.Key_F2) {
-                root.openTileMenu(appModel, currentIndex, appGrid)
-                event.accepted = true
-            }
-        }
-        Keys.onUpPressed: (event) => {
-            if (currentIndex < root.columns) {
-                (webModel.count > 0 ? streamGrid : quickRow).forceActiveFocus()
-            } else {
-                event.accepted = false
-            }
-        }
-    }
-
-    Text {
-        anchors.centerIn: appGrid
-        visible: appModel.count === 0
-        color: "#9fb4d0"
-        font.pixelSize: root.unit * 3
-        text: ""
     }
 
     Text {
@@ -704,9 +585,9 @@ Rectangle {
         target: appModel
         function onInternalRequested(target) {
             if (target === "bigscreen:iptv") {
-                iptvScreen.open(appGrid)
+                iptvScreen.open(mediaGrid())
             } else {
-                libraryScreen.open(target === "bigscreen:shows" ? "shows" : "movies", appGrid)
+                libraryScreen.open(target === "bigscreen:shows" ? "shows" : "movies", mediaGrid())
             }
         }
     }

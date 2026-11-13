@@ -35,7 +35,8 @@ public:
     // Apps: snelkoppelingen uit het Startmenu. Web: streamingdiensten en andere websites.
     enum Kind { Apps, Web };
 
-    explicit AppModel(Kind kind, QObject *parent = nullptr);
+    // category: bij web-tegels de rij (video, muziek, luisterboeken, podcasts)
+    explicit AppModel(Kind kind, const QString &category = QString(), QObject *parent = nullptr);
 
     int rowCount(const QModelIndex &parent = {}) const override;
     QVariant data(const QModelIndex &index, int role) const override;
