@@ -10,7 +10,7 @@ Rectangle {
     id: root
 
     readonly property real unit: height / 100
-    readonly property int columns: Math.max(4, Math.floor(width / (unit * 25)))
+    readonly property int columns: unit > 0 ? Math.max(4, Math.floor(width / (unit * 25))) : 5
 
     // Model en rij van de tegel waarvoor het aanpas-menu of de bestandskiezer open staat
     property var editModel: appModel
@@ -19,10 +19,12 @@ Rectangle {
     color: "#0b0c0f"
 
     // Naam en soort van de tegel die nu focus heeft (voor het grote tekstvlak bovenaan)
-    readonly property string focusName: streamGrid.activeFocus ? webModel.nameAt(streamGrid.currentIndex)
+    readonly property string focusName: streamTitle.activeFocus && streamTitle.currentIndex >= 0 ? streamTitle.model[streamTitle.currentIndex].label
+                                       : streamGrid.activeFocus ? webModel.nameAt(streamGrid.currentIndex)
                                        : appGrid.activeFocus ? appModel.nameAt(appGrid.currentIndex)
                                        : quickRow.activeFocus ? quickModel.get(quickRow.currentIndex).label : ""
-    readonly property string focusKind: streamGrid.activeFocus ? "Streaming  ·  Enter om te openen"
+    readonly property string focusKind: streamTitle.activeFocus ? "Kies met links en rechts, omlaag naar de tegels"
+                                       : streamGrid.activeFocus ? "Streaming  ·  Enter om te openen"
                                        : appGrid.activeFocus ? "Media  ·  Enter om te openen"
                                        : quickRow.activeFocus ? "Instellingen" : ""
     // (revision in de binding: opnieuw opvragen zodra een logo binnen is of wijzigt)
@@ -176,7 +178,7 @@ Rectangle {
             streamGrid.forceActiveFocus()
             editModel = webModel
             editRow = 2
-            handleMenuAction("move-down")
+            Qt.callLater(() => handleMenuAction("move-down"))
         } else if (selfTest === "library") {
             libraryScreen.open("shows", appGrid)
         } else if (selfTest === "librarymovies") {

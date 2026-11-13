@@ -22,7 +22,7 @@ FocusScope {
     function open(pickerTitle, pickerUnit, max, focusItem) {
         title = pickerTitle
         unitName = pickerUnit
-        maximum = Math.max(1, max)
+        maximum = isFinite(max) ? Math.max(1, max) : 1
         value = 1
         typed = ""
         returnFocusTo = focusItem
