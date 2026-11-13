@@ -27,6 +27,7 @@
 #include "appmodel.h"
 #include "gamepadnavigator.h"
 #include "medialibrary.h"
+#include "iptvmodel.h"
 
 #include <QNetworkAccessManager>
 #include <QNetworkDiskCache>
@@ -187,6 +188,7 @@ int main(int argc, char *argv[])
     AppModel appModel(AppModel::Apps);
     AppModel webModel(AppModel::Web);
     MediaLibrary library(appDataDir());
+    IptvModel iptv(appDataDir());
 
     auto inputSystem = createInputSystem();
     Q_UNUSED(inputSystem); // in dit skeleton nog niet aan QML-signalen gekoppeld
@@ -208,6 +210,7 @@ int main(int argc, char *argv[])
     view.rootContext()->setContextProperty(QStringLiteral("appModel"), &appModel);
     view.rootContext()->setContextProperty(QStringLiteral("webModel"), &webModel);
     view.rootContext()->setContextProperty(QStringLiteral("library"), &library);
+    view.rootContext()->setContextProperty(QStringLiteral("iptv"), &iptv);
     view.engine()->setNetworkAccessManagerFactory(new CachingNetworkFactory(appDataDir() + QStringLiteral("/imagecache")));
     view.rootContext()->setContextProperty(QStringLiteral("gamepad"), &gamepad);
     // Alleen voor de geautomatiseerde test: opent bij het starten een menu

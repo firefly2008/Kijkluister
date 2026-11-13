@@ -23,6 +23,7 @@ jobs:
         with:
           version: "6.8.3"
           arch: win64_msvc2022_64
+          modules: qtmultimedia
           cache: true
       - name: Inno Setup
         run: choco install innosetup -y --no-progress
@@ -48,7 +49,7 @@ jobs:
           }
           New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\BigscreenHost" | Out-Null
           "[library]`r`nmoviesFolder=$($films -replace '\\','/')`r`nshowsFolder=$($series -replace '\\','/')`r`n" | Set-Content "$env:LOCALAPPDATA\BigscreenHost\settings.ini"
-          foreach ($mode in 'home', 'library', 'librarymovies', 'librarydetail', 'librarysetup', 'addtile') {
+          foreach ($mode in 'home', 'library', 'librarydetail', 'iptv', 'iptvplay', 'iptvsources', 'addtile') {
             $env:BIGSCREEN_SELFTEST = $mode
             $p = Start-Process dist\bigscreen-host.exe -PassThru
             Start-Sleep 14

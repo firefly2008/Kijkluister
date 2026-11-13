@@ -84,6 +84,17 @@ const WebDefault webDefaults[] = {
     {"Qobuz", "https://play.qobuz.com"},
     {"SoundCloud", "https://soundcloud.com"},
     {"Storytel", "https://www.storytel.com/nl"},
+    // Luisterboeken en podcasts (Nederland)
+    {"Podimo", "https://podimo.com/nl"},
+    {"BookBeat", "https://www.bookbeat.com/nl"},
+    {"Nextory", "https://nextory.com/nl"},
+    {"Kobo Plus", "https://www.kobo.com/nl/nl/plus"},
+    {"Fluister", "https://www.fluister.nl"},
+    {"Luisterrijk", "https://www.luisterrijk.nl"},
+    {"Online Bibliotheek", "https://www.onlinebibliotheek.nl"},
+    {"NPO Luister", "https://www.npoluister.nl"},
+    {"Apple Podcasts", "https://podcasts.apple.com/nl"},
+    {"Pocket Casts", "https://play.pocketcasts.com"},
 };
 
 // Zoekt MPC-HC (64-bit) op de gebruikelijke plekken, ook die van het K-Lite Codec Pack.
@@ -243,6 +254,9 @@ QVariant AppModel::data(const QModelIndex &index, int role) const
         if (app.path == QLatin1String("bigscreen:movies")) {
             return QStringLiteral("glyph:") + QChar(0xE8B2);
         }
+        if (app.path == QLatin1String("bigscreen:iptv")) {
+            return QStringLiteral("glyph:") + QChar(0xE714);
+        }
         if (app.path == QLatin1String("bigscreen:shows")) {
             return QStringLiteral("glyph:") + QChar(0xE7F4);
         }
@@ -287,16 +301,13 @@ void AppModel::refresh()
         return;
     }
 
-    // Media-rij: de Windows-mappen Muziek, Video's en Afbeeldingen, de mediaspeler
-    // MPC-HC en programma's die de gebruiker zelf heeft toegevoegd. (Tot en met
-    // versie 2 stonden hier alle programma's uit het Startmenu.)
+    // Media-rij: Films, Series, Live tv en programma's die de gebruiker zelf heeft
+    // toegevoegd. (Versie 3.0-3.5 had hier ook Muziek, Video's, Afbeeldingen en
+    // MPC-HC; tot en met versie 2 alle programma's uit het Startmenu.)
     QList<App> apps = {
         {QStringLiteral("Films"), QStringLiteral("bigscreen:movies"), false},
         {QStringLiteral("Series"), QStringLiteral("bigscreen:shows"), false},
-        {QStringLiteral("Muziek"), QDir::toNativeSeparators(QStandardPaths::writableLocation(QStandardPaths::MusicLocation)), false},
-        {QStringLiteral("Video's"), QDir::toNativeSeparators(QStandardPaths::writableLocation(QStandardPaths::MoviesLocation)), false},
-        {QStringLiteral("Afbeeldingen"), QDir::toNativeSeparators(QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)), false},
-        {QStringLiteral("MPC-HC x64"), mpcHcPath(), false},
+        {QStringLiteral("Live tv"), QStringLiteral("bigscreen:iptv"), false},
     };
     apps.append(customTiles());
     apps.erase(std::remove_if(apps.begin(), apps.end(), [this](const App &tile) {

@@ -7,13 +7,15 @@ Rectangle {
 
     property string text
     property real unit: 10
+    // Gekozen optie in een rij keuzeknoppen
+    property bool checked: false
     signal clicked()
 
     activeFocusOnTab: true
     height: unit * 6
     width: label.implicitWidth + unit * 5
     radius: height / 2
-    color: activeFocus ? "#e8eaed" : (mouse.containsMouse ? "#55ffffff" : "#33ffffff")
+    color: activeFocus ? "#e8eaed" : checked ? "#3d6fb4" : (mouse.containsMouse ? "#55ffffff" : "#33ffffff")
 
     Text {
         id: label

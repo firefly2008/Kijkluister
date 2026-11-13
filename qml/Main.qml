@@ -146,6 +146,16 @@ Rectangle {
         } else if (selfTest === "librarydetail") {
             libraryScreen.autoOpen = "detail"
             libraryScreen.open("shows", appGrid)
+        } else if (selfTest === "iptv" || selfTest === "iptvplay" || selfTest === "iptvsources") {
+            // Test: openbare lijst met vrij beschikbare Nederlandse zenders (iptv-org)
+            if (iptv.sources.length === 0) {
+                iptv.addSource("m3u-url", "Test", "https://iptv-org.github.io/iptv/countries/nl.m3u", "", "")
+            }
+            iptvScreen.autoPlay = selfTest === "iptvplay"
+            iptvScreen.open(appGrid)
+            if (selfTest === "iptvsources") {
+                iptvScreen.openSources()
+            }
         } else if (selfTest === "librarysetup") {
             libraryScreen.open("movies", appGrid)
             libraryScreen.openSetup()
@@ -581,6 +591,11 @@ Rectangle {
         onBrowseRequested: programDialog.open()
     }
 
+    // Live tv: zenderlijst en speler
+    IptvScreen {
+        id: iptvScreen
+    }
+
     // Films en Series: eigen scherm met de bibliotheek
     LibraryScreen {
         id: libraryScreen
@@ -589,7 +604,11 @@ Rectangle {
     Connections {
         target: appModel
         function onInternalRequested(target) {
-            libraryScreen.open(target === "bigscreen:shows" ? "shows" : "movies", appGrid)
+            if (target === "bigscreen:iptv") {
+                iptvScreen.open(appGrid)
+            } else {
+                libraryScreen.open(target === "bigscreen:shows" ? "shows" : "movies", appGrid)
+            }
         }
     }
 }
