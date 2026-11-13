@@ -82,6 +82,11 @@ set_target_properties(bigscreen-host PROPERTIES OUTPUT_NAME Kijkluister)
 install(TARGETS bigscreen-host RUNTIME DESTINATION .)
 if(WIN32)
     install(FILES $<TARGET_RUNTIME_DLLS:bigscreen-host> DESTINATION .)
+    # zlib (vcpkg) is een "UNKNOWN" importbibliotheek en komt niet vanzelf mee: DLL zelf kopiëren
+    get_filename_component(ZLIB_BIN_DIR "${ZLIB_INCLUDE_DIRS}/../bin" ABSOLUTE)
+    file(GLOB ZLIB_DLLS "${ZLIB_BIN_DIR}/z.dll" "${ZLIB_BIN_DIR}/zlib*.dll")
+    message(STATUS "zlib DLL's: ${ZLIB_DLLS}")
+    install(FILES ${ZLIB_DLLS} DESTINATION .)
 endif()
 
 # --- Linux-only dependencies uit het origineel (plasma-bigscreen 6.8.2) ---
