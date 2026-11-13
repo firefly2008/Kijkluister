@@ -5,6 +5,8 @@
 #pragma once
 
 #include <QAbstractListModel>
+#include <QColor>
+#include <QHash>
 #include <QList>
 #include <QNetworkAccessManager>
 #include <QSettings>
@@ -20,7 +22,7 @@ class AppModel : public QAbstractListModel
     Q_PROPERTY(QString background READ background NOTIFY backgroundChanged)
 
 public:
-    enum Roles { NameRole = Qt::UserRole + 1, PathRole, IconRole, CustomIconRole };
+    enum Roles { NameRole = Qt::UserRole + 1, PathRole, IconRole, CustomIconRole, AccentRole };
     // Apps: snelkoppelingen uit het Startmenu. Web: streamingdiensten en andere websites.
     enum Kind { Apps, Web };
 
@@ -38,6 +40,8 @@ public:
     Q_INVOKABLE bool openUri(const QString &uri);
     Q_INVOKABLE QString nameAt(int row) const;
     Q_INVOKABLE bool hasCustomIcon(int row) const;
+    Q_INVOKABLE QString iconAt(int row) const;
+    Q_INVOKABLE QColor accentAt(int row) const;
 
     // Tegels aanpassen
     Q_INVOKABLE void hide(int row);
@@ -67,7 +71,10 @@ private:
     void fetchFavicons();
     bool launchWeb(const QString &url);
 
+    QColor accentFor(const App &app) const;
+
     Kind m_kind;
+    mutable QHash<QString, QColor> m_accentCache; // sleutel: pictogrambestand
     QNetworkAccessManager m_network;
     QString importImage(const QUrl &source, const QString &baseName);
 

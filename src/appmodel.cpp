@@ -142,7 +142,7 @@ void AppModel::fetchFavicons()
             image.save(file, "PNG");
             for (int row = 0; row < m_apps.size(); ++row) {
                 if (m_apps.at(row).path == target) {
-                    Q_EMIT dataChanged(index(row), index(row), {IconRole});
+                    Q_EMIT dataChanged(index(row), index(row), {IconRole, AccentRole});
                 }
             }
         });
@@ -215,13 +215,15 @@ QVariant AppModel::data(const QModelIndex &index, int role) const
     }
     case CustomIconRole:
         return m_customIcons.contains(app.path);
+    case AccentRole:
+        return accentFor(app);
     }
     return {};
 }
 
 QHash<int, QByteArray> AppModel::roleNames() const
 {
-    return {{NameRole, "name"}, {PathRole, "path"}, {IconRole, "iconSource"}, {CustomIconRole, "customIcon"}};
+    return {{NameRole, "name"}, {PathRole, "path"}, {IconRole, "iconSource"}, {CustomIconRole, "customIcon"}, {AccentRole, "accent"}};
 }
 
 void AppModel::refresh()
@@ -322,6 +324,65 @@ bool AppModel::openUri(const QString &uri)
 QString AppModel::nameAt(int row) const
 {
     return (row >= 0 && row < m_apps.size()) ? m_apps.at(row).name : QString();
+}
+
+QString AppModel::iconAt(int row) const
+{
+    return data(index(row), IconRole).toString();
+}
+
+QColor AppModel::accentAt(int row) const
+{
+    return (row >= 0 && row < m_apps.size()) ? accentFor(m_apps.at(row)) : QColor(QStringLiteral("#22252b"));
+}
+
+// Achtergrondkleur van een tegel: de overheersende kleur van het logo, zo donker
+// gemaakt dat witte tekst erop leesbaar blijft. Toepassingen krijgen neutraal grijs.
+QColor AppModel::accentFor(const App &app) const
+{
+    if (m_kind != Web) {
+        return QColor(QStringLiteral("#22252b"));
+    }
+    QString file = QUrl(m_customIcons.value(app.path).toString()).toLocalFile();
+    if (file.isEmpty()) {
+        file = faviconFile(app.path);
+    }
+    const auto cached = m_accentCache.constFind(file);
+    if (cached != m_accentCache.constEnd()) {
+        return *cached;
+    }
+
+    // Zonder logo: vaste kleur per naam
+    QColor result = QColor::fromHslF(((app.name.size() * 47 + app.name.at(0).unicode() * 13) % 360) / 360.0, 0.45, 0.32);
+    const QImage image = QImage(file).scaled(24, 24, Qt::IgnoreAspectRatio, Qt::SmoothTransformation)
+                             .convertToFormat(QImage::Format_ARGB32);
+    if (!image.isNull()) {
+        // Gemiddelde van de pixels, gewogen naar verzadiging: een rood logo op wit
+        // geeft rood, geen roze. Is alles grijs/zwart/wit, dan blijft het donkergrijs.
+        double r = 0, g = 0, b = 0, weight = 0;
+        for (int y = 0; y < image.height(); ++y) {
+            for (int x = 0; x < image.width(); ++x) {
+                const QColor pixel = QColor::fromRgba(image.pixel(x, y));
+                if (pixel.alpha() < 128) {
+                    continue;
+                }
+                const double w = pixel.hslSaturationF() * (1.0 - qAbs(pixel.lightnessF() - 0.5) * 2.0);
+                r += pixel.redF() * w;
+                g += pixel.greenF() * w;
+                b += pixel.blueF() * w;
+                weight += w;
+            }
+        }
+        if (weight > 8.0) {
+            const QColor mean = QColor::fromRgbF(r / weight, g / weight, b / weight);
+            result = QColor::fromHslF(qMax(0.0f, mean.hslHueF()), qMin(0.75f, mean.hslSaturationF()),
+                                      qBound(0.22f, mean.lightnessF(), 0.36f));
+        } else {
+            result = QColor(QStringLiteral("#2a2d33"));
+        }
+        m_accentCache.insert(file, result);
+    }
+    return result;
 }
 
 bool AppModel::hasCustomIcon(int row) const
@@ -445,7 +506,7 @@ bool AppModel::setCustomIcon(int row, const QUrl &imageFile)
     removeLocalFile(m_customIcons.value(path).toString());
     m_customIcons.insert(path, imported);
     m_settings.setValue(key("customIcons"), m_customIcons);
-    Q_EMIT dataChanged(index(row), index(row), {IconRole, CustomIconRole});
+    Q_EMIT dataChanged(index(row), index(row), {IconRole, CustomIconRole, AccentRole});
     return true;
 }
 
@@ -457,7 +518,7 @@ void AppModel::clearCustomIcon(int row)
     const QString path = m_apps.at(row).path;
     removeLocalFile(m_customIcons.take(path).toString());
     m_settings.setValue(key("customIcons"), m_customIcons);
-    Q_EMIT dataChanged(index(row), index(row), {IconRole, CustomIconRole});
+    Q_EMIT dataChanged(index(row), index(row), {IconRole, CustomIconRole, AccentRole});
 }
 
 bool AppModel::setBackground(const QUrl &imageFile)

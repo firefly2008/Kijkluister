@@ -10,7 +10,7 @@ Rectangle {
     id: root
 
     readonly property real unit: height / 100
-    readonly property int columns: Math.max(3, Math.floor(width / (unit * 24)))
+    readonly property int columns: Math.max(4, Math.floor(width / (unit * 25)))
 
     // Model en rij van de tegel waarvoor het aanpas-menu of de bestandskiezer open staat
     property var editModel: appModel
@@ -19,41 +19,32 @@ Rectangle {
     color: "#0b0c0f"
 
     // Naam en soort van de tegel die nu focus heeft (voor het grote tekstvlak bovenaan)
-    readonly property string focusName: streamRow.activeFocus ? webModel.nameAt(streamRow.currentIndex)
+    readonly property string focusName: streamGrid.activeFocus ? webModel.nameAt(streamGrid.currentIndex)
                                        : appGrid.activeFocus ? appModel.nameAt(appGrid.currentIndex)
                                        : quickRow.activeFocus ? quickModel.get(quickRow.currentIndex).label : ""
-    readonly property string focusKind: streamRow.activeFocus ? "Streaming  ·  Enter om te openen"
+    readonly property string focusKind: streamGrid.activeFocus ? "Streaming  ·  Enter om te openen"
                                        : appGrid.activeFocus ? "Toepassing  ·  Enter om te starten"
                                        : quickRow.activeFocus ? "Instellingen" : ""
-    // Sfeerkleur van de achtergrond, afgeleid van de tegel met focus
-    readonly property color accent: focusName === "" ? "#2b5fa8"
-                                   : Qt.hsla(((focusName.charCodeAt(0) * 37 + focusName.length * 53) % 360) / 360, 0.55, 0.38, 1)
+    readonly property string focusIcon: streamGrid.activeFocus ? webModel.iconAt(streamGrid.currentIndex)
+                                       : appGrid.activeFocus ? appModel.iconAt(appGrid.currentIndex) : ""
+    // Achtergrondkleur: de kleur van het logo van de streamingdienst met focus
+    readonly property color accent: streamGrid.activeFocus && streamGrid.currentIndex >= 0
+                                    ? webModel.accentAt(streamGrid.currentIndex) : "#1d3557"
     // Het tekstvlak klapt in zodra je door de toepassingen bladert
     readonly property bool heroShown: !appGrid.activeFocus
 
-    // Achtergrond: donker, met een zachte kleurgloed rechtsboven
+    // Achtergrond: neemt de kleur van de gekozen streamingdienst aan, naar onder donker
     Rectangle {
-        anchors.top: parent.top
-        anchors.left: parent.left
-        anchors.right: parent.right
-        height: parent.height * 0.75
+        anchors.fill: parent
         visible: appModel.background === ""
-        gradient: Gradient {
-            orientation: Gradient.Horizontal
-            GradientStop { position: 0.0; color: "#0b0c0f" }
-            GradientStop { position: 0.35; color: "#0b0c0f" }
-            GradientStop {
-                position: 1.0
-                color: Qt.rgba(root.accent.r, root.accent.g, root.accent.b, 0.85)
-                Behavior on color { ColorAnimation { duration: 500 } }
-            }
-        }
+        color: root.accent
+        Behavior on color { ColorAnimation { duration: 450 } }
         Rectangle {
             anchors.fill: parent
             gradient: Gradient {
-                GradientStop { position: 0.0; color: "#000b0c0f" }
-                GradientStop { position: 0.55; color: "#a00b0c0f" }
-                GradientStop { position: 1.0; color: "#0b0c0f" }
+                GradientStop { position: 0.0; color: "#300b0c0f" }
+                GradientStop { position: 0.45; color: "#b00b0c0f" }
+                GradientStop { position: 1.0; color: "#f20b0c0f" }
             }
         }
     }
@@ -261,7 +252,7 @@ Rectangle {
 
         Keys.onReturnPressed: trigger(currentIndex)
         Keys.onEnterPressed: trigger(currentIndex)
-        Keys.onDownPressed: (webModel.count > 0 ? streamRow : appGrid).forceActiveFocus()
+        Keys.onDownPressed: (webModel.count > 0 ? streamGrid : appGrid).forceActiveFocus()
     }
 
     // --- Groot tekstvlak: wat heeft nu focus ---
@@ -272,17 +263,31 @@ Rectangle {
         anchors.right: parent.right
         anchors.leftMargin: root.unit * 4
         anchors.rightMargin: root.unit * 4
-        height: root.heroShown ? root.unit * 24 : 0
+        height: root.heroShown ? root.unit * 21 : 0
         opacity: root.heroShown ? 1 : 0
         clip: true
         Behavior on height { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
         Behavior on opacity { NumberAnimation { duration: 180 } }
 
-        Column {
+        Image {
+            id: heroIcon
             anchors.left: parent.left
             anchors.bottom: parent.bottom
-            anchors.bottomMargin: root.unit * 2
-            width: parent.width * 0.6
+            anchors.bottomMargin: root.unit * 2.5
+            width: root.focusIcon !== "" ? root.unit * 13 : 0
+            height: root.unit * 13
+            sourceSize: Qt.size(256, 256)
+            source: root.focusIcon
+            fillMode: Image.PreserveAspectFit
+            asynchronous: true
+        }
+
+        Column {
+            anchors.left: heroIcon.right
+            anchors.leftMargin: heroIcon.width > 0 ? root.unit * 3 : 0
+            anchors.bottom: parent.bottom
+            anchors.bottomMargin: root.unit * 2.5
+            width: parent.width * 0.7
             spacing: root.unit
 
             Text {
@@ -316,24 +321,30 @@ Rectangle {
         text: "Streaming"
     }
 
-    ListView {
-        id: streamRow
+    GridView {
+        id: streamGrid
+        // Marge rondom, zodat de vergrote gekozen tegel niet wordt afgesneden
+        readonly property real pad: root.unit * 2.2
         anchors.top: streamTitle.bottom
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.leftMargin: root.unit * 3
-        anchors.rightMargin: root.unit * 3
+        anchors.leftMargin: root.unit * 1.5
+        anchors.rightMargin: root.unit * 1.5
         visible: webModel.count > 0
-        height: visible ? root.unit * 21 : 0
+        leftMargin: pad
+        rightMargin: pad
+        topMargin: pad * 0.6
+        bottomMargin: pad * 0.6
+        cellWidth: Math.floor((width - pad * 2) / root.columns)
+        cellHeight: cellWidth * 0.46
+        // Twee rijen zichtbaar; met alleen toepassingen in beeld nog een
+        height: !visible ? 0 : cellHeight * (root.heroShown ? 2 : 1) + pad * 1.2
+        Behavior on height { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
         focus: webModel.count > 0
-        orientation: ListView.Horizontal
         model: webModel
         keyNavigationEnabled: true
         clip: true
         highlightMoveDuration: 150
-        preferredHighlightBegin: width * 0.1
-        preferredHighlightEnd: width * 0.9
-        highlightRangeMode: ListView.ApplyRange
 
         function trigger(index) {
             if (index < 0) {
@@ -343,23 +354,35 @@ Rectangle {
             root.showToast(webModel.launch(index) ? name + " openen… (sluiten met Alt+F4)" : name + " kon niet geopend worden")
         }
 
-        delegate: AppTile {
-            width: streamRow.height * 1.45
-            height: streamRow.height
-            selected: streamRow.activeFocus && streamRow.currentIndex === index
-            onActivated: { streamRow.currentIndex = index; streamRow.trigger(index) }
-            onHovered: { if (!menu.visible && !addOverlay.visible) { streamRow.currentIndex = index; streamRow.forceActiveFocus() } }
-            onMenuRequested: { streamRow.currentIndex = index; root.openTileMenu(webModel, index, streamRow) }
+        delegate: BannerTile {
+            width: streamGrid.cellWidth
+            height: streamGrid.cellHeight
+            selected: streamGrid.activeFocus && streamGrid.currentIndex === index
+            onActivated: { streamGrid.currentIndex = index; streamGrid.trigger(index) }
+            onHovered: { if (!menu.visible && !addOverlay.visible) { streamGrid.currentIndex = index; streamGrid.forceActiveFocus() } }
+            onMenuRequested: { streamGrid.currentIndex = index; root.openTileMenu(webModel, index, streamGrid) }
         }
 
         Keys.onReturnPressed: trigger(currentIndex)
         Keys.onEnterPressed: trigger(currentIndex)
-        Keys.onMenuPressed: root.openTileMenu(webModel, currentIndex, streamRow)
-        Keys.onUpPressed: quickRow.forceActiveFocus()
-        Keys.onDownPressed: appGrid.forceActiveFocus()
+        Keys.onMenuPressed: root.openTileMenu(webModel, currentIndex, streamGrid)
+        Keys.onUpPressed: (event) => {
+            if (currentIndex < root.columns) {
+                quickRow.forceActiveFocus()
+            } else {
+                event.accepted = false
+            }
+        }
+        Keys.onDownPressed: (event) => {
+            if (currentIndex + root.columns >= count) {
+                appGrid.forceActiveFocus()
+            } else {
+                event.accepted = false
+            }
+        }
         Keys.onPressed: (event) => {
             if (event.key === Qt.Key_F2) {
-                root.openTileMenu(webModel, currentIndex, streamRow)
+                root.openTileMenu(webModel, currentIndex, streamGrid)
                 event.accepted = true
             }
         }
@@ -368,7 +391,7 @@ Rectangle {
     // --- Raster met toepassingen ---
     Text {
         id: sectionTitle
-        anchors.top: streamRow.bottom
+        anchors.top: streamGrid.bottom
         anchors.left: parent.left
         anchors.topMargin: root.unit * 1.5
         anchors.leftMargin: root.unit * 4
@@ -384,21 +407,22 @@ Rectangle {
         anchors.bottom: hint.top
         anchors.left: parent.left
         anchors.right: parent.right
-        anchors.leftMargin: root.unit * 3
-        anchors.rightMargin: root.unit * 3
-        anchors.topMargin: root.unit * 0.5
-        anchors.bottomMargin: root.unit
-        cellWidth: Math.floor(width / root.columns)
-        cellHeight: cellWidth * 0.8
+        readonly property real pad: root.unit * 2.2
+        anchors.leftMargin: root.unit * 1.5
+        anchors.rightMargin: root.unit * 1.5
+        anchors.bottomMargin: root.unit * 0.5
+        leftMargin: pad
+        rightMargin: pad
+        topMargin: pad * 0.6
+        bottomMargin: pad * 0.6
+        cellWidth: Math.floor((width - pad * 2) / root.columns)
+        cellHeight: cellWidth * 0.46
         model: appModel
         focus: webModel.count === 0
         clip: true
         keyNavigationEnabled: true
         highlightMoveDuration: 150
         // Ruimte houden zodat de geselecteerde tegel niet tegen de rand plakt
-        preferredHighlightBegin: cellHeight * 0.1
-        preferredHighlightEnd: height - cellHeight * 0.1
-        highlightRangeMode: GridView.ApplyRange
 
         function trigger(index) {
             if (index < 0) {
@@ -408,7 +432,7 @@ Rectangle {
             root.showToast(appModel.launch(index) ? name + " starten…" : name + " kon niet gestart worden")
         }
 
-        delegate: AppTile {
+        delegate: BannerTile {
             width: appGrid.cellWidth
             height: appGrid.cellHeight
             selected: appGrid.activeFocus && appGrid.currentIndex === index
@@ -428,7 +452,7 @@ Rectangle {
         }
         Keys.onUpPressed: (event) => {
             if (currentIndex < root.columns) {
-                (webModel.count > 0 ? streamRow : quickRow).forceActiveFocus()
+                (webModel.count > 0 ? streamGrid : quickRow).forceActiveFocus()
             } else {
                 event.accepted = false
             }

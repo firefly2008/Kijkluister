@@ -39,7 +39,7 @@ else()
 endif()
 
 # Zonder alias komt het bestand in de resources onder .../host/qml/Main.qml terecht
-set(BIGSCREEN_QML_FILES qml/Main.qml qml/AppTile.qml qml/QuickTile.qml qml/MenuOverlay.qml qml/AddTileOverlay.qml)
+set(BIGSCREEN_QML_FILES qml/Main.qml qml/BannerTile.qml qml/QuickTile.qml qml/MenuOverlay.qml qml/AddTileOverlay.qml)
 foreach(qml_file IN LISTS BIGSCREEN_QML_FILES)
     get_filename_component(qml_name ${qml_file} NAME)
     set_source_files_properties(${qml_file} PROPERTIES QT_RESOURCE_ALIAS ${qml_name})
