@@ -12,6 +12,8 @@ Item {
     required property color accent
 
     property bool selected: false
+    // "glyph:<teken>": pictogram uit het Windows-lettertype in plaats van een afbeelding
+    readonly property bool isGlyph: iconSource.startsWith("glyph:")
     signal activated()
     signal menuRequested()
     signal hovered()
@@ -57,17 +59,25 @@ Item {
                 // Nog geen pictogram: beginletter
                 Text {
                     anchors.centerIn: parent
-                    visible: tile.iconSource === "" || icon.status === Image.Error
+                    visible: !tile.isGlyph && (tile.iconSource === "" || icon.status === Image.Error)
                     color: "white"
                     font.pixelSize: parent.height * 0.8
                     font.weight: Font.Bold
                     text: tile.name.charAt(0).toUpperCase()
                 }
+                Text {
+                    anchors.centerIn: parent
+                    visible: tile.isGlyph
+                    color: "white"
+                    font.family: "Segoe MDL2 Assets"
+                    font.pixelSize: parent.height * 0.8
+                    text: tile.isGlyph ? tile.iconSource.substring(6) : ""
+                }
                 Image {
                     id: icon
                     anchors.fill: parent
                     sourceSize: Qt.size(256, 256)
-                    source: tile.iconSource
+                    source: tile.isGlyph ? "" : tile.iconSource
                     asynchronous: true
                     fillMode: Image.PreserveAspectFit
                     smooth: true

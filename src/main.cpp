@@ -26,6 +26,11 @@
 #include "appiconprovider.h"
 #include "appmodel.h"
 #include "gamepadnavigator.h"
+#include "medialibrary.h"
+
+#include <QNetworkAccessManager>
+#include <QNetworkDiskCache>
+#include <QQmlNetworkAccessManagerFactory>
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -39,6 +44,40 @@
 #endif
 
 namespace {
+
+// Posters, achtergronden en castfoto's op schijf bewaren, zodat de bibliotheek
+// ook zonder internet en zonder opnieuw downloaden snel laadt.
+class CachingNetworkFactory : public QQmlNetworkAccessManagerFactory
+{
+public:
+    explicit CachingNetworkFactory(const QString &dir)
+        : m_dir(dir)
+    {
+    }
+    QNetworkAccessManager *create(QObject *parent) override
+    {
+        auto *manager = new QNetworkAccessManager(parent);
+        auto *cache = new QNetworkDiskCache(manager);
+        cache->setCacheDirectory(m_dir);
+        cache->setMaximumCacheSize(512LL * 1024 * 1024);
+        manager->setCache(cache);
+        return manager;
+    }
+
+private:
+    QString m_dir;
+};
+
+QString appDataDir()
+{
+    QString base = qEnvironmentVariable("LOCALAPPDATA");
+    if (base.isEmpty()) {
+        base = QDir::tempPath();
+    }
+    const QString dir = QDir::fromNativeSeparators(base) + QStringLiteral("/BigscreenHost");
+    QDir().mkpath(dir);
+    return dir;
+}
 
 // De app is een GUI-programma zonder console: zonder logbestand verdwijnen alle
 // foutmeldingen. Log staat in %LOCALAPPDATA%\\BigscreenHost\\bigscreen-host.log
@@ -147,6 +186,7 @@ int main(int argc, char *argv[])
     GamepadNavigator gamepad;
     AppModel appModel(AppModel::Apps);
     AppModel webModel(AppModel::Web);
+    MediaLibrary library(appDataDir());
 
     auto inputSystem = createInputSystem();
     Q_UNUSED(inputSystem); // in dit skeleton nog niet aan QML-signalen gekoppeld
@@ -167,6 +207,8 @@ int main(int argc, char *argv[])
     view.engine()->addImageProvider(QStringLiteral("appicon"), new AppIconProvider);
     view.rootContext()->setContextProperty(QStringLiteral("appModel"), &appModel);
     view.rootContext()->setContextProperty(QStringLiteral("webModel"), &webModel);
+    view.rootContext()->setContextProperty(QStringLiteral("library"), &library);
+    view.engine()->setNetworkAccessManagerFactory(new CachingNetworkFactory(appDataDir() + QStringLiteral("/imagecache")));
     view.rootContext()->setContextProperty(QStringLiteral("gamepad"), &gamepad);
     // Alleen voor de geautomatiseerde test: opent bij het starten een menu
     view.rootContext()->setContextProperty(QStringLiteral("selfTest"), qEnvironmentVariable("BIGSCREEN_SELFTEST"));

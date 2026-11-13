@@ -14,6 +14,9 @@
 #include <QUrl>
 #include <QVariantMap>
 
+// Pad naar MPC-HC (64-bit), of "mpc-hc64.exe" als het niet gevonden is
+QString mpcHcPath();
+
 class AppModel : public QAbstractListModel
 {
     Q_OBJECT
@@ -61,6 +64,8 @@ public:
 Q_SIGNALS:
     void countChanged();
     void backgroundChanged();
+    // Tegel die een scherm binnen Bigscreen opent (bigscreen:movies, bigscreen:shows)
+    void internalRequested(const QString &target);
     void revisionChanged();
 
 private:

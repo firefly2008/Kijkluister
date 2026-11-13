@@ -26,8 +26,10 @@ Rectangle {
                                        : appGrid.activeFocus ? "Media  ·  Enter om te openen"
                                        : quickRow.activeFocus ? "Instellingen" : ""
     // (revision in de binding: opnieuw opvragen zodra een logo binnen is of wijzigt)
-    readonly property string focusIcon: streamGrid.activeFocus ? (webModel.revision, webModel.iconAt(streamGrid.currentIndex))
-                                       : appGrid.activeFocus ? (appModel.revision, appModel.iconAt(appGrid.currentIndex)) : ""
+    readonly property string focusIconRaw: streamGrid.activeFocus ? (webModel.revision, webModel.iconAt(streamGrid.currentIndex))
+                                          : appGrid.activeFocus ? (appModel.revision, appModel.iconAt(appGrid.currentIndex)) : ""
+    // Pictogrammen uit het lettertype (Films, Series) niet als afbeelding laden
+    readonly property string focusIcon: focusIconRaw.startsWith("glyph:") ? "" : focusIconRaw
     // Achtergrondkleur: de kleur van het logo van de streamingdienst met focus
     readonly property color accent: streamGrid.activeFocus && streamGrid.currentIndex >= 0
                                     ? (webModel.revision, webModel.accentAt(streamGrid.currentIndex)) : "#1d3557"
@@ -137,6 +139,16 @@ Rectangle {
     Component.onCompleted: {
         if (selfTest === "addtile") {
             addOverlay.open(quickRow)
+        } else if (selfTest === "library") {
+            libraryScreen.open("shows", appGrid)
+        } else if (selfTest === "librarymovies") {
+            libraryScreen.open("movies", appGrid)
+        } else if (selfTest === "librarydetail") {
+            libraryScreen.autoOpen = "detail"
+            libraryScreen.open("shows", appGrid)
+        } else if (selfTest === "librarysetup") {
+            libraryScreen.open("movies", appGrid)
+            libraryScreen.openSetup()
         }
     }
 
@@ -567,5 +579,17 @@ Rectangle {
         id: addOverlay
         onAccepted: (name, target) => root.addTile(name, target)
         onBrowseRequested: programDialog.open()
+    }
+
+    // Films en Series: eigen scherm met de bibliotheek
+    LibraryScreen {
+        id: libraryScreen
+    }
+
+    Connections {
+        target: appModel
+        function onInternalRequested(target) {
+            libraryScreen.open(target === "bigscreen:shows" ? "shows" : "movies", appGrid)
+        }
     }
 }

@@ -38,10 +38,20 @@ jobs:
         run: |
           Add-Type -AssemblyName System.Windows.Forms, System.Drawing
           $log = "$env:LOCALAPPDATA\BigscreenHost\bigscreen-host.log"
-          foreach ($mode in 'home', 'addtile') {
+          # Testbibliotheek: lege videobestanden met namen zoals ze in het echt voorkomen
+          $films = "$env:RUNNER_TEMP\media\Films"; $series = "$env:RUNNER_TEMP\media\Series"
+          New-Item -ItemType Directory -Force "$films\The.Matrix.1999.1080p.BluRay.x264", "$series\Westworld (2016)\Season 1", "$series\Breaking Bad\Seizoen 2" | Out-Null
+          foreach ($f in "$films\The.Matrix.1999.1080p.BluRay.x264\The.Matrix.1999.1080p.BluRay.x264.mkv", "$films\Inception (2010).mkv",
+                         "$films\Amelie.2001.DVDRip.XviD.avi", "$series\Westworld (2016)\Season 1\Westworld.S01E01.720p.mkv",
+                         "$series\Westworld (2016)\Season 1\Westworld.S01E02.720p.mkv", "$series\Breaking Bad\Seizoen 2\Breaking.Bad.2x03.mp4") {
+            New-Item -ItemType File -Force $f | Out-Null
+          }
+          New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\BigscreenHost" | Out-Null
+          "[library]`r`nmoviesFolder=$($films -replace '\\','/')`r`nshowsFolder=$($series -replace '\\','/')`r`n" | Set-Content "$env:LOCALAPPDATA\BigscreenHost\settings.ini"
+          foreach ($mode in 'home', 'library', 'librarymovies', 'librarydetail', 'librarysetup', 'addtile') {
             $env:BIGSCREEN_SELFTEST = $mode
             $p = Start-Process dist\bigscreen-host.exe -PassThru
-            Start-Sleep 12
+            Start-Sleep 14
             # Schermafdruk als base64 in het log, zodat het resultaat te bekijken is
             $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
             $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height

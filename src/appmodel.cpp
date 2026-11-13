@@ -89,7 +89,7 @@ const WebDefault webDefaults[] = {
 // Zoekt MPC-HC (64-bit) op de gebruikelijke plekken, ook die van het K-Lite Codec Pack.
 // Niet gevonden: de bestandsnaam alleen, zodat de tegel blijft staan en bij openen
 // meldt dat het programma ontbreekt.
-static QString mpcHcPath()
+QString mpcHcPath()
 {
     const QString pf = QDir::fromNativeSeparators(qEnvironmentVariable("ProgramFiles"));
     const QString pf86 = QDir::fromNativeSeparators(qEnvironmentVariable("ProgramFiles(x86)"));
@@ -240,6 +240,12 @@ QVariant AppModel::data(const QModelIndex &index, int role) const
         if (!custom.isEmpty()) {
             return custom;
         }
+        if (app.path == QLatin1String("bigscreen:movies")) {
+            return QStringLiteral("glyph:") + QChar(0xE8B2);
+        }
+        if (app.path == QLatin1String("bigscreen:shows")) {
+            return QStringLiteral("glyph:") + QChar(0xE7F4);
+        }
         if (m_kind == Web) {
             const QString file = faviconFile(app.path);
             return QFile::exists(file) ? QUrl::fromLocalFile(file).toString() : QString();
@@ -285,6 +291,8 @@ void AppModel::refresh()
     // MPC-HC en programma's die de gebruiker zelf heeft toegevoegd. (Tot en met
     // versie 2 stonden hier alle programma's uit het Startmenu.)
     QList<App> apps = {
+        {QStringLiteral("Films"), QStringLiteral("bigscreen:movies"), false},
+        {QStringLiteral("Series"), QStringLiteral("bigscreen:shows"), false},
         {QStringLiteral("Muziek"), QDir::toNativeSeparators(QStandardPaths::writableLocation(QStandardPaths::MusicLocation)), false},
         {QStringLiteral("Video's"), QDir::toNativeSeparators(QStandardPaths::writableLocation(QStandardPaths::MoviesLocation)), false},
         {QStringLiteral("Afbeeldingen"), QDir::toNativeSeparators(QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)), false},
@@ -313,6 +321,10 @@ bool AppModel::launch(int row)
         return false;
     }
     const App &app = m_apps.at(row);
+    if (app.path.startsWith(QLatin1String("bigscreen:"))) {
+        Q_EMIT internalRequested(app.path);
+        return true;
+    }
     const bool ok = m_kind == Web ? launchWeb(app.path)
                                   : QFileInfo::exists(app.path) && QDesktopServices::openUrl(QUrl::fromLocalFile(app.path));
     qInfo() << "Launch" << app.name << (ok ? "ok" : "FAILED");
