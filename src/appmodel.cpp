@@ -176,6 +176,8 @@ void AppModel::fetchFavicons()
                     Q_EMIT dataChanged(index(row), index(row), {IconRole, AccentRole});
                 }
             }
+            ++m_revision;
+            Q_EMIT revisionChanged();
         });
     }
 }
@@ -508,6 +510,8 @@ bool AppModel::setCustomIcon(int row, const QUrl &imageFile)
     m_customIcons.insert(path, imported);
     m_settings.setValue(key("customIcons"), m_customIcons);
     Q_EMIT dataChanged(index(row), index(row), {IconRole, CustomIconRole, AccentRole});
+    ++m_revision;
+    Q_EMIT revisionChanged();
     return true;
 }
 
@@ -520,6 +524,8 @@ void AppModel::clearCustomIcon(int row)
     removeLocalFile(m_customIcons.take(path).toString());
     m_settings.setValue(key("customIcons"), m_customIcons);
     Q_EMIT dataChanged(index(row), index(row), {IconRole, CustomIconRole, AccentRole});
+    ++m_revision;
+    Q_EMIT revisionChanged();
 }
 
 bool AppModel::setBackground(const QUrl &imageFile)

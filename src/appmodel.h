@@ -20,6 +20,8 @@ class AppModel : public QAbstractListModel
     Q_PROPERTY(int count READ count NOTIFY countChanged)
     Q_PROPERTY(int hiddenCount READ hiddenCount NOTIFY countChanged)
     Q_PROPERTY(QString background READ background NOTIFY backgroundChanged)
+    // Telt op zodra een pictogram (en daarmee een kleur) verandert, zodat QML opnieuw opvraagt
+    Q_PROPERTY(int revision READ revision NOTIFY revisionChanged)
 
 public:
     enum Roles { NameRole = Qt::UserRole + 1, PathRole, IconRole, CustomIconRole, AccentRole };
@@ -34,6 +36,7 @@ public:
     int count() const { return m_apps.size(); }
     int hiddenCount() const { return m_hidden.size(); }
     QString background() const { return m_background; }
+    int revision() const { return m_revision; }
 
     Q_INVOKABLE void refresh();
     Q_INVOKABLE bool launch(int row);
@@ -57,6 +60,7 @@ public:
 Q_SIGNALS:
     void countChanged();
     void backgroundChanged();
+    void revisionChanged();
 
 private:
     struct App {
@@ -82,5 +86,6 @@ private:
     QStringList m_hidden;
     QVariantMap m_customIcons; // pad van snelkoppeling -> file-URL van eigen pictogram
     QString m_background;
+    int m_revision = 0;
     QSettings m_settings;
 };

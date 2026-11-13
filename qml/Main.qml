@@ -25,11 +25,12 @@ Rectangle {
     readonly property string focusKind: streamGrid.activeFocus ? "Streaming  ·  Enter om te openen"
                                        : appGrid.activeFocus ? "Media  ·  Enter om te openen"
                                        : quickRow.activeFocus ? "Instellingen" : ""
-    readonly property string focusIcon: streamGrid.activeFocus ? webModel.iconAt(streamGrid.currentIndex)
-                                       : appGrid.activeFocus ? appModel.iconAt(appGrid.currentIndex) : ""
+    // (revision in de binding: opnieuw opvragen zodra een logo binnen is of wijzigt)
+    readonly property string focusIcon: streamGrid.activeFocus ? (webModel.revision, webModel.iconAt(streamGrid.currentIndex))
+                                       : appGrid.activeFocus ? (appModel.revision, appModel.iconAt(appGrid.currentIndex)) : ""
     // Achtergrondkleur: de kleur van het logo van de streamingdienst met focus
     readonly property color accent: streamGrid.activeFocus && streamGrid.currentIndex >= 0
-                                    ? webModel.accentAt(streamGrid.currentIndex) : "#1d3557"
+                                    ? (webModel.revision, webModel.accentAt(streamGrid.currentIndex)) : "#1d3557"
     readonly property bool heroShown: true
 
     // Achtergrond: neemt de kleur van de gekozen streamingdienst aan, naar onder donker
