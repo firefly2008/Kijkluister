@@ -14,6 +14,10 @@ FocusScope {
     property int playingRow: -1
     property var channel: ({})
     property string errorText: ""
+    property bool pinInfo: false           // test: balk blijft staan
+    property bool autoGuide: false         // test: gids openen na afspelen
+    // Gids van de zender die nu speelt; ververst als er nieuwe gidsgegevens zijn
+    readonly property var nowNext: (iptv.epgRevision, epgClock.tick, playingRow >= 0 ? iptv.nowNext(playingRow) : ({}))
     // De speler bestaat alleen tijdens het kijken (snellere start, decoder weer vrij)
     readonly property var player: playerLoader.item ? playerLoader.item.mediaPlayer : null
 
@@ -61,8 +65,19 @@ FocusScope {
             player.source = ch.url
             player.play()
         }
+        iptv.requestEpg(row)
         showInfo()
         playerView.forceActiveFocus()
+        if (autoGuide) {
+            autoGuide = false
+            guideTestTimer.start()
+        }
+    }
+    Timer { id: guideTestTimer; interval: 6000; onTriggered: tv.openGuide(tv.playingRow) }
+
+    function openGuide(row) {
+        iptv.requestEpg(row)
+        guidePanel.open(row, iptv.channelAt(row), playing ? playerView : grid)
     }
 
     function zap(delta) {
@@ -386,6 +401,9 @@ FocusScope {
                 if (event.key === Qt.Key_F2) {
                     tv.toggleFavorite(currentIndex)
                     event.accepted = true
+                } else if (event.key === Qt.Key_I) {
+                    tv.openGuide(currentIndex)
+                    event.accepted = true
                 }
             }
             Keys.onLeftPressed: (event) => {
@@ -491,8 +509,8 @@ FocusScope {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.bottom: parent.bottom
-            height: tv.unit * 20
-            opacity: infoTimer.running || tv.errorText !== "" ? 1 : 0
+            height: tv.unit * 26
+            opacity: infoTimer.running || tv.pinInfo || tv.errorText !== "" ? 1 : 0
             visible: opacity > 0
             Behavior on opacity { NumberAnimation { duration: 250 } }
             gradient: Gradient {
@@ -524,21 +542,67 @@ FocusScope {
                 Column {
                     anchors.verticalCenter: parent.verticalCenter
                     spacing: tv.unit * 0.6
+                    width: tv.width - tv.unit * 25
                     Text {
                         color: "white"
                         font.pixelSize: tv.unit * 4
                         font.weight: Font.DemiBold
                         text: (tv.channel.number || "") + "   " + (tv.channel.name || "")
                     }
+                    // Gids: nu en straks
+                    Row {
+                        spacing: tv.unit * 1.5
+                        visible: !!tv.nowNext.nowTitle
+                        Text {
+                            color: "#ffb74d"
+                            font.pixelSize: tv.unit * 2.4
+                            font.weight: Font.DemiBold
+                            text: "NU"
+                        }
+                        Text {
+                            color: "white"
+                            font.pixelSize: tv.unit * 2.6
+                            text: (tv.nowNext.nowTime || "") + "   " + (tv.nowNext.nowTitle || "")
+                            elide: Text.ElideRight
+                            width: Math.min(implicitWidth, tv.width * 0.6)
+                        }
+                    }
+                    Rectangle {
+                        visible: !!tv.nowNext.nowTitle
+                        width: tv.unit * 40
+                        height: tv.unit * 0.5
+                        radius: height / 2
+                        color: "#40ffffff"
+                        Rectangle {
+                            width: parent.width * Math.max(0, Math.min(1, tv.nowNext.nowProgress || 0))
+                            height: parent.height
+                            radius: height / 2
+                            color: "#ffb74d"
+                        }
+                    }
                     Text {
+                        visible: !!tv.nowNext.nextTitle
                         color: "#b0b4bb"
-                        font.pixelSize: tv.unit * 2.1
-                        text: (tv.channel.group || "") + "    ·    ↑ ↓ zender wisselen   ·   Esc / B terug   ·   F2 / X favoriet   ·   E externe speler"
+                        font.pixelSize: tv.unit * 2.2
+                        elide: Text.ElideRight
+                        width: Math.min(implicitWidth, tv.width * 0.6)
+                        text: "Straks  " + (tv.nowNext.nextTime || "") + "   " + (tv.nowNext.nextTitle || "")
+                    }
+                    Text {
+                        visible: !tv.nowNext.nowTitle && !tv.nowNext.nextTitle
+                        color: "#80848b"
+                        font.pixelSize: tv.unit * 2.2
+                        text: iptv.epgStatus === "Gids laden…" ? "Gids laden…" : "Geen gidsinformatie voor deze zender"
+                    }
+                    Text {
+                        color: "#80848b"
+                        font.pixelSize: tv.unit * 1.9
+                        text: (tv.channel.group || "") + "    ·    ↑ ↓ zender   ·   OK / I / Y gids   ·   Esc / B terug   ·   F2 / X favoriet   ·   E externe speler"
                     }
                 }
             }
         }
-        Timer { id: infoTimer; interval: 4000 }
+        Timer { id: infoTimer; interval: 2000 }
 
         Keys.onEscapePressed: tv.stop()
         Keys.onBackPressed: tv.stop()
@@ -546,12 +610,15 @@ FocusScope {
         Keys.onDownPressed: tv.zap(1)
         Keys.onLeftPressed: tv.showInfo()
         Keys.onRightPressed: tv.showInfo()
-        Keys.onReturnPressed: tv.showInfo()
-        Keys.onEnterPressed: tv.showInfo()
+        Keys.onReturnPressed: tv.openGuide(tv.playingRow)
+        Keys.onEnterPressed: tv.openGuide(tv.playingRow)
         Keys.onMenuPressed: tv.toggleFavorite(tv.playingRow)
         Keys.onPressed: (event) => {
             if (event.key === Qt.Key_F2) {
                 tv.toggleFavorite(tv.playingRow)
+                event.accepted = true
+            } else if (event.key === Qt.Key_I) {
+                tv.openGuide(tv.playingRow)
                 event.accepted = true
             } else if (event.key === Qt.Key_E) {
                 if (iptv.openExternal(tv.playingRow)) {
@@ -590,6 +657,21 @@ FocusScope {
         }
     }
     Timer { id: messageTimer; interval: 2500 }
+
+    // Elke minuut "nu" bijwerken
+    Timer {
+        id: epgClock
+        property int tick: 0
+        interval: 60000
+        repeat: true
+        running: tv.visible
+        onTriggered: tick++
+    }
+
+    EpgPanel {
+        id: guidePanel
+        unit: tv.unit
+    }
 
     IptvSources {
         id: sources

@@ -1,0 +1,222 @@
+// Tv-gids van één zender: lijst met programma's links, uitgebreide info rechts.
+// SPDX-License-Identifier: GPL-2.0-or-later
+import QtQuick
+
+FocusScope {
+    id: panel
+
+    property real unit: height / 100
+    property int row: -1
+    property var channel: ({})
+    property Item returnFocusTo: null
+    property var programmes: []
+
+    anchors.fill: parent
+    visible: false
+    z: 40
+
+    function open(r, ch, focusItem) {
+        row = r
+        channel = ch
+        returnFocusTo = focusItem
+        refresh()
+        list.currentIndex = 0
+        visible = true
+        list.forceActiveFocus()
+    }
+
+    function refresh() {
+        programmes = row >= 0 ? iptv.guide(row) : []
+    }
+
+    function close() {
+        visible = false
+        if (returnFocusTo) {
+            returnFocusTo.forceActiveFocus()
+        }
+    }
+
+    Connections {
+        target: iptv
+        function onEpgChanged() {
+            if (panel.visible) {
+                const keep = list.currentIndex
+                panel.refresh()
+                list.currentIndex = Math.min(Math.max(0, keep), panel.programmes.length - 1)
+            }
+        }
+    }
+
+    Keys.onEscapePressed: close()
+    Keys.onBackPressed: close()
+    Keys.onPressed: (event) => {
+        if (event.key === Qt.Key_I) {
+            close()
+            event.accepted = true
+        }
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        color: "#f00b0c0f"
+        MouseArea { anchors.fill: parent; onClicked: {} }
+    }
+
+    // Kop: logo, zender, sluiten-hint
+    Row {
+        id: header
+        x: panel.unit * 6
+        y: panel.unit * 5
+        spacing: panel.unit * 2.5
+        Rectangle {
+            width: panel.unit * 10
+            height: panel.unit * 7
+            radius: panel.unit
+            color: "#22252b"
+            Image {
+                anchors.fill: parent
+                anchors.margins: panel.unit * 0.8
+                source: panel.channel.logo || ""
+                fillMode: Image.PreserveAspectFit
+                asynchronous: true
+            }
+        }
+        Column {
+            anchors.verticalCenter: parent.verticalCenter
+            Text {
+                color: "white"
+                font.pixelSize: panel.unit * 4
+                font.weight: Font.DemiBold
+                text: "Tv-gids  ·  " + (panel.channel.name || "")
+            }
+            Text {
+                color: "#80848b"
+                font.pixelSize: panel.unit * 2
+                text: "↑ ↓ programma kiezen   ·   Esc / B / I sluiten"
+            }
+        }
+    }
+
+    Text {
+        anchors.centerIn: parent
+        visible: panel.programmes.length === 0
+        color: "#b0b4bb"
+        font.pixelSize: panel.unit * 3
+        text: iptv.epgStatus === "Gids laden…" ? "Gids laden…" : "Geen gidsinformatie voor deze zender"
+    }
+
+    // Programmalijst
+    ListView {
+        id: list
+        x: panel.unit * 6
+        y: panel.unit * 16
+        width: parent.width * 0.38
+        height: parent.height - y - panel.unit * 5
+        clip: true
+        model: panel.programmes
+        spacing: panel.unit * 0.6
+        highlightMoveDuration: 120
+        keyNavigationWraps: false
+        Keys.onReturnPressed: {}
+        delegate: Rectangle {
+            id: item
+            required property var modelData
+            required property int index
+            readonly property bool current: ListView.isCurrentItem
+            readonly property bool newDay: index === 0 || panel.programmes[index - 1].day !== modelData.day
+            width: list.width
+            height: panel.unit * (newDay ? 10.5 : 7)
+            radius: panel.unit
+            color: current ? "#ffffff" : "transparent"
+
+            MouseArea {
+                anchors.fill: parent
+                onClicked: { list.currentIndex = item.index; list.forceActiveFocus() }
+            }
+            Text {
+                visible: item.newDay
+                x: panel.unit * 1.5
+                y: panel.unit * 0.6
+                color: item.current ? "#c0392b" : "#ffb74d"
+                font.pixelSize: panel.unit * 2
+                font.weight: Font.DemiBold
+                text: item.modelData.day
+            }
+            Row {
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: panel.unit * 1.6
+                x: panel.unit * 1.5
+                spacing: panel.unit * 2
+                Text {
+                    color: item.current ? "#202124" : "#b0b4bb"
+                    font.pixelSize: panel.unit * 2.6
+                    text: item.modelData.start
+                }
+                Text {
+                    width: list.width - panel.unit * 14
+                    elide: Text.ElideRight
+                    color: item.current ? "#202124" : "white"
+                    font.pixelSize: panel.unit * 2.6
+                    font.weight: item.modelData.isNow ? Font.DemiBold : Font.Normal
+                    text: (item.modelData.isNow ? "● " : "") + item.modelData.title
+                }
+            }
+        }
+    }
+
+    // Uitgebreide info van het gekozen programma
+    Flickable {
+        id: details
+        readonly property var p: list.currentIndex >= 0 && list.currentIndex < panel.programmes.length
+                                 ? panel.programmes[list.currentIndex] : null
+        x: list.x + list.width + panel.unit * 5
+        y: list.y
+        width: parent.width - x - panel.unit * 6
+        height: list.height
+        clip: true
+        contentHeight: info.implicitHeight
+        visible: p !== null
+
+        Column {
+            id: info
+            width: details.width
+            spacing: panel.unit * 1.5
+            Text {
+                width: parent.width
+                wrapMode: Text.Wrap
+                color: "white"
+                font.pixelSize: panel.unit * 4.5
+                font.weight: Font.DemiBold
+                text: details.p ? details.p.title : ""
+            }
+            Text {
+                color: "#ffb74d"
+                font.pixelSize: panel.unit * 2.4
+                text: details.p ? details.p.day + "   " + details.p.start + " – " + details.p.stop
+                                  + "   ·   " + details.p.duration + " min"
+                                  + (details.p.category ? "   ·   " + details.p.category : "") : ""
+            }
+            Rectangle {
+                visible: details.p && details.p.isNow
+                width: panel.unit * 40
+                height: panel.unit * 0.6
+                radius: height / 2
+                color: "#40ffffff"
+                Rectangle {
+                    width: parent.width * (details.p ? details.p.progress : 0)
+                    height: parent.height
+                    radius: height / 2
+                    color: "#ffb74d"
+                }
+            }
+            Text {
+                width: parent.width
+                wrapMode: Text.Wrap
+                lineHeight: 1.25
+                color: "#d5d8dc"
+                font.pixelSize: panel.unit * 2.7
+                text: details.p ? (details.p.description || "Geen beschrijving beschikbaar.") : ""
+            }
+        }
+    }
+}

@@ -15,6 +15,13 @@
 #include <QProcess>
 #include <QRegularExpression>
 #include <QUrlQuery>
+#include <QLocale>
+#include <QTimeZone>
+#include <algorithm>
+#include <QXmlStreamReader>
+#include <QtConcurrent/QtConcurrentRun>
+
+#include <zlib.h>
 
 namespace {
 
@@ -27,6 +34,50 @@ const QRegularExpression nameAttr(QStringLiteral(R"re(tvg-name="([^"]*)")re"));
 const QRegularExpression idAttr(QStringLiteral(R"re(tvg-id="([^"]*)")re"));
 const QRegularExpression logoAttr(QStringLiteral(R"re(tvg-logo="([^"]*)")re"));
 const QRegularExpression groupAttr(QStringLiteral(R"re(group-title="([^"]*)")re"));
+// Verwijzing naar de gids in de kop van de lijst: #EXTM3U url-tvg="..." of x-tvg-url="..."
+const QRegularExpression epgHeader(QStringLiteral(R"re((?:url-tvg|x-tvg-url)="([^"]*)")re"));
+
+// .xml.gz-gidsen uitpakken (gzip)
+QByteArray gunzip(const QByteArray &data)
+{
+    if (data.size() < 2 || uchar(data[0]) != 0x1f || uchar(data[1]) != 0x8b) {
+        return data;
+    }
+    z_stream stream{};
+    if (inflateInit2(&stream, 16 + MAX_WBITS) != Z_OK) {
+        return {};
+    }
+    QByteArray out;
+    char buffer[65536];
+    stream.next_in = reinterpret_cast<Bytef *>(const_cast<char *>(data.constData()));
+    stream.avail_in = uInt(data.size());
+    int result = Z_OK;
+    do {
+        stream.next_out = reinterpret_cast<Bytef *>(buffer);
+        stream.avail_out = sizeof(buffer);
+        result = inflate(&stream, Z_NO_FLUSH);
+        if (result != Z_OK && result != Z_STREAM_END) {
+            break;
+        }
+        out.append(buffer, int(sizeof(buffer) - stream.avail_out));
+    } while (result != Z_STREAM_END);
+    inflateEnd(&stream);
+    return out;
+}
+
+// XMLTV-tijd: "20261113120000 +0100"
+qint64 xmltvTime(const QString &value)
+{
+    QDateTime time = QDateTime::fromString(value.left(14), QStringLiteral("yyyyMMddHHmmss"));
+    time.setTimeZone(QTimeZone::UTC);
+    const QString zone = value.mid(14).trimmed();
+    if (zone.size() == 5) {
+        const int sign = zone.startsWith(QLatin1Char('-')) ? -1 : 1;
+        const int offset = sign * (zone.mid(1, 2).toInt() * 3600 + zone.mid(3, 2).toInt() * 60);
+        return time.toSecsSinceEpoch() - offset;
+    }
+    return time.toSecsSinceEpoch();
+}
 
 QString capture(const QRegularExpression &re, const QString &line)
 {
@@ -73,6 +124,20 @@ IptvModel::IptvModel(const QString &dataDir, QObject *parent)
     loadCache();
     rebuildGroups();
     applyFilter();
+    m_epgUrls = m_settings.value(QStringLiteral("iptv/epgUrls")).toStringList();
+    connect(&m_epgWatcher, &QFutureWatcher<EpgData>::finished, this, [this] {
+        m_epg = m_epgWatcher.result();
+        m_epgBusy = false;
+        saveEpgCache();
+        ++m_epgRevision;
+        m_epgStatus = m_epg.programmes.isEmpty() ? tr("Geen gids gevonden") : tr("Gids: %1 zenders").arg(m_epg.programmes.size());
+        qInfo() << "EPG ready:" << m_epg.programmes.size() << "channels";
+        Q_EMIT epgChanged();
+    });
+    // Gids uit het geheugen van de vorige keer; is die ouder dan 6 uur, opnieuw ophalen
+    if (!loadEpgCache() && !m_all.isEmpty()) {
+        QMetaObject::invokeMethod(this, &IptvModel::reloadEpg, Qt::QueuedConnection);
+    }
     setStatus(m_all.isEmpty() ? QString() : tr("%1 zenders").arg(m_all.size()), false);
 }
 
@@ -238,6 +303,7 @@ void IptvModel::reload()
     }
     m_loading.clear();
     m_errors.clear();
+    m_loadingEpgUrls.clear();
     m_loadIndex = -1;
     if (m_sources.isEmpty()) {
         finishLoading();
@@ -290,6 +356,12 @@ void IptvModel::loadNext()
 void IptvModel::parseM3u(const QByteArray &data)
 {
     const int before = m_loading.size();
+    // Gids-adres(sen) uit de kop
+    const QString head = QString::fromUtf8(data.left(4096)).section(QLatin1Char('\n'), 0, 0);
+    const QString epg = capture(epgHeader, head);
+    for (const QString &url : epg.split(QLatin1Char(','), Qt::SkipEmptyParts)) {
+        m_loadingEpgUrls << url.trimmed();
+    }
     QString info;
     QString extGroup;
     const QList<QByteArray> lines = data.split('\n');
@@ -327,7 +399,7 @@ void IptvModel::parseM3u(const QByteArray &data)
             group = extGroup.isEmpty() ? otherGroup : extGroup;
         }
         if (!name.isEmpty()) {
-            m_loading.append({name, capture(logoAttr, info), group, line});
+            m_loading.append({name, capture(logoAttr, info), group, line, capture(idAttr, info)});
         }
         info.clear();
     }
@@ -387,9 +459,19 @@ void IptvModel::loadXtream(const QVariantMap &source)
                     o.value(QStringLiteral("stream_icon")).toString(),
                     group.isEmpty() ? otherGroup : group,
                     QStringLiteral("%1/live/%2/%3/%4.ts").arg(server, user, password, id),
+                    o.value(QStringLiteral("epg_channel_id")).toString(),
+                    m_loadIndex,
+                    id,
                 });
             }
             qInfo() << "IPTV: Xtream gave" << list.array().size() << "channels";
+            // Volledige gids van de server (XMLTV); per zender ook nog op aanvraag
+            QUrl xmltv(server + QStringLiteral("/xmltv.php"));
+            QUrlQuery q;
+            q.addQueryItem(QStringLiteral("username"), user);
+            q.addQueryItem(QStringLiteral("password"), password);
+            xmltv.setQuery(q);
+            m_loadingEpgUrls << xmltv.toString();
             loadNext();
         });
     });
@@ -401,6 +483,10 @@ void IptvModel::finishLoading()
     if (!m_loading.isEmpty() || m_errors.isEmpty()) {
         m_all = m_loading;
         saveCache();
+        m_loadingEpgUrls.removeDuplicates();
+        m_epgUrls = m_loadingEpgUrls;
+        m_settings.setValue(QStringLiteral("iptv/epgUrls"), m_epgUrls);
+        reloadEpg();
     }
     m_loading.clear();
     rebuildGroups();
@@ -470,7 +556,7 @@ void IptvModel::saveCache() const
 {
     QJsonArray array;
     for (const Channel &c : m_all) {
-        array.append(QJsonArray{c.name, c.logo, c.group, c.url});
+        array.append(QJsonArray{c.name, c.logo, c.group, c.url, c.epgId, c.xtreamSource, c.streamId});
     }
     QFile file(m_dataDir + QStringLiteral("/iptv-channels.json"));
     if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
@@ -486,8 +572,9 @@ void IptvModel::loadCache()
     }
     for (const QJsonValue &v : QJsonDocument::fromJson(file.readAll()).array()) {
         const QJsonArray a = v.toArray();
-        if (a.size() == 4) {
-            m_all.append({a.at(0).toString(), a.at(1).toString(), a.at(2).toString(), a.at(3).toString()});
+        if (a.size() >= 4) {
+            m_all.append({a.at(0).toString(), a.at(1).toString(), a.at(2).toString(), a.at(3).toString(),
+                          a.at(4).toString(), a.size() > 5 ? a.at(5).toInt(-1) : -1, a.at(6).toString()});
         }
     }
 }
@@ -497,4 +584,328 @@ void IptvModel::setStatus(const QString &status, bool busy)
     m_status = status;
     m_busy = busy;
     Q_EMIT statusChanged();
+}
+
+// =====================================================================
+// Gids (EPG)
+// =====================================================================
+
+void IptvModel::reloadEpg()
+{
+    if (m_epgBusy) {
+        return;
+    }
+    m_shortEpgRequested.clear();
+    if (m_epgUrls.isEmpty()) {
+        m_epg = {};
+        ++m_epgRevision;
+        m_epgStatus.clear();
+        Q_EMIT epgChanged();
+        return;
+    }
+    m_epgBusy = true;
+    m_epgFiles.clear();
+    m_epgIndex = -1;
+    m_epgStatus = tr("Gids laden…");
+    Q_EMIT epgChanged();
+    downloadNextEpg();
+}
+
+void IptvModel::downloadNextEpg()
+{
+    ++m_epgIndex;
+    if (m_epgIndex >= m_epgUrls.size()) {
+        finishEpgDownload();
+        return;
+    }
+    QString address = m_epgUrls.at(m_epgIndex);
+    QUrl url = QUrl::fromUserInput(address);
+    QNetworkRequest req = request(url);
+    req.setTransferTimeout(180000);
+    QNetworkReply *reply = m_network.get(req);
+    connect(reply, &QNetworkReply::finished, this, [this, reply] {
+        reply->deleteLater();
+        if (reply->error() == QNetworkReply::NoError) {
+            m_epgFiles.append(reply->readAll());
+        } else {
+            qWarning().noquote() << "EPG download failed" << reply->url().host() << reply->errorString();
+        }
+        downloadNextEpg();
+    });
+}
+
+void IptvModel::finishEpgDownload()
+{
+    // Alleen de zenders uit onze lijst bewaren: gidsen kunnen enorm zijn
+    QSet<QString> wanted;
+    for (const Channel &c : std::as_const(m_all)) {
+        if (!c.epgId.isEmpty()) {
+            wanted.insert(c.epgId);
+        }
+        wanted.insert(QStringLiteral("name:") + c.name.toLower());
+    }
+    const QList<QByteArray> files = m_epgFiles;
+    m_epgFiles.clear();
+    // Uitpakken en lezen op de achtergrond, zodat het scherm blijft reageren
+    m_epgWatcher.setFuture(QtConcurrent::run([files, wanted] { return parseXmltv(files, wanted); }));
+}
+
+IptvModel::EpgData IptvModel::parseXmltv(const QList<QByteArray> &files, const QSet<QString> &wanted)
+{
+    EpgData data;
+    const qint64 now = QDateTime::currentSecsSinceEpoch();
+    const qint64 from = now - 3 * 3600;
+    const qint64 until = now + 48 * 3600;
+    for (const QByteArray &raw : files) {
+        const QByteArray xml = gunzip(raw);
+        QXmlStreamReader reader(xml);
+        QString channelId;
+        QSet<QString> matched;
+        while (!reader.atEnd()) {
+            reader.readNext();
+            if (!reader.isStartElement()) {
+                continue;
+            }
+            if (reader.name() == QLatin1String("channel")) {
+                channelId = reader.attributes().value(QLatin1String("id")).toString();
+            } else if (reader.name() == QLatin1String("display-name") && !channelId.isEmpty()) {
+                const QString name = reader.readElementText().trimmed().toLower();
+                if (!data.names.contains(name) && wanted.contains(QStringLiteral("name:") + name)) {
+                    data.names.insert(name, channelId);
+                    matched.insert(channelId);
+                }
+            } else if (reader.name() == QLatin1String("programme")) {
+                const auto attrs = reader.attributes();
+                const QString channel = attrs.value(QLatin1String("channel")).toString();
+                Programme p;
+                p.start = xmltvTime(attrs.value(QLatin1String("start")).toString());
+                p.stop = xmltvTime(attrs.value(QLatin1String("stop")).toString());
+                const bool keep = (wanted.contains(channel) || matched.contains(channel)) && p.stop > from && p.start < until;
+                while (!(reader.isEndElement() && reader.name() == QLatin1String("programme")) && !reader.atEnd()) {
+                    reader.readNext();
+                    if (!keep || !reader.isStartElement()) {
+                        continue;
+                    }
+                    if (reader.name() == QLatin1String("title") && p.title.isEmpty()) {
+                        p.title = reader.readElementText().trimmed();
+                    } else if (reader.name() == QLatin1String("desc") && p.description.isEmpty()) {
+                        p.description = reader.readElementText().trimmed();
+                    } else if (reader.name() == QLatin1String("category") && p.category.isEmpty()) {
+                        p.category = reader.readElementText().trimmed();
+                    }
+                }
+                if (keep && !p.title.isEmpty()) {
+                    data.programmes[channel].append(p);
+                }
+            }
+        }
+    }
+    // Zenders die alleen via hun naam gekoppeld zijn, en verder ongebruikte gids-id's weg
+    QSet<QString> used = wanted;
+    for (auto it = data.names.constBegin(); it != data.names.constEnd(); ++it) {
+        used.insert(it.value());
+    }
+    for (auto it = data.programmes.begin(); it != data.programmes.end();) {
+        it = used.contains(it.key()) ? std::next(it) : data.programmes.erase(it);
+    }
+    sortAndTrim(data);
+    return data;
+}
+
+void IptvModel::sortAndTrim(EpgData &data)
+{
+    for (auto &list : data.programmes) {
+        std::sort(list.begin(), list.end(), [](const Programme &a, const Programme &b) { return a.start < b.start; });
+    }
+}
+
+QString IptvModel::epgKey(const Channel &c) const
+{
+    if (!c.epgId.isEmpty() && m_epg.programmes.contains(c.epgId)) {
+        return c.epgId;
+    }
+    if (c.xtreamSource >= 0 && m_epg.programmes.contains(QStringLiteral("xtream:") + c.streamId)) {
+        return QStringLiteral("xtream:") + c.streamId;
+    }
+    return m_epg.names.value(c.name.toLower());
+}
+
+const QList<IptvModel::Programme> *IptvModel::programmesFor(const Channel &c) const
+{
+    const QString key = epgKey(c);
+    const auto it = m_epg.programmes.constFind(key);
+    return (key.isEmpty() || it == m_epg.programmes.constEnd()) ? nullptr : &it.value();
+}
+
+QVariantMap IptvModel::nowNext(int row) const
+{
+    if (row < 0 || row >= m_visible.size()) {
+        return {};
+    }
+    const QList<Programme> *list = programmesFor(m_all.at(m_visible.at(row)));
+    if (!list) {
+        return {};
+    }
+    const qint64 now = QDateTime::currentSecsSinceEpoch();
+    auto fmt = [](qint64 secs) { return QDateTime::fromSecsSinceEpoch(secs).toLocalTime().toString(QStringLiteral("HH:mm")); };
+    QVariantMap result;
+    for (int i = 0; i < list->size(); ++i) {
+        const Programme &p = list->at(i);
+        if (p.stop <= now) {
+            continue;
+        }
+        if (p.start <= now) {
+            result[QStringLiteral("nowTitle")] = p.title;
+            result[QStringLiteral("nowTime")] = fmt(p.start) + QStringLiteral(" – ") + fmt(p.stop);
+            result[QStringLiteral("nowProgress")] = double(now - p.start) / qMax<qint64>(1, p.stop - p.start);
+            result[QStringLiteral("nowDescription")] = p.description;
+            if (i + 1 < list->size()) {
+                result[QStringLiteral("nextTitle")] = list->at(i + 1).title;
+                result[QStringLiteral("nextTime")] = fmt(list->at(i + 1).start);
+            }
+        } else {
+            result[QStringLiteral("nextTitle")] = p.title;
+            result[QStringLiteral("nextTime")] = fmt(p.start);
+        }
+        break;
+    }
+    return result;
+}
+
+QVariantList IptvModel::guide(int row) const
+{
+    if (row < 0 || row >= m_visible.size()) {
+        return {};
+    }
+    const QList<Programme> *list = programmesFor(m_all.at(m_visible.at(row)));
+    if (!list) {
+        return {};
+    }
+    const qint64 now = QDateTime::currentSecsSinceEpoch();
+    const QDate today = QDate::currentDate();
+    QVariantList result;
+    for (const Programme &p : *list) {
+        if (p.stop <= now) {
+            continue;
+        }
+        const QDateTime start = QDateTime::fromSecsSinceEpoch(p.start).toLocalTime();
+        const QDateTime stop = QDateTime::fromSecsSinceEpoch(p.stop).toLocalTime();
+        const qint64 days = today.daysTo(start.date());
+        QString day = days == 0 ? tr("Vandaag") : days == 1 ? tr("Morgen") : QLocale(QLocale::Dutch).toString(start.date(), QStringLiteral("dddd d MMMM"));
+        result.append(QVariantMap{
+            {QStringLiteral("title"), p.title},
+            {QStringLiteral("description"), p.description},
+            {QStringLiteral("category"), p.category},
+            {QStringLiteral("start"), start.toString(QStringLiteral("HH:mm"))},
+            {QStringLiteral("stop"), stop.toString(QStringLiteral("HH:mm"))},
+            {QStringLiteral("day"), day},
+            {QStringLiteral("duration"), int((p.stop - p.start) / 60)},
+            {QStringLiteral("isNow"), p.start <= now},
+            {QStringLiteral("progress"), p.start <= now ? double(now - p.start) / qMax<qint64>(1, p.stop - p.start) : 0.0},
+        });
+        if (result.size() >= 60) {
+            break;
+        }
+    }
+    return result;
+}
+
+// Xtream: gids van een zender rechtstreeks opvragen, zoals open-tv (get_simple_data_table)
+void IptvModel::requestEpg(int row)
+{
+    if (row < 0 || row >= m_visible.size()) {
+        return;
+    }
+    const Channel c = m_all.at(m_visible.at(row));
+    if (c.xtreamSource < 0 || c.xtreamSource >= m_sources.size() || c.streamId.isEmpty()
+        || m_shortEpgRequested.contains(c.streamId)) {
+        return;
+    }
+    const QList<Programme> *existing = programmesFor(c);
+    const qint64 now = QDateTime::currentSecsSinceEpoch();
+    if (existing && !existing->isEmpty() && existing->last().stop > now + 3600) {
+        return; // al genoeg gids
+    }
+    m_shortEpgRequested.insert(c.streamId);
+    const QVariantMap source = m_sources.at(c.xtreamSource).toMap();
+    QUrl url(source.value(QStringLiteral("url")).toString() + QStringLiteral("/player_api.php"));
+    QUrlQuery query;
+    query.addQueryItem(QStringLiteral("username"), source.value(QStringLiteral("user")).toString());
+    query.addQueryItem(QStringLiteral("password"), source.value(QStringLiteral("password")).toString());
+    query.addQueryItem(QStringLiteral("action"), QStringLiteral("get_simple_data_table"));
+    query.addQueryItem(QStringLiteral("stream_id"), c.streamId);
+    url.setQuery(query);
+    QNetworkReply *reply = m_network.get(request(url));
+    connect(reply, &QNetworkReply::finished, this, [this, reply, c] {
+        reply->deleteLater();
+        const QJsonArray listings = QJsonDocument::fromJson(reply->readAll()).object().value(QStringLiteral("epg_listings")).toArray();
+        QList<Programme> programmes;
+        auto text = [](const QJsonValue &v) { return QString::fromUtf8(QByteArray::fromBase64(v.toString().toUtf8())).trimmed(); };
+        for (const QJsonValue &v : listings) {
+            const QJsonObject o = v.toObject();
+            Programme p;
+            p.start = o.value(QStringLiteral("start_timestamp")).toVariant().toLongLong();
+            p.stop = o.value(QStringLiteral("stop_timestamp")).toVariant().toLongLong();
+            p.title = text(o.value(QStringLiteral("title")));
+            p.description = text(o.value(QStringLiteral("description")));
+            if (p.start > 0 && p.stop > p.start && !p.title.isEmpty()) {
+                programmes.append(p);
+            }
+        }
+        if (programmes.isEmpty()) {
+            return;
+        }
+        std::sort(programmes.begin(), programmes.end(), [](const Programme &a, const Programme &b) { return a.start < b.start; });
+        m_epg.programmes.insert(QStringLiteral("xtream:") + c.streamId, programmes);
+        ++m_epgRevision;
+        Q_EMIT epgChanged();
+    });
+}
+
+void IptvModel::saveEpgCache() const
+{
+    QJsonObject programmes;
+    for (auto it = m_epg.programmes.constBegin(); it != m_epg.programmes.constEnd(); ++it) {
+        QJsonArray list;
+        for (const Programme &p : it.value()) {
+            list.append(QJsonArray{double(p.start), double(p.stop), p.title, p.description, p.category});
+        }
+        programmes.insert(it.key(), list);
+    }
+    QJsonObject names;
+    for (auto it = m_epg.names.constBegin(); it != m_epg.names.constEnd(); ++it) {
+        names.insert(it.key(), it.value());
+    }
+    QFile file(m_dataDir + QStringLiteral("/iptv-epg.json"));
+    if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        file.write(QJsonDocument(QJsonObject{{QStringLiteral("saved"), double(QDateTime::currentSecsSinceEpoch())},
+                                             {QStringLiteral("programmes"), programmes},
+                                             {QStringLiteral("names"), names}}).toJson(QJsonDocument::Compact));
+    }
+}
+
+bool IptvModel::loadEpgCache()
+{
+    QFile file(m_dataDir + QStringLiteral("/iptv-epg.json"));
+    if (m_epgUrls.isEmpty() || !file.open(QIODevice::ReadOnly)) {
+        return false;
+    }
+    const QJsonObject root = QJsonDocument::fromJson(file.readAll()).object();
+    const qint64 saved = qint64(root.value(QStringLiteral("saved")).toDouble());
+    const QJsonObject programmes = root.value(QStringLiteral("programmes")).toObject();
+    for (auto it = programmes.constBegin(); it != programmes.constEnd(); ++it) {
+        QList<Programme> list;
+        for (const QJsonValue &v : it.value().toArray()) {
+            const QJsonArray a = v.toArray();
+            list.append({qint64(a.at(0).toDouble()), qint64(a.at(1).toDouble()), a.at(2).toString(), a.at(3).toString(), a.at(4).toString()});
+        }
+        m_epg.programmes.insert(it.key(), list);
+    }
+    const QJsonObject names = root.value(QStringLiteral("names")).toObject();
+    for (auto it = names.constBegin(); it != names.constEnd(); ++it) {
+        m_epg.names.insert(it.key(), it.value().toString());
+    }
+    ++m_epgRevision;
+    m_epgStatus = tr("Gids: %1 zenders").arg(m_epg.programmes.size());
+    return QDateTime::currentSecsSinceEpoch() - saved < 6 * 3600;
 }

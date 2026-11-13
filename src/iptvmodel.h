@@ -10,6 +10,9 @@
 #pragma once
 
 #include <QAbstractListModel>
+#include <QDateTime>
+#include <QFutureWatcher>
+#include <QHash>
 #include <QColor>
 #include <QNetworkAccessManager>
 #include <QSet>
@@ -29,6 +32,9 @@ class IptvModel : public QAbstractListModel
     Q_PROPERTY(QVariantList sources READ sources NOTIFY sourcesChanged)
     Q_PROPERTY(bool busy READ busy NOTIFY statusChanged)
     Q_PROPERTY(QString status READ status NOTIFY statusChanged)
+    // Gids (EPG): telt op bij nieuwe gegevens, zodat QML opnieuw opvraagt
+    Q_PROPERTY(int epgRevision READ epgRevision NOTIFY epgChanged)
+    Q_PROPERTY(QString epgStatus READ epgStatus NOTIFY epgChanged)
 
 public:
     enum Roles { NameRole = Qt::UserRole + 1, IconRole, AccentRole, GroupRole, UrlRole, FavoriteRole, NumberRole };
@@ -61,12 +67,21 @@ public:
     Q_INVOKABLE bool openExternal(int row);
     Q_INVOKABLE QString localPath(const QUrl &url) const;
 
+    // Gids: wat er nu en straks op een zender is, en het hele overzicht
+    int epgRevision() const { return m_epgRevision; }
+    QString epgStatus() const { return m_epgStatus; }
+    Q_INVOKABLE QVariantMap nowNext(int row) const;
+    Q_INVOKABLE QVariantList guide(int row) const;
+    Q_INVOKABLE void requestEpg(int row);   // Xtream: gids van deze zender ophalen
+    Q_INVOKABLE void reloadEpg();
+
 Q_SIGNALS:
     void countChanged();
     void channelsChanged();
     void filterChanged();
     void sourcesChanged();
     void statusChanged();
+    void epgChanged();
 
 private:
     struct Channel {
@@ -74,7 +89,30 @@ private:
         QString logo;
         QString group;
         QString url;
+        QString epgId;       // tvg-id (M3U) of epg_channel_id (Xtream)
+        int xtreamSource = -1;
+        QString streamId;
     };
+    struct Programme {
+        qint64 start = 0;    // seconden sinds 1970 (UTC)
+        qint64 stop = 0;
+        QString title;
+        QString description;
+        QString category;
+    };
+    struct EpgData {
+        QHash<QString, QList<Programme>> programmes; // per gids-id, op tijd gesorteerd
+        QHash<QString, QString> names;               // weergavenaam (klein) -> gids-id
+    };
+
+    QString epgKey(const Channel &c) const;
+    const QList<Programme> *programmesFor(const Channel &c) const;
+    void downloadNextEpg();
+    void finishEpgDownload();
+    void saveEpgCache() const;
+    bool loadEpgCache();
+    static EpgData parseXmltv(const QList<QByteArray> &files, const QSet<QString> &wanted);
+    static void sortAndTrim(EpgData &data);
 
     void loadNext();
     void finishLoading();
@@ -102,4 +140,15 @@ private:
     QStringList m_errors;
     bool m_busy = false;
     QString m_status;
+
+    QStringList m_epgUrls;
+    QStringList m_loadingEpgUrls;
+    QList<QByteArray> m_epgFiles;
+    int m_epgIndex = -1;
+    EpgData m_epg;
+    QSet<QString> m_shortEpgRequested;
+    QFutureWatcher<EpgData> m_epgWatcher;
+    int m_epgRevision = 0;
+    QString m_epgStatus;
+    bool m_epgBusy = false;
 };

@@ -223,6 +223,7 @@ int main(int argc, char *argv[])
     view.rootContext()->setContextProperty(QStringLiteral("gamepad"), &gamepad);
     // Alleen voor de geautomatiseerde test: opent bij het starten een menu
     view.rootContext()->setContextProperty(QStringLiteral("selfTest"), qEnvironmentVariable("BIGSCREEN_SELFTEST"));
+    view.rootContext()->setContextProperty(QStringLiteral("selfTestM3u"), qEnvironmentVariable("BIGSCREEN_TEST_M3U"));
     QObject::connect(&gamepad, &GamepadNavigator::homeRequested, &view, [&view] {
         view.showFullScreen();
         view.raise();

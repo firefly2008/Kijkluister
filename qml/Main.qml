@@ -281,6 +281,15 @@ Rectangle {
             if (selfTest === "iptvsources") {
                 iptvScreen.openSources()
             }
+        } else if (selfTest === "iptvbar" || selfTest === "iptvepg") {
+            // Test: eigen lijst met gids (aangemaakt door de CI)
+            if (iptv.sources.length === 0) {
+                iptv.addSource("m3u-file", "Gids-test", selfTestM3u, "", "")
+            }
+            iptvScreen.autoPlay = true
+            iptvScreen.pinInfo = selfTest === "iptvbar"
+            iptvScreen.autoGuide = selfTest === "iptvepg"
+            iptvScreen.open(mediaGrid())
         } else if (selfTest === "librarysetup") {
             libraryScreen.open("movies", mediaGrid())
             libraryScreen.openSetup()

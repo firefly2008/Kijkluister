@@ -9,7 +9,8 @@ project(bigscreen-host LANGUAGES CXX)
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
-find_package(Qt6 6.8 CONFIG REQUIRED COMPONENTS Core Gui Quick Qml Network Multimedia)
+find_package(Qt6 6.8 CONFIG REQUIRED COMPONENTS Core Gui Quick Qml Network Multimedia Concurrent)
+find_package(ZLIB REQUIRED)
 qt_standard_project_setup(REQUIRES 6.8)
 find_package(SDL3 CONFIG REQUIRED)
 
@@ -47,7 +48,7 @@ else()
 endif()
 
 # Zonder alias komt het bestand in de resources onder .../host/qml/Main.qml terecht
-set(BIGSCREEN_QML_FILES qml/Main.qml qml/BannerTile.qml qml/QuickTile.qml qml/MenuOverlay.qml qml/PlacesPicker.qml qml/SectionGrid.qml qml/AddTileOverlay.qml qml/LibraryScreen.qml qml/LibrarySetup.qml qml/FocusButton.qml qml/PosterTile.qml qml/IptvScreen.qml qml/IptvSources.qml)
+set(BIGSCREEN_QML_FILES qml/Main.qml qml/BannerTile.qml qml/QuickTile.qml qml/MenuOverlay.qml qml/PlacesPicker.qml qml/SectionGrid.qml qml/AddTileOverlay.qml qml/LibraryScreen.qml qml/LibrarySetup.qml qml/FocusButton.qml qml/PosterTile.qml qml/IptvScreen.qml qml/IptvSources.qml qml/EpgPanel.qml)
 foreach(qml_file IN LISTS BIGSCREEN_QML_FILES)
     get_filename_component(qml_name ${qml_file} NAME)
     set_source_files_properties(${qml_file} PROPERTIES QT_RESOURCE_ALIAS ${qml_name})
@@ -67,6 +68,8 @@ target_link_libraries(bigscreen-host PRIVATE
     Qt6::Qml
     Qt6::Network
     Qt6::Multimedia
+    Qt6::Concurrent
+    ZLIB::ZLIB
     SDL3::SDL3
 )
 
