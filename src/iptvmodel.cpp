@@ -239,6 +239,61 @@ void IptvModel::rebuildGroups()
     }
 }
 
+namespace {
+struct FreeList {
+    const char *name;
+    const char *url;
+};
+// iptv-org verzamelt alleen vrij en openbaar beschikbare streams van de zenders zelf
+const FreeList freeLists[] = {
+    {"Nederland", "https://iptv-org.github.io/iptv/countries/nl.m3u"},
+    {"België", "https://iptv-org.github.io/iptv/countries/be.m3u"},
+    {"Nieuws (internationaal)", "https://iptv-org.github.io/iptv/categories/news.m3u"},
+};
+}
+
+int IptvModel::addFreeSources()
+{
+    QStringList present;
+    for (const QVariant &v : std::as_const(m_sources)) {
+        present << v.toMap().value(QStringLiteral("url")).toString();
+    }
+    int added = 0;
+    for (const FreeList &list : freeLists) {
+        const QString url = QString::fromLatin1(list.url);
+        if (present.contains(url)) {
+            continue;
+        }
+        const QString name = QString::fromUtf8(list.name);
+        m_sources.append(QVariantMap{
+            {QStringLiteral("type"), QStringLiteral("m3u-url")},
+            {QStringLiteral("name"), tr("Gratis: %1").arg(name)},
+            {QStringLiteral("url"), url},
+            {QStringLiteral("group"), name},
+            {QStringLiteral("free"), true},
+        });
+        ++added;
+    }
+    if (added > 0) {
+        m_settings.setValue(QStringLiteral("iptv/sources"), m_sources);
+        m_settings.sync();
+        Q_EMIT sourcesChanged();
+        reload();
+    }
+    qInfo() << "IPTV: free sources added:" << added;
+    return added;
+}
+
+// Eén keer, ook bij een bestaande installatie: daarna beslist de gebruiker zelf
+void IptvModel::addFreeSourcesOnce()
+{
+    if (m_settings.value(QStringLiteral("iptv/freeSourcesAdded")).toBool()) {
+        return;
+    }
+    m_settings.setValue(QStringLiteral("iptv/freeSourcesAdded"), true);
+    addFreeSources();
+}
+
 bool IptvModel::addSource(const QString &type, const QString &name, const QString &url, const QString &user, const QString &password)
 {
     QString target = url.trimmed();
@@ -340,13 +395,19 @@ void IptvModel::loadNext()
         return;
     }
     QNetworkReply *reply = m_network.get(request(QUrl(source.value(QStringLiteral("url")).toString())));
-    connect(reply, &QNetworkReply::finished, this, [this, reply, name] {
+    const QString fixedGroup = source.value(QStringLiteral("group")).toString();
+    connect(reply, &QNetworkReply::finished, this, [this, reply, name, fixedGroup] {
         reply->deleteLater();
         if (reply->error() != QNetworkReply::NoError) {
             m_errors << tr("%1: %2").arg(name, reply->errorString());
             qWarning().noquote() << "IPTV load failed" << name << reply->errorString();
         } else {
+            const int before = m_loading.size();
             parseM3u(reply->readAll());
+            // Gratis lijsten: één groep per land in plaats van losse categorieën
+            for (int i = before; !fixedGroup.isEmpty() && i < m_loading.size(); ++i) {
+                m_loading[i].group = fixedGroup;
+            }
         }
         loadNext();
     });

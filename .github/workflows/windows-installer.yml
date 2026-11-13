@@ -88,7 +88,7 @@ jobs:
           $gz.Write($bytes, 0, $bytes.Length); $gz.Close(); $fs.Close()
           $env:BIGSCREEN_TEST_M3U = "$tv\test.m3u"
           Get-Content "$tv\test.m3u"
-          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile'
+          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree'
           $manual = '${{ github.ref }}' -like 'refs/heads/screenshots/*'
           if ($manual) {
             # Schermafbeeldingen voor de handleiding, op Full HD

@@ -57,6 +57,9 @@ public:
     QString status() const { return m_status; }
 
     // type: "m3u-url", "m3u-file" of "xtream"
+    // Gratis, openbaar beschikbare zenders (iptv-org) toevoegen als ze er nog niet zijn
+    Q_INVOKABLE int addFreeSources();
+    void addFreeSourcesOnce();
     Q_INVOKABLE bool addSource(const QString &type, const QString &name, const QString &url,
                                const QString &user, const QString &password);
     Q_INVOKABLE void removeSource(int index);

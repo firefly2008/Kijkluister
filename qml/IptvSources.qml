@@ -285,15 +285,27 @@ FocusScope {
                     unit: sources.unit
                     text: "Toevoegen en laden"
                     onClicked: sources.add()
-                    KeyNavigation.right: closeButton
+                    KeyNavigation.right: freeButton
                     KeyNavigation.up: sources.addType === "xtream" ? passwordField : sources.addType === "m3u-file" ? fileButton : urlField
+                }
+                FocusButton {
+                    id: freeButton
+                    unit: sources.unit
+                    text: "Gratis zenders"
+                    onClicked: {
+                        const n = iptv.addFreeSources()
+                        warning.text = n > 0 ? n + " gratis lijst(en) toegevoegd." : "De gratis lijsten staan er al."
+                    }
+                    KeyNavigation.left: addButton
+                    KeyNavigation.right: closeButton
+                    KeyNavigation.up: addButton.KeyNavigation.up
                 }
                 FocusButton {
                     id: closeButton
                     unit: sources.unit
                     text: "Sluiten"
                     onClicked: sources.close()
-                    KeyNavigation.left: addButton
+                    KeyNavigation.left: freeButton
                     KeyNavigation.up: addButton.KeyNavigation.up
                 }
             }

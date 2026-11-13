@@ -224,6 +224,11 @@ int main(int argc, char *argv[])
     // Alleen voor de geautomatiseerde test: opent bij het starten een menu
     view.rootContext()->setContextProperty(QStringLiteral("selfTest"), qEnvironmentVariable("BIGSCREEN_SELFTEST"));
     view.rootContext()->setContextProperty(QStringLiteral("selfTestM3u"), qEnvironmentVariable("BIGSCREEN_TEST_M3U"));
+    // Gratis zenders klaarzetten (de tests gebruiken hun eigen lijst)
+    const QString selfTestMode = qEnvironmentVariable("BIGSCREEN_SELFTEST");
+    if (selfTestMode.isEmpty() || selfTestMode == QLatin1String("iptvfree")) {
+        iptv.addFreeSourcesOnce();
+    }
     QObject::connect(&gamepad, &GamepadNavigator::homeRequested, &view, [&view] {
         view.showFullScreen();
         view.raise();

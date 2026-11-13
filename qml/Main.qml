@@ -290,6 +290,8 @@ Rectangle {
             iptvScreen.pinInfo = selfTest === "iptvbar"
             iptvScreen.autoGuide = selfTest === "iptvepg"
             iptvScreen.open(mediaGrid())
+        } else if (selfTest === "iptvfree") {
+            iptvScreen.open(mediaGrid())
         } else if (selfTest.startsWith("m-")) {
             // Schermafbeeldingen voor de handleiding
             if (iptv.sources.length === 0) {
