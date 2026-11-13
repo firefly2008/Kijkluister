@@ -478,6 +478,9 @@ Rectangle {
         contentHeight: sectionColumn.height
         clip: true
         boundsBehavior: Flickable.StopAtBounds
+        // Na een maatwijziging (start, ander scherm) de gekozen tegel weer in beeld brengen
+        onHeightChanged: if (root.currentSection) root.scrollTo(root.currentSection)
+        onContentHeightChanged: if (root.currentSection) root.scrollTo(root.currentSection)
         Behavior on contentY { NumberAnimation { duration: 200; easing.type: Easing.OutCubic } }
 
         Column {
