@@ -27,8 +27,12 @@ qt_add_executable(bigscreen-host WIN32
     src/iptvmodel.h
 )
 
+# Pictogram (getekend door assets/make_icon.py)
+qt_add_resources(bigscreen-host "icons" PREFIX "/" FILES assets/kijkluister-256.png)
+
 if(WIN32)
     target_sources(bigscreen-host PRIVATE
+        src/app.rc
         src/win32inputsystem.cpp
         src/win32inputsystem.h
     )

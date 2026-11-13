@@ -335,9 +335,20 @@ Rectangle {
         anchors.margins: root.unit * 3
         height: root.unit * 6
 
+        Image {
+            id: brandIcon
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            width: root.unit * 4.4
+            height: width
+            source: "qrc:/assets/kijkluister-256.png"
+            sourceSize: Qt.size(128, 128)
+            smooth: true
+        }
         Text {
             id: brand
-            anchors.left: parent.left
+            anchors.left: brandIcon.right
+            anchors.leftMargin: root.unit * 1.2
             anchors.verticalCenter: parent.verticalCenter
             color: "white"
             font.pixelSize: root.unit * 3.2
@@ -376,9 +387,9 @@ Rectangle {
         id: quickRow
         anchors.verticalCenter: header.verticalCenter
         anchors.left: header.left
-        anchors.leftMargin: brand.width + root.unit * 4
+        anchors.leftMargin: brand.x + brand.width + root.unit * 3
         width: Math.min(root.unit * 19 * quickModel.count,
-                        header.width - brand.width - clock.width - dateLabel.width - root.unit * 10)
+                        header.width - brand.x - brand.width - clock.width - dateLabel.width - root.unit * 10)
         height: root.unit * 5.6
         orientation: ListView.Horizontal
         model: quickModel

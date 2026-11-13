@@ -17,6 +17,7 @@
 #include <QDateTime>
 #include <QDir>
 #include <QGuiApplication>
+#include <QIcon>
 #include <QQuickView>
 #include <QQuickWindow>
 #include <QScreen>
@@ -167,6 +168,7 @@ int main(int argc, char *argv[])
 
     QGuiApplication app(argc, argv);
     QGuiApplication::setApplicationName(QStringLiteral("Kijkluister"));
+    QGuiApplication::setWindowIcon(QIcon(QStringLiteral(":/assets/kijkluister-256.png")));
     QGuiApplication::setOrganizationName(QStringLiteral("KDE"));
 
     qInfo() << "QGuiApplication created; platform" << QGuiApplication::platformName();
