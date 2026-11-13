@@ -14,6 +14,8 @@ FocusScope {
     property int playingRow: -1
     property var channel: ({})
     property string errorText: ""
+    // De speler bestaat alleen tijdens het kijken (snellere start, decoder weer vrij)
+    readonly property var player: playerLoader.item ? playerLoader.item.mediaPlayer : null
 
     anchors.fill: parent
     visible: false
@@ -53,10 +55,12 @@ FocusScope {
         playingRow = row
         channel = ch
         errorText = ""
-        player.stop()
-        player.source = ch.url
-        player.play()
         playing = true
+        if (player) {
+            player.stop()
+            player.source = ch.url
+            player.play()
+        }
         showInfo()
         playerView.forceActiveFocus()
     }
@@ -68,8 +72,9 @@ FocusScope {
     }
 
     function stop() {
-        player.stop()
-        player.source = ""
+        if (player) {
+            player.stop()
+        }
         if (playing) {
             playing = false
             grid.currentIndex = Math.max(0, playingRow)
@@ -428,34 +433,41 @@ FocusScope {
             color: "black"
         }
 
-        MediaPlayer {
-            id: player
-            audioOutput: AudioOutput {}
-            videoOutput: video
-            onErrorOccurred: (error, errorString) => {
-                tv.errorText = errorString !== "" ? errorString : "Deze zender kan niet worden afgespeeld"
-                console.warn("IPTV play error:", errorString, tv.channel.url)
-            }
-            onMediaStatusChanged: {
-                if (mediaStatus === MediaPlayer.BufferedMedia) {
-                    console.info("IPTV playing:", tv.channel.name)
+        Loader {
+            id: playerLoader
+            anchors.fill: parent
+            active: tv.playing
+            sourceComponent: Item {
+                property alias mediaPlayer: mediaPlayer
+                MediaPlayer {
+                    id: mediaPlayer
+                    audioOutput: AudioOutput {}
+                    videoOutput: video
+                    onErrorOccurred: (error, errorString) => {
+                        tv.errorText = errorString !== "" ? errorString : "Deze zender kan niet worden afgespeeld"
+                        console.warn("IPTV play error:", errorString, tv.channel.url)
+                    }
+                    onMediaStatusChanged: {
+                        if (mediaStatus === MediaPlayer.BufferedMedia) {
+                            console.info("IPTV playing:", tv.channel.name)
+                        }
+                    }
+                }
+                VideoOutput {
+                    id: video
+                    anchors.fill: parent
+                    fillMode: VideoOutput.PreserveAspectFit
                 }
             }
-        }
-
-        VideoOutput {
-            id: video
-            anchors.fill: parent
-            fillMode: VideoOutput.PreserveAspectFit
         }
 
         // Laden / fout
         Column {
             anchors.centerIn: parent
             spacing: tv.unit * 1.5
-            visible: tv.errorText !== "" || player.mediaStatus === MediaPlayer.LoadingMedia
-                     || player.mediaStatus === MediaPlayer.StalledMedia
-                     || (player.mediaStatus === MediaPlayer.BufferingMedia && !player.hasVideo)
+            visible: tv.errorText !== "" || (tv.player !== null && (tv.player.mediaStatus === MediaPlayer.LoadingMedia
+                     || tv.player.mediaStatus === MediaPlayer.StalledMedia
+                     || (tv.player.mediaStatus === MediaPlayer.BufferingMedia && !tv.player.hasVideo)))
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 color: "white"
