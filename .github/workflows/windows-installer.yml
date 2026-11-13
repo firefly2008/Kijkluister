@@ -51,7 +51,8 @@ jobs:
           "[library]`r`nmoviesFolder=$($films -replace '\\','/')`r`nshowsFolder=$($series -replace '\\','/')`r`n" | Set-Content "$env:LOCALAPPDATA\BigscreenHost\settings.ini"
           # Gids-test: een paar echte zenders (iptv-org) met een eigen XMLTV-gids (gzip) rond dit moment
           $tv = "$env:RUNNER_TEMP\tv"; New-Item -ItemType Directory -Force $tv | Out-Null
-          $lines = (Invoke-WebRequest -UseBasicParsing https://iptv-org.github.io/iptv/countries/nl.m3u).Content -split "`n" | ForEach-Object { $_.Trim() }
+          Invoke-WebRequest -UseBasicParsing https://iptv-org.github.io/iptv/countries/nl.m3u -OutFile "$tv\nl.m3u"
+          $lines = @(Get-Content -Encoding UTF8 "$tv\nl.m3u" | ForEach-Object { $_.Trim() })
           $guideUrl = "file:///" + ("$tv\guide.xml.gz" -replace '\\','/')
           $m3u = @("#EXTM3U url-tvg=`"$guideUrl`""); $n = 0
           for ($i = 0; $i -lt $lines.Count -and $n -lt 6; $i++) {
