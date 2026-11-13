@@ -16,6 +16,7 @@
 #include <QStandardPaths>
 
 #include <algorithm>
+#include <climits>
 
 namespace {
 QString dataDir()
@@ -270,6 +271,7 @@ void AppModel::refresh()
         tiles.erase(std::remove_if(tiles.begin(), tiles.end(), [this](const App &tile) {
             return m_hidden.contains(tile.path);
         }), tiles.end());
+        applyOrder(tiles);
         beginResetModel();
         m_apps = tiles;
         endResetModel();
@@ -293,6 +295,7 @@ void AppModel::refresh()
         return m_hidden.contains(tile.path);
     }), apps.end());
 
+    applyOrder(apps);
     beginResetModel();
     m_apps = apps;
     endResetModel();
@@ -461,6 +464,40 @@ bool AppModel::addTile(const QString &name, const QString &target)
     refresh();
     qInfo() << "Tile added" << cleanName << cleanTarget;
     return true;
+}
+
+// Zet de tegels in de volgorde die de gebruiker heeft gesleept; nieuwe tegels achteraan.
+void AppModel::applyOrder(QList<App> &tiles) const
+{
+    const QStringList order = m_settings.value(key("order")).toStringList();
+    if (order.isEmpty()) {
+        return;
+    }
+    std::stable_sort(tiles.begin(), tiles.end(), [&order](const App &a, const App &b) {
+        const int ia = order.indexOf(a.path);
+        const int ib = order.indexOf(b.path);
+        return (ia < 0 ? INT_MAX : ia) < (ib < 0 ? INT_MAX : ib);
+    });
+}
+
+void AppModel::saveOrder()
+{
+    QStringList order;
+    for (const App &tile : std::as_const(m_apps)) {
+        order << tile.path;
+    }
+    m_settings.setValue(key("order"), order);
+}
+
+void AppModel::move(int from, int to)
+{
+    if (from == to || from < 0 || to < 0 || from >= m_apps.size() || to >= m_apps.size()) {
+        return;
+    }
+    beginMoveRows({}, from, from, {}, to > from ? to + 1 : to);
+    m_apps.move(from, to);
+    endMoveRows();
+    saveOrder();
 }
 
 void AppModel::restoreHidden()

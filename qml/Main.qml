@@ -64,6 +64,12 @@ Rectangle {
         if (model.hasCustomIcon(row)) {
             entries.push({ label: "Standaardpictogram herstellen", action: "icon-reset" })
         }
+        if (row > 0) {
+            entries.push({ label: "Naar links verplaatsen", action: "move-left" })
+        }
+        if (row < model.count - 1) {
+            entries.push({ label: "Naar rechts verplaatsen", action: "move-right" })
+        }
         entries.push({ label: "Van startpagina verwijderen", action: "hide" })
         entries.push({ label: "Annuleren", action: "" })
         menu.open(model.nameAt(row), entries, focusItem)
@@ -92,6 +98,11 @@ Rectangle {
             imageDialog.open()
         } else if (action === "icon-reset") {
             editModel.clearCustomIcon(editRow)
+        } else if (action === "move-left" || action === "move-right") {
+            const to = editRow + (action === "move-left" ? -1 : 1)
+            editModel.move(editRow, to)
+            const grid = editModel === webModel ? streamGrid : appGrid
+            grid.currentIndex = to
         } else if (action === "hide") {
             const name = editModel.nameAt(editRow)
             editModel.hide(editRow)
@@ -361,7 +372,19 @@ Rectangle {
             onActivated: { streamGrid.currentIndex = index; streamGrid.trigger(index) }
             onHovered: { if (!menu.visible && !addOverlay.visible) { streamGrid.currentIndex = index; streamGrid.forceActiveFocus() } }
             onMenuRequested: { streamGrid.currentIndex = index; root.openTileMenu(webModel, index, streamGrid) }
+            // Slepen: de tegel neemt de plek in van de tegel waar de muis boven hangt
+            onDragMoved: (x, y) => {
+                const pos = mapToItem(streamGrid.contentItem, x, y)
+                const to = streamGrid.indexAt(pos.x, pos.y)
+                if (to >= 0 && to !== index) {
+                    webModel.move(index, to)
+                    streamGrid.currentIndex = to
+                }
+            }
         }
+
+        move: Transition { NumberAnimation { properties: "x,y"; duration: 160; easing.type: Easing.OutCubic } }
+        displaced: Transition { NumberAnimation { properties: "x,y"; duration: 160; easing.type: Easing.OutCubic } }
 
         Keys.onReturnPressed: trigger(currentIndex)
         Keys.onEnterPressed: trigger(currentIndex)
@@ -440,7 +463,19 @@ Rectangle {
             onActivated: { appGrid.currentIndex = index; appGrid.trigger(index) }
             onHovered: { if (!menu.visible && !addOverlay.visible) { appGrid.currentIndex = index; appGrid.forceActiveFocus() } }
             onMenuRequested: { appGrid.currentIndex = index; root.openTileMenu(appModel, index, appGrid) }
+            // Slepen: de tegel neemt de plek in van de tegel waar de muis boven hangt
+            onDragMoved: (x, y) => {
+                const pos = mapToItem(appGrid.contentItem, x, y)
+                const to = appGrid.indexAt(pos.x, pos.y)
+                if (to >= 0 && to !== index) {
+                    appModel.move(index, to)
+                    appGrid.currentIndex = to
+                }
+            }
         }
+
+        move: Transition { NumberAnimation { properties: "x,y"; duration: 160; easing.type: Easing.OutCubic } }
+        displaced: Transition { NumberAnimation { properties: "x,y"; duration: 160; easing.type: Easing.OutCubic } }
 
         Keys.onReturnPressed: trigger(currentIndex)
         Keys.onEnterPressed: trigger(currentIndex)
@@ -476,7 +511,7 @@ Rectangle {
         color: "#7d8188"
         font.pixelSize: root.unit * 2
         text: (gamepad.connectedCount > 0 ? "Controller verbonden  ·  " : "")
-              + "Pijltjes / D-pad: navigeren  ·  Enter / A: openen  ·  F2, rechtermuisknop of X: tegel aanpassen"
+              + "Pijltjes / D-pad: navigeren  ·  Enter / A: openen  ·  F2, rechtermuisknop of X: aanpassen  ·  Ingedrukt houden en slepen: verplaatsen"
     }
 
     // --- Korte melding ---

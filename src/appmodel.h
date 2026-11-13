@@ -48,6 +48,7 @@ public:
 
     // Tegels aanpassen
     Q_INVOKABLE void hide(int row);
+    Q_INVOKABLE void move(int from, int to);
     Q_INVOKABLE bool addTile(const QString &name, const QString &target);
     Q_INVOKABLE void restoreHidden();
     Q_INVOKABLE bool setCustomIcon(int row, const QUrl &imageFile);
@@ -76,6 +77,8 @@ private:
     bool launchWeb(const QString &url);
 
     QColor accentFor(const App &app) const;
+    void applyOrder(QList<App> &tiles) const;
+    void saveOrder();
 
     Kind m_kind;
     mutable QHash<QString, QColor> m_accentCache; // sleutel: pictogrambestand

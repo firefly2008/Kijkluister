@@ -15,9 +15,12 @@ Item {
     signal activated()
     signal menuRequested()
     signal hovered()
+    // Slepen: linkermuisknop ingedrukt houden en de tegel naar een andere plek bewegen
+    property bool dragging: false
+    signal dragMoved(real x, real y)
 
     // Gekozen tegel komt boven zijn buren te liggen
-    z: selected ? 2 : 0
+    z: dragging ? 3 : selected ? 2 : 0
 
     Rectangle {
         id: card
@@ -27,7 +30,8 @@ Item {
         color: tile.accent
         border.width: tile.selected ? Math.max(3, height * 0.035) : 0
         border.color: "white"
-        scale: tile.selected ? 1.2 : 1.0
+        scale: tile.dragging ? 1.28 : tile.selected ? 1.2 : 1.0
+        opacity: tile.dragging ? 0.85 : 1.0
         Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
 
         // Lichte glans bovenin, zodat het vlak niet vlak oogt
@@ -88,14 +92,30 @@ Item {
         anchors.fill: parent
         hoverEnabled: true
         acceptedButtons: Qt.LeftButton | Qt.RightButton
+        // Tijdens het slepen mag de lijst de muis niet overnemen om te scrollen
+        preventStealing: tile.dragging
         onEntered: tile.hovered()
         onClicked: (mouse) => {
+            if (mouse.wasHeld) {
+                return
+            }
             if (mouse.button === Qt.RightButton) {
                 tile.menuRequested()
             } else {
                 tile.activated()
             }
         }
-        onPressAndHold: tile.menuRequested()
+        onPressAndHold: (mouse) => {
+            if (mouse.button === Qt.LeftButton) {
+                tile.dragging = true
+            }
+        }
+        onPositionChanged: (mouse) => {
+            if (tile.dragging) {
+                tile.dragMoved(mouse.x, mouse.y)
+            }
+        }
+        onReleased: tile.dragging = false
+        onCanceled: tile.dragging = false
     }
 }
