@@ -360,7 +360,9 @@ FocusScope {
             height: lib.unit * 56
             topMargin: lib.unit * 2
             bottomMargin: lib.unit * 2
-            cellWidth: Math.floor(width / 8)
+            // Ongeveer zes posters naast elkaar op een tv-scherm
+            readonly property int columns: Math.max(4, Math.round(width / (lib.unit * 24)))
+            cellWidth: Math.floor(width / columns)
             cellHeight: Math.floor(cellWidth * 1.66)
             clip: true
             focus: true
@@ -375,6 +377,7 @@ FocusScope {
             }
 
             delegate: PosterTile {
+                fontSize: lib.unit * 1.9
                 width: grid.cellWidth
                 height: grid.cellHeight
                 selected: grid.activeFocus && grid.currentIndex === index
@@ -394,7 +397,7 @@ FocusScope {
             Keys.onReturnPressed: lib.showDetail(lib.items[currentIndex])
             Keys.onEnterPressed: lib.showDetail(lib.items[currentIndex])
             Keys.onLeftPressed: (event) => {
-                if (currentIndex % Math.max(1, Math.floor(width / cellWidth)) === 0) {
+                if (currentIndex % columns === 0) {
                     menu.currentIndex = lib.section === "movies" ? 0 : 1
                     menu.forceActiveFocus()
                 } else {

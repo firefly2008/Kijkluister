@@ -8,6 +8,7 @@ Item {
     required property var modelData
     required property int index
     property bool selected: false
+    property real fontSize: 14
     signal activated()
     signal hovered()
 
@@ -37,7 +38,7 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
                 color: "white"
-                font.pixelSize: parent.width * 0.11
+                font.pixelSize: tile.fontSize * 1.3
                 font.weight: Font.DemiBold
                 text: tile.modelData.title || ""
             }
@@ -59,7 +60,7 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
             color: tile.selected ? "white" : "#b0b4bb"
-            font.pixelSize: frame.width * 0.085
+            font.pixelSize: tile.fontSize
             text: tile.modelData.title + (tile.modelData.year ? " (" + tile.modelData.year + ")" : "")
         }
     }
