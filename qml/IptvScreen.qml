@@ -27,6 +27,9 @@ FocusScope {
             sources.open()
         } else if (iptv.totalCount === 0 && !iptv.busy) {
             iptv.reload()
+        } else if (autoPlay && iptv.count > 0) {
+            autoPlay = false
+            play(0)
         }
     }
 

@@ -25,7 +25,8 @@ FocusScope {
         warning.text = ""
         confirmRemove = -1
         visible = true
-        (sourceList.count > 0 ? sourceList : urlTab).forceActiveFocus()
+        const first = sourceList.count > 0 ? sourceList : urlTab
+        first.forceActiveFocus()
     }
 
     function close() {
