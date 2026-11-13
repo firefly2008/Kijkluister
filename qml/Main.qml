@@ -168,6 +168,9 @@ Rectangle {
     Component.onCompleted: {
         if (selfTest === "addtile") {
             addOverlay.open(quickRow)
+        } else if (selfTest === "podcasts") {
+            webModel.category = "podcasts"
+            streamTitle.forceActiveFocus()
         } else if (selfTest === "moveask") {
             streamGrid.currentIndex = 2
             streamGrid.forceActiveFocus()
@@ -374,19 +377,70 @@ Rectangle {
         }
     }
 
-    // --- Streaming ---
-    Text {
+    // --- Streaming: tabbladen Video, Muziek, Luisterboeken, Podcasts ---
+    ListView {
         id: streamTitle
         anchors.top: hero.bottom
         anchors.left: parent.left
+        anchors.right: parent.right
         anchors.topMargin: root.unit * 1.5
-        anchors.leftMargin: root.unit * 4
-        visible: webModel.count > 0
-        height: visible ? implicitHeight : 0
-        color: "white"
-        font.pixelSize: root.unit * 2.6
-        font.weight: Font.DemiBold
-        text: "Streaming"
+        anchors.leftMargin: root.unit * 3
+        height: root.unit * 4.6
+        orientation: ListView.Horizontal
+        spacing: root.unit
+        interactive: false
+        keyNavigationEnabled: true
+        currentIndex: model.findIndex(t => t.key === webModel.category)
+        model: [
+            { key: "video", label: "Video" },
+            { key: "muziek", label: "Muziek" },
+            { key: "luisterboeken", label: "Luisterboeken" },
+            { key: "podcasts", label: "Podcasts" }
+        ]
+
+        delegate: Rectangle {
+            id: tab
+            required property int index
+            required property var modelData
+            readonly property bool chosen: webModel.category === modelData.key
+            readonly property bool focused: streamTitle.activeFocus && streamTitle.currentIndex === index
+            width: tabLabel.implicitWidth + root.unit * 4
+            height: streamTitle.height
+            radius: height / 2
+            color: focused ? "#e8eaed" : chosen ? "#40ffffff" : "transparent"
+            Text {
+                id: tabLabel
+                anchors.centerIn: parent
+                color: tab.focused ? "#111318" : tab.chosen ? "white" : "#c4c7cc"
+                font.pixelSize: root.unit * 2.4
+                font.weight: tab.chosen ? Font.DemiBold : Font.Normal
+                text: tab.modelData.label
+            }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: {
+                    webModel.category = tab.modelData.key
+                    streamGrid.currentIndex = 0
+                    streamGrid.forceActiveFocus()
+                }
+            }
+        }
+
+        // Links/rechts wisselt meteen van tabblad
+        onCurrentIndexChanged: {
+            if (activeFocus && currentIndex >= 0) {
+                webModel.category = model[currentIndex].key
+            }
+        }
+        Keys.onUpPressed: quickRow.forceActiveFocus()
+        Keys.onDownPressed: {
+            streamGrid.currentIndex = 0
+            streamGrid.forceActiveFocus()
+        }
+        Keys.onReturnPressed: {
+            streamGrid.currentIndex = 0
+            streamGrid.forceActiveFocus()
+        }
     }
 
     GridView {
@@ -448,7 +502,7 @@ Rectangle {
         Keys.onMenuPressed: root.openTileMenu(webModel, currentIndex, streamGrid)
         Keys.onUpPressed: (event) => {
             if (currentIndex < root.columns) {
-                quickRow.forceActiveFocus()
+                streamTitle.forceActiveFocus()
             } else {
                 event.accepted = false
             }

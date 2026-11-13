@@ -27,6 +27,8 @@ class AppModel : public QAbstractListModel
     Q_PROPERTY(int revision READ revision NOTIFY revisionChanged)
     // Grote naam en logo linksboven op de startpagina
     Q_PROPERTY(bool showHero READ showHero WRITE setShowHero NOTIFY showHeroChanged)
+    // Web-tegels: welk tabblad zichtbaar is
+    Q_PROPERTY(QString category READ category WRITE setCategory NOTIFY categoryChanged)
 
 public:
     enum Roles { NameRole = Qt::UserRole + 1, PathRole, IconRole, CustomIconRole, AccentRole };
@@ -42,6 +44,15 @@ public:
     int hiddenCount() const { return m_hidden.size(); }
     QString background() const { return m_background; }
     int revision() const { return m_revision; }
+    QString category() const { return m_category; }
+    void setCategory(const QString &category)
+    {
+        if (category != m_category) {
+            m_category = category;
+            refresh();
+            Q_EMIT categoryChanged();
+        }
+    }
     bool showHero() const { return m_settings.value(QStringLiteral("showHero"), true).toBool(); }
     void setShowHero(bool show)
     {
@@ -78,12 +89,14 @@ Q_SIGNALS:
     void internalRequested(const QString &target);
     void revisionChanged();
     void showHeroChanged();
+    void categoryChanged();
 
 private:
     struct App {
         QString name;
         QString path; // pad van snelkoppeling/programma, of URL bij een web-tegel
         bool custom = false; // door de gebruiker zelf toegevoegd
+        QString category;    // bij web-tegels: video, muziek, luisterboeken of podcasts
     };
     QString key(const char *name) const;
     QList<App> customTiles() const;
@@ -106,5 +119,6 @@ private:
     QVariantMap m_customIcons; // pad van snelkoppeling -> file-URL van eigen pictogram
     QString m_background;
     int m_revision = 0;
+    QString m_category = QStringLiteral("video");
     QSettings m_settings;
 };

@@ -43,58 +43,59 @@ void removeLocalFile(const QString &fileUrl)
 struct WebDefault {
     const char *name;
     const char *url;
+    const char *category; // video, muziek, luisterboeken, podcasts
 };
 const WebDefault webDefaults[] = {
-    {"Netflix", "https://www.netflix.com"},
-    {"Disney+", "https://www.disneyplus.com"},
-    {"Prime Video", "https://www.primevideo.com"},
-    {"HBO Max", "https://www.hbomax.com"},
-    {"Videoland", "https://www.videoland.com"},
-    {"NPO Start", "https://npo.nl/start"},
-    {"NLZIET", "https://app.nlziet.nl"},
-    {"SkyShowtime", "https://www.skyshowtime.com"},
-    {"Apple TV", "https://tv.apple.com/nl"},
-    {"Viaplay", "https://viaplay.com/nl-nl"},
-    {"YouTube", "https://www.youtube.com"},
-    {"KIJK", "https://www.kijk.nl"},
-    {"Ziggo GO", "https://www.ziggogo.tv"},
-    {"KPN TV", "https://tv.kpn.com"},
-    {"Odido TV", "https://tv.odido.nl"},
-    {"Canal+", "https://www.canalplus.com/nl/"},
-    {"Discovery+", "https://www.discoveryplus.com/nl"},
-    {"Pathé Thuis", "https://www.pathe-thuis.nl"},
-    {"Rakuten TV", "https://www.rakuten.tv/nl"},
-    {"MUBI", "https://mubi.com/nl"},
-    {"CineMember", "https://www.cinemember.nl"},
-    {"Picl", "https://picl.nl"},
-    {"Cinetree", "https://cinetree.nl"},
-    {"Film1", "https://www.film1.nl"},
-    {"Crunchyroll", "https://www.crunchyroll.com"},
-    {"F1 TV", "https://f1tv.formula1.com"},
-    {"ESPN", "https://www.espn.nl/watch/"},
-    {"Twitch", "https://www.twitch.tv"},
-    {"Plex", "https://app.plex.tv"},
-    // Muziek en luisterboeken
-    {"Spotify", "https://open.spotify.com"},
-    {"YouTube Music", "https://music.youtube.com"},
-    {"Apple Music", "https://music.apple.com/nl"},
-    {"Deezer", "https://www.deezer.com/nl"},
-    {"Tidal", "https://listen.tidal.com"},
-    {"Amazon Music", "https://music.amazon.com"},
-    {"Qobuz", "https://play.qobuz.com"},
-    {"SoundCloud", "https://soundcloud.com"},
-    {"Storytel", "https://www.storytel.com/nl"},
+    {"Netflix", "https://www.netflix.com", "video"},
+    {"Disney+", "https://www.disneyplus.com", "video"},
+    {"Prime Video", "https://www.primevideo.com", "video"},
+    {"HBO Max", "https://www.hbomax.com", "video"},
+    {"Videoland", "https://www.videoland.com", "video"},
+    {"NPO Start", "https://npo.nl/start", "video"},
+    {"NLZIET", "https://app.nlziet.nl", "video"},
+    {"SkyShowtime", "https://www.skyshowtime.com", "video"},
+    {"Apple TV", "https://tv.apple.com/nl", "video"},
+    {"Viaplay", "https://viaplay.com/nl-nl", "video"},
+    {"YouTube", "https://www.youtube.com", "video"},
+    {"KIJK", "https://www.kijk.nl", "video"},
+    {"Ziggo GO", "https://www.ziggogo.tv", "video"},
+    {"KPN TV", "https://tv.kpn.com", "video"},
+    {"Odido TV", "https://tv.odido.nl", "video"},
+    {"Canal+", "https://www.canalplus.com/nl/", "video"},
+    {"Discovery+", "https://www.discoveryplus.com/nl", "video"},
+    {"Pathé Thuis", "https://www.pathe-thuis.nl", "video"},
+    {"Rakuten TV", "https://www.rakuten.tv/nl", "video"},
+    {"MUBI", "https://mubi.com/nl", "video"},
+    {"CineMember", "https://www.cinemember.nl", "video"},
+    {"Picl", "https://picl.nl", "video"},
+    {"Cinetree", "https://cinetree.nl", "video"},
+    {"Film1", "https://www.film1.nl", "video"},
+    {"Crunchyroll", "https://www.crunchyroll.com", "video"},
+    {"F1 TV", "https://f1tv.formula1.com", "video"},
+    {"ESPN", "https://www.espn.nl/watch/", "video"},
+    {"Twitch", "https://www.twitch.tv", "video"},
+    {"Plex", "https://app.plex.tv", "video"},
+    // Muziek
+    {"Spotify", "https://open.spotify.com", "muziek"},
+    {"YouTube Music", "https://music.youtube.com", "muziek"},
+    {"Apple Music", "https://music.apple.com/nl", "muziek"},
+    {"Deezer", "https://www.deezer.com/nl", "muziek"},
+    {"Tidal", "https://listen.tidal.com", "muziek"},
+    {"Amazon Music", "https://music.amazon.com", "muziek"},
+    {"Qobuz", "https://play.qobuz.com", "muziek"},
+    {"SoundCloud", "https://soundcloud.com", "muziek"},
+    {"Storytel", "https://www.storytel.com/nl", "luisterboeken"},
     // Luisterboeken en podcasts (Nederland)
-    {"Podimo", "https://podimo.com/nl"},
-    {"BookBeat", "https://www.bookbeat.com/nl"},
-    {"Nextory", "https://nextory.com/nl"},
-    {"Kobo Plus", "https://www.kobo.com/nl/nl/plus"},
-    {"Fluister", "https://www.fluister.nl"},
-    {"Luisterrijk", "https://www.luisterrijk.nl"},
-    {"Online Bibliotheek", "https://www.onlinebibliotheek.nl"},
-    {"NPO Luister", "https://www.npoluister.nl"},
-    {"Apple Podcasts", "https://podcasts.apple.com/nl"},
-    {"Pocket Casts", "https://play.pocketcasts.com"},
+    {"Podimo", "https://podimo.com/nl", "podcasts"},
+    {"BookBeat", "https://www.bookbeat.com/nl", "luisterboeken"},
+    {"Nextory", "https://nextory.com/nl", "luisterboeken"},
+    {"Kobo Plus", "https://www.kobo.com/nl/nl/plus", "luisterboeken"},
+    {"Fluister", "https://www.fluister.nl", "luisterboeken"},
+    {"Luisterrijk", "https://www.luisterrijk.nl", "luisterboeken"},
+    {"Online Bibliotheek", "https://www.onlinebibliotheek.nl", "luisterboeken"},
+    {"NPO Luister", "https://www.npoluister.nl", "podcasts"},
+    {"Apple Podcasts", "https://podcasts.apple.com/nl", "podcasts"},
+    {"Pocket Casts", "https://play.pocketcasts.com", "podcasts"},
 };
 
 // Zoekt MPC-HC (64-bit) op de gebruikelijke plekken, ook die van het K-Lite Codec Pack.
@@ -140,7 +141,8 @@ QList<AppModel::App> AppModel::customTiles() const
     const QVariantList stored = m_settings.value(key("customTiles")).toList();
     for (const QVariant &entry : stored) {
         const QVariantMap map = entry.toMap();
-        tiles.append({map.value(QStringLiteral("name")).toString(), map.value(QStringLiteral("target")).toString(), true});
+        tiles.append({map.value(QStringLiteral("name")).toString(), map.value(QStringLiteral("target")).toString(), true,
+                      map.value(QStringLiteral("category"), QStringLiteral("video")).toString()});
     }
     return tiles;
 }
@@ -149,7 +151,8 @@ void AppModel::saveCustomTiles(const QList<App> &tiles)
 {
     QVariantList stored;
     for (const App &tile : tiles) {
-        stored.append(QVariantMap{{QStringLiteral("name"), tile.name}, {QStringLiteral("target"), tile.path}});
+        stored.append(QVariantMap{{QStringLiteral("name"), tile.name}, {QStringLiteral("target"), tile.path},
+                                  {QStringLiteral("category"), tile.category}});
     }
     m_settings.setValue(key("customTiles"), stored);
 }
@@ -285,11 +288,12 @@ void AppModel::refresh()
     if (m_kind == Web) {
         QList<App> tiles;
         for (const WebDefault &entry : webDefaults) {
-            tiles.append({QString::fromUtf8(entry.name), QString::fromUtf8(entry.url), false});
+            tiles.append({QString::fromUtf8(entry.name), QString::fromUtf8(entry.url), false, QString::fromUtf8(entry.category)});
         }
         tiles.append(customTiles());
+        // Alleen de tegels van het gekozen tabblad (Video, Muziek, Luisterboeken, Podcasts)
         tiles.erase(std::remove_if(tiles.begin(), tiles.end(), [this](const App &tile) {
-            return m_hidden.contains(tile.path);
+            return m_hidden.contains(tile.path) || tile.category != m_category;
         }), tiles.end());
         applyOrder(tiles);
         beginResetModel();
@@ -480,7 +484,7 @@ bool AppModel::addTile(const QString &name, const QString &target)
             return false;
         }
     }
-    own.append({cleanName, cleanTarget, true});
+    own.append({cleanName, cleanTarget, true, m_kind == Web ? m_category : QString()});
     saveCustomTiles(own);
     m_hidden.removeAll(cleanTarget);
     m_settings.setValue(key("hiddenApps"), m_hidden);
@@ -508,6 +512,13 @@ void AppModel::saveOrder()
     QStringList order;
     for (const App &tile : std::as_const(m_apps)) {
         order << tile.path;
+    }
+    // Tegels van andere tabbladen houden hun plek in de opgeslagen volgorde
+    const QStringList previous = m_settings.value(key("order")).toStringList();
+    for (const QString &path : previous) {
+        if (!order.contains(path)) {
+            order << path;
+        }
     }
     m_settings.setValue(key("order"), order);
 }
