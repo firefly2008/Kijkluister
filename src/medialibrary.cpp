@@ -394,7 +394,7 @@ void MediaLibrary::finish(const QString &key, QJsonObject entry, const QString &
 
 void MediaLibrary::getJson(QNetworkRequest request, const JsonCallback &callback)
 {
-    request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("BigscreenHost (Windows-port van Plasma Bigscreen)"));
+    request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("Kijkluister (gebaseerd op Plasma Bigscreen)"));
     request.setTransferTimeout(20000);
     QNetworkReply *reply = m_network.get(request);
     connect(reply, &QNetworkReply::finished, this, [reply, callback] {

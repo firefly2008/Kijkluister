@@ -342,7 +342,7 @@ Rectangle {
             color: "white"
             font.pixelSize: root.unit * 3.2
             font.weight: Font.DemiBold
-            text: "Bigscreen"
+            text: "Kijkluister"
         }
 
         Text {

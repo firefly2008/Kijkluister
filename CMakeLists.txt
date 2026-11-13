@@ -1,5 +1,5 @@
-# Plasma Bigscreen -> Windows: Fase 0 proof-of-concept skeleton
-# Optie A (zie migratieplan): losse "Bigscreen Host" kiosk-app, geen KWin/Plasma-sessie.
+# Kijkluister: Windows-port van Plasma Bigscreen (tot versie 3.7 "Bigscreen Host")
+# Optie A (zie migratieplan): losse kiosk-app, geen KWin/Plasma-sessie.
 #
 # SPDX-License-Identifier: GPL-2.0-or-later
 
@@ -71,6 +71,7 @@ if(WIN32)
 endif()
 
 # Installatie: alles plat in een map, zodat windeployqt + Inno Setup er een installer van maken
+set_target_properties(bigscreen-host PROPERTIES OUTPUT_NAME Kijkluister)
 install(TARGETS bigscreen-host RUNTIME DESTINATION .)
 if(WIN32)
     install(FILES $<TARGET_RUNTIME_DLLS:bigscreen-host> DESTINATION .)

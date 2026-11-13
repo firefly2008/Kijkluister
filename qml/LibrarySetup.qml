@@ -94,7 +94,7 @@ FocusScope {
                 wrapMode: Text.Wrap
                 color: "#c4c7cc"
                 font.pixelSize: setup.unit * 2.2
-                text: "Kies de mappen met je films en series. Bigscreen zoekt daarin de video's en haalt titel, "
+                text: "Kies de mappen met je films en series. Kijkluister zoekt daarin de video's en haalt titel, "
                       + "beschrijving, poster, achtergrond en cast op, zoals Kodi dat doet. Zet elke serie in een eigen "
                       + "map (bijvoorbeeld Series\\Westworld (2016)) en noem afleveringen S01E01, S01E02 enzovoort."
             }

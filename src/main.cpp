@@ -100,7 +100,7 @@ void showFatal(const QString &text)
     qCritical().noquote() << text;
 #ifdef Q_OS_WIN
     const QString full = text + QStringLiteral("\n\nLog: ") + g_logPath;
-    MessageBoxW(nullptr, reinterpret_cast<LPCWSTR>(full.utf16()), L"Bigscreen Host", MB_OK | MB_ICONERROR);
+    MessageBoxW(nullptr, reinterpret_cast<LPCWSTR>(full.utf16()), L"Kijkluister", MB_OK | MB_ICONERROR);
 #endif
 }
 
@@ -166,14 +166,14 @@ int main(int argc, char *argv[])
         Qt::HighDpiScaleFactorRoundingPolicy::PassThrough);
 
     QGuiApplication app(argc, argv);
-    QGuiApplication::setApplicationName(QStringLiteral("Bigscreen Host"));
+    QGuiApplication::setApplicationName(QStringLiteral("Kijkluister"));
     QGuiApplication::setOrganizationName(QStringLiteral("KDE"));
 
     qInfo() << "QGuiApplication created; platform" << QGuiApplication::platformName();
 
     QCommandLineParser parser;
     parser.setApplicationDescription(
-        QStringLiteral("Plasma Bigscreen Windows-host (PoC skeleton, Optie A)"));
+        QStringLiteral("Kijkluister: tv, films, series, muziek, luisterboeken en podcasts op een groot scherm"));
     parser.addHelpOption();
     QCommandLineOption screenOption(
         QStringList{QStringLiteral("screen")},

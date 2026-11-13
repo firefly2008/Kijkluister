@@ -51,7 +51,7 @@ jobs:
           "[library]`r`nmoviesFolder=$($films -replace '\\','/')`r`nshowsFolder=$($series -replace '\\','/')`r`n" | Set-Content "$env:LOCALAPPDATA\BigscreenHost\settings.ini"
           foreach ($mode in 'home', 'podcasts', 'moveask', 'library', 'iptvplay', 'addtile') {
             $env:BIGSCREEN_SELFTEST = $mode
-            $p = Start-Process dist\bigscreen-host.exe -PassThru
+            $p = Start-Process dist\Kijkluister.exe -PassThru
             Start-Sleep 14
             # Schermafdruk als base64 in het log, zodat het resultaat te bekijken is
             $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
@@ -65,7 +65,7 @@ jobs:
           }
       - uses: actions/upload-artifact@v4
         with:
-          name: BigscreenHost-setup
+          name: Kijkluister-setup
           path: out/*.exe
       # Een branch release/x.y.z wordt Release vx.y.z: die blijft bewaard naast de andere versies
       - name: Release maken
@@ -73,7 +73,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           tag_name: v${{ env.BIGSCREEN_VERSION }}
-          name: Bigscreen Host ${{ env.BIGSCREEN_VERSION }}
+          name: Kijkluister ${{ env.BIGSCREEN_VERSION }}
           target_commitish: ${{ github.sha }}
           files: out/*.exe
           generate_release_notes: true

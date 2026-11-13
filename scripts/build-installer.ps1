@@ -25,7 +25,7 @@ cmake --install build --prefix dist
 if ($LASTEXITCODE) { throw "install mislukt" }
 
 # 3. Qt-runtime erbij (DLL's, QML-modules, plugins, VC-runtime)
-& "$QtDir\bin\windeployqt.exe" --release --qmldir qml --compiler-runtime dist\bigscreen-host.exe
+& "$QtDir\bin\windeployqt.exe" --release --qmldir qml --compiler-runtime dist\Kijkluister.exe
 if ($LASTEXITCODE) { throw "windeployqt mislukt" }
 
 # 4. Installer
@@ -33,4 +33,4 @@ $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
 if (-not $iscc) { $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }
 & $iscc "/DAppVersion=$Version" installer\bigscreen-host.iss
 if ($LASTEXITCODE) { throw "Inno Setup mislukt" }
-Write-Host "Klaar: out\BigscreenHost-$Version-x64-setup.exe"
+Write-Host "Klaar: out\Kijkluister-$Version-x64-setup.exe"
