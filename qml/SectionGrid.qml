@@ -11,7 +11,8 @@ Item {
     property var model: null
     property int columns: 5
     property real unit: 10
-    property bool dialogOpen: false
+    // Mag de muis de selectie overnemen? (bij open venster of stilstaande muis niet)
+    property var canHover: function() { return true }
     readonly property alias grid: grid
     readonly property int count: model ? model.count : 0
 
@@ -78,7 +79,7 @@ Item {
                 section.launchRequested(index)
             }
             onHovered: {
-                if (!section.dialogOpen) {
+                if (section.canHover()) {
                     grid.currentIndex = index
                     grid.forceActiveFocus()
                 }

@@ -30,22 +30,36 @@ Rectangle {
 
     // Rij en tegel die nu focus hebben
     property Item currentSection: null
-    readonly property bool tilesFocused: currentSection !== null && currentSection.grid.activeFocus
-    readonly property var focusModel: tilesFocused ? currentSection.model : null
-    readonly property int focusRow: tilesFocused ? currentSection.grid.currentIndex : -1
-    readonly property bool focusIsWeb: focusModel !== null && focusModel !== appModel
+    readonly property var focusModel: currentSection !== null && currentSection.grid.activeFocus ? currentSection.model : null
+    readonly property int focusRow: focusModel ? currentSection.grid.currentIndex : -1
+    readonly property bool focusIsWeb: focusModel ? focusModel !== appModel : false
+
+    // Muis telt alleen als hij echt bewogen is, niet als tegels onder een stilstaande
+    // cursor doorschuiven tijdens het scrollen met pijltjes of controller
+    property double lastMouseMove: 0
+    function mouseActive() {
+        return Date.now() - lastMouseMove < 400
+    }
 
     // Naam en soort van de tegel die nu focus heeft (voor het grote tekstvlak bovenaan)
-    readonly property string focusName: tilesFocused ? focusModel.nameAt(focusRow)
+    readonly property string focusName: focusModel ? focusModel.nameAt(focusRow)
                                        : quickRow.activeFocus ? quickModel.get(quickRow.currentIndex).label : ""
-    readonly property string focusKind: tilesFocused ? currentSection.title + "  ·  Enter om te openen"
+    readonly property string focusKind: focusModel ? currentSection.title + "  ·  Enter om te openen"
                                        : quickRow.activeFocus ? "Instellingen" : ""
     // (revision in de binding: opnieuw opvragen zodra een logo binnen is of wijzigt)
-    readonly property string focusIconRaw: tilesFocused ? (focusModel.revision, focusModel.iconAt(focusRow)) : ""
+    readonly property string focusIconRaw: focusModel ? (focusModel.revision, focusModel.iconAt(focusRow)) : ""
     // Pictogrammen uit het lettertype (Films, Series) niet als afbeelding laden
     readonly property string focusIcon: focusIconRaw.startsWith("glyph:") ? "" : focusIconRaw
     // Achtergrondkleur: de kleur van het logo van de dienst met focus
     readonly property color accent: focusIsWeb && focusRow >= 0 ? (focusModel.revision, focusModel.accentAt(focusRow)) : "#1d3557"
+
+    MouseArea {
+        anchors.fill: parent
+        z: 1000
+        acceptedButtons: Qt.NoButton
+        hoverEnabled: true
+        onPositionChanged: root.lastMouseMove = Date.now()
+    }
     readonly property bool heroShown: appModel.showHero
 
     // Achtergrond: neemt de kleur van de gekozen streamingdienst aan, naar onder donker
@@ -391,7 +405,7 @@ Rectangle {
             compact: width < root.unit * 16
             selected: quickRow.activeFocus && quickRow.currentIndex === index
             onActivated: { quickRow.currentIndex = index; quickRow.trigger(index) }
-            onHovered: { if (!menu.visible && !addOverlay.visible) { quickRow.currentIndex = index; quickRow.forceActiveFocus() } }
+            onHovered: { if (!menu.visible && !addOverlay.visible && root.mouseActive()) { quickRow.currentIndex = index; quickRow.forceActiveFocus() } }
         }
 
         Keys.onReturnPressed: trigger(currentIndex)
@@ -483,7 +497,7 @@ Rectangle {
                     model: modelData.model
                     columns: root.columns
                     unit: root.unit
-                    dialogOpen: menu.visible || addOverlay.visible || placesPicker.visible
+                    canHover: () => !menu.visible && !addOverlay.visible && !placesPicker.visible && root.mouseActive()
                     onExitUp: (column) => root.focusSection(index - 1, column, true)
                     onExitDown: (column) => root.focusSection(index + 1, column, false)
                     onLaunchRequested: (row) => root.launch(sectionItem.model, row)
