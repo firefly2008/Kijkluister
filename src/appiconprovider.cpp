@@ -71,8 +71,8 @@ QImage AppIconProvider::requestImage(const QString &id, QSize *size, const QSize
     Q_UNUSED(id);
 #endif
     if (image.isNull()) {
-        image = QImage(64, 64, QImage::Format_ARGB32_Premultiplied);
-        image.fill(Qt::transparent);
+        // Niet gevonden: QML toont dan de beginletter van de tegel
+        return image;
     }
     if (requestedSize.isValid() && requestedSize.width() > 0 && requestedSize.height() > 0) {
         image = image.scaled(requestedSize, Qt::KeepAspectRatio, Qt::SmoothTransformation);

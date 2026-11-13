@@ -85,6 +85,27 @@ const WebDefault webDefaults[] = {
     {"Storytel", "https://www.storytel.com/nl"},
 };
 
+// Zoekt MPC-HC (64-bit) op de gebruikelijke plekken, ook die van het K-Lite Codec Pack.
+// Niet gevonden: de bestandsnaam alleen, zodat de tegel blijft staan en bij openen
+// meldt dat het programma ontbreekt.
+static QString mpcHcPath()
+{
+    const QString pf = QDir::fromNativeSeparators(qEnvironmentVariable("ProgramFiles"));
+    const QString pf86 = QDir::fromNativeSeparators(qEnvironmentVariable("ProgramFiles(x86)"));
+    const QStringList candidates = {
+        pf + QStringLiteral("/MPC-HC/mpc-hc64.exe"),
+        pf86 + QStringLiteral("/K-Lite Codec Pack/MPC-HC64/mpc-hc64.exe"),
+        pf + QStringLiteral("/K-Lite Codec Pack/MPC-HC64/mpc-hc64.exe"),
+        pf86 + QStringLiteral("/MPC-HC/mpc-hc64.exe"),
+    };
+    for (const QString &candidate : candidates) {
+        if (QFile::exists(candidate)) {
+            return QDir::toNativeSeparators(candidate);
+        }
+    }
+    return QStringLiteral("mpc-hc64.exe");
+}
+
 AppModel::AppModel(Kind kind, QObject *parent)
     : QAbstractListModel(parent)
     , m_kind(kind)
@@ -256,61 +277,29 @@ void AppModel::refresh()
         return;
     }
 
-    static const QStringList skipWords = {
-        QStringLiteral("uninstall"), QStringLiteral("verwijder"), QStringLiteral("deinstall"),
-        QStringLiteral("readme"), QStringLiteral("help"), QStringLiteral("website"),
-        QStringLiteral("documentation"), QStringLiteral("documentatie"), QStringLiteral("license"),
-        QStringLiteral("release notes"), QStringLiteral("manual"), QStringLiteral("handleiding"),
-        QStringLiteral("bigscreen host"),
+    // Media-rij: de Windows-mappen Muziek, Video's en Afbeeldingen, de mediaspeler
+    // MPC-HC en programma's die de gebruiker zelf heeft toegevoegd. (Tot en met
+    // versie 2 stonden hier alle programma's uit het Startmenu.)
+    QList<App> apps = {
+        {QStringLiteral("Muziek"), QDir::toNativeSeparators(QStandardPaths::writableLocation(QStandardPaths::MusicLocation)), false},
+        {QStringLiteral("Video's"), QDir::toNativeSeparators(QStandardPaths::writableLocation(QStandardPaths::MoviesLocation)), false},
+        {QStringLiteral("Afbeeldingen"), QDir::toNativeSeparators(QStandardPaths::writableLocation(QStandardPaths::PicturesLocation)), false},
+        {QStringLiteral("MPC-HC x64"), mpcHcPath(), false},
     };
-
-    QList<App> apps;
-    QSet<QString> seen;
-    QStringList roots = QStandardPaths::standardLocations(QStandardPaths::ApplicationsLocation);
-#ifdef Q_OS_WIN
-    // Qt geeft alleen het Startmenu van de gebruiker; de meeste programma's staan
-    // in het gedeelde Startmenu onder ProgramData.
-    const QString programData = qEnvironmentVariable("ProgramData");
-    if (!programData.isEmpty()) {
-        roots.append(QDir::fromNativeSeparators(programData) + QStringLiteral("/Microsoft/Windows/Start Menu/Programs"));
-    }
-#endif
-    for (const QString &root : std::as_const(roots)) {
-        QDirIterator it(root, {QStringLiteral("*.lnk")}, QDir::Files, QDirIterator::Subdirectories);
-        while (it.hasNext()) {
-            const QFileInfo info(it.next());
-            const QString name = info.completeBaseName();
-            const QString key = name.toLower();
-            const QString path = QDir::toNativeSeparators(info.absoluteFilePath());
-            if (seen.contains(key) || m_hidden.contains(path)) {
-                continue;
-            }
-            const bool skip = std::any_of(skipWords.begin(), skipWords.end(), [&key](const QString &word) {
-                return key.contains(word);
-            });
-            if (skip) {
-                continue;
-            }
-            seen.insert(key);
-            apps.append({name, path, false});
-        }
-    }
-    // Zelf toegevoegde programma's
-    const QList<App> own = customTiles();
-    for (const App &tile : own) {
-        if (!m_hidden.contains(tile.path)) {
-            apps.append(tile);
-        }
-    }
-    std::sort(apps.begin(), apps.end(), [](const App &a, const App &b) {
-        return a.name.localeAwareCompare(b.name) < 0;
-    });
+    apps.append(customTiles());
+    apps.erase(std::remove_if(apps.begin(), apps.end(), [this](const App &tile) {
+        return m_hidden.contains(tile.path);
+    }), apps.end());
 
     beginResetModel();
     m_apps = apps;
     endResetModel();
     Q_EMIT countChanged();
-    qInfo() << "Apps found" << m_apps.size() << "hidden" << m_hidden.size() << "in" << roots;
+    QStringList summary;
+    for (const App &tile : std::as_const(m_apps)) {
+        summary << tile.name + QStringLiteral(" -> ") + tile.path;
+    }
+    qInfo().noquote() << "Media tiles:" << summary.join(QStringLiteral(" | "));
 }
 
 bool AppModel::launch(int row)
@@ -319,7 +308,8 @@ bool AppModel::launch(int row)
         return false;
     }
     const App &app = m_apps.at(row);
-    const bool ok = m_kind == Web ? launchWeb(app.path) : QDesktopServices::openUrl(QUrl::fromLocalFile(app.path));
+    const bool ok = m_kind == Web ? launchWeb(app.path)
+                                  : QFileInfo::exists(app.path) && QDesktopServices::openUrl(QUrl::fromLocalFile(app.path));
     qInfo() << "Launch" << app.name << (ok ? "ok" : "FAILED");
     return ok;
 }
@@ -448,7 +438,7 @@ bool AppModel::addTile(const QString &name, const QString &target)
             cleanTarget = QUrl(cleanTarget).toLocalFile();
         }
         const QFileInfo info(cleanTarget);
-        if (!info.isFile()) {
+        if (!info.exists()) { // programma, snelkoppeling of map
             return false;
         }
         cleanTarget = QDir::toNativeSeparators(info.absoluteFilePath());

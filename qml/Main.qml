@@ -23,15 +23,14 @@ Rectangle {
                                        : appGrid.activeFocus ? appModel.nameAt(appGrid.currentIndex)
                                        : quickRow.activeFocus ? quickModel.get(quickRow.currentIndex).label : ""
     readonly property string focusKind: streamGrid.activeFocus ? "Streaming  ·  Enter om te openen"
-                                       : appGrid.activeFocus ? "Toepassing  ·  Enter om te starten"
+                                       : appGrid.activeFocus ? "Media  ·  Enter om te openen"
                                        : quickRow.activeFocus ? "Instellingen" : ""
     readonly property string focusIcon: streamGrid.activeFocus ? webModel.iconAt(streamGrid.currentIndex)
                                        : appGrid.activeFocus ? appModel.iconAt(appGrid.currentIndex) : ""
     // Achtergrondkleur: de kleur van het logo van de streamingdienst met focus
     readonly property color accent: streamGrid.activeFocus && streamGrid.currentIndex >= 0
                                     ? webModel.accentAt(streamGrid.currentIndex) : "#1d3557"
-    // Het tekstvlak klapt in zodra je door de toepassingen bladert
-    readonly property bool heroShown: !appGrid.activeFocus
+    readonly property bool heroShown: true
 
     // Achtergrond: neemt de kleur van de gekozen streamingdienst aan, naar onder donker
     Rectangle {
@@ -337,9 +336,9 @@ Rectangle {
         bottomMargin: pad * 0.6
         cellWidth: Math.floor((width - pad * 2) / root.columns)
         cellHeight: cellWidth * 0.46
-        // Twee rijen zichtbaar; met alleen toepassingen in beeld nog een
-        height: !visible ? 0 : cellHeight * (root.heroShown ? 2 : 1) + pad * 1.2
-        Behavior on height { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
+        // Vult de ruimte tussen het tekstvlak en de rij Media
+        anchors.bottom: sectionTitle.top
+        anchors.bottomMargin: root.unit * 0.5
         focus: webModel.count > 0
         model: webModel
         keyNavigationEnabled: true
@@ -391,19 +390,20 @@ Rectangle {
     // --- Raster met toepassingen ---
     Text {
         id: sectionTitle
-        anchors.top: streamGrid.bottom
+        anchors.bottom: appGrid.top
         anchors.left: parent.left
         anchors.topMargin: root.unit * 1.5
         anchors.leftMargin: root.unit * 4
         color: "white"
         font.pixelSize: root.unit * 2.6
         font.weight: Font.DemiBold
-        text: "Toepassingen"
+        text: "Media"
     }
 
     GridView {
         id: appGrid
-        anchors.top: sectionTitle.bottom
+        // Een rij onderaan: mappen Muziek/Video's/Afbeeldingen, MPC-HC en eigen programma's
+        height: cellHeight + pad * 1.2
         anchors.bottom: hint.top
         anchors.left: parent.left
         anchors.right: parent.right
@@ -429,7 +429,7 @@ Rectangle {
                 return
             }
             const name = appModel.nameAt(index)
-            root.showToast(appModel.launch(index) ? name + " starten…" : name + " kon niet gestart worden")
+            root.showToast(appModel.launch(index) ? name + " openen…" : name + " is niet gevonden op deze pc")
         }
 
         delegate: BannerTile {
@@ -464,7 +464,7 @@ Rectangle {
         visible: appModel.count === 0
         color: "#9fb4d0"
         font.pixelSize: root.unit * 3
-        text: "Geen toepassingen gevonden in het Startmenu"
+        text: ""
     }
 
     Text {
