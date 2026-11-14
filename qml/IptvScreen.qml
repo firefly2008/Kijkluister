@@ -17,6 +17,7 @@ FocusScope {
     property bool pinInfo: false           // test: balk blijft staan
     property bool autoGuide: false         // test: gids openen na afspelen
     property string demo: ""               // schermafbeeldingen voor de handleiding
+    property bool autoGuideRecord: false   // test: vanuit de gids opnemen
     property string autoRecord: ""         // test: "record" neemt op, "recordpanel" toont het venster
     property alias guideStart: guidePanel.startIndex
     // Gids van de zender die nu speelt; ververst als er nieuwe gidsgegevens zijn
@@ -111,7 +112,25 @@ FocusScope {
             recordTestTimer.start()
         }
     }
-    Timer { id: guideTestTimer; interval: 6000; onTriggered: tv.openGuide(tv.playingRow) }
+    Timer {
+        id: guideTestTimer
+        interval: 6000
+        onTriggered: {
+            tv.openGuide(tv.playingRow)
+            if (tv.autoGuideRecord) {
+                tv.autoGuideRecord = false
+                guideRecordTimer.start()
+            }
+        }
+    }
+    Timer {
+        id: guideRecordTimer
+        interval: 2000
+        onTriggered: {
+            guidePanel.toggleRecord(0)   // loopt nu: begint meteen
+            guidePanel.toggleRecord(3)   // later: gepland
+        }
+    }
     Timer {
         id: recordTestTimer
         property string mode: ""

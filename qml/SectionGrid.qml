@@ -73,6 +73,9 @@ Item {
             width: grid.cellWidth
             height: grid.cellHeight
             selected: grid.activeFocus && grid.currentIndex === index
+            backdrop: section.model && section.model.backdropAt ? section.model.backdropAt(index) : ""
+            subtitle: section.model && section.model.subtitleAt ? section.model.subtitleAt(index) : ""
+            progress: section.model && section.model.progressAt ? section.model.progressAt(index) : -1
             onActivated: {
                 grid.currentIndex = index
                 grid.forceActiveFocus()

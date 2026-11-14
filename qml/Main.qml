@@ -19,13 +19,19 @@ Rectangle {
     color: "#0b0c0f"
 
     // De rijen op de startpagina, van boven naar beneden
-    readonly property var sectionDefs: [
+    readonly property var sectionDefs: (resume.count > 0 ? [{ title: "Verder kijken", model: resume }] : []).concat([
         { title: "Video", model: webVideo },
         { title: "Muziek", model: webMusic },
         { title: "Podcasts", model: webPodcasts },
         { title: "Media", model: appModel }
-    ]
+    ])
     readonly property var webModels: [webVideo, webMusic, webPodcasts]
+    // Rij "Verder kijken" verschijnt of verdwijnt: de rijen worden opnieuw gemaakt, focus terugzetten
+    onSectionDefsChanged: Qt.callLater(() => {
+        if (!frameScreen.visible && !iptvScreen.visible && !libraryScreen.visible && root.currentSection === null) {
+            focusSection(0, 0, false)
+        }
+    })
 
     // Rij en tegel die nu focus hebben
     property Item currentSection: null
@@ -144,6 +150,14 @@ Rectangle {
         }
         editModel = model
         editRow = row
+        if (model === resume) {
+            menu.open(model.nameAt(row), [
+                { label: "Verder kijken", action: "resume-play" },
+                { label: "Uit deze rij halen", action: "resume-remove" },
+                { label: "Annuleren", action: "" }
+            ], focusItem)
+            return
+        }
         const entries = [{ label: "Pictogram wijzigen…", action: "icon" }]
         if (model.hasCustomIcon(row)) {
             entries.push({ label: "Standaardpictogram herstellen", action: "icon-reset" })
@@ -204,7 +218,11 @@ Rectangle {
     }
 
     function handleMenuAction(action) {
-        if (action === "icon") {
+        if (action === "resume-play") {
+            launch(resume, editRow)
+        } else if (action === "resume-remove") {
+            resume.remove(editRow)
+        } else if (action === "icon") {
             imageDialog.purpose = "icon"
             imageDialog.title = "Pictogram kiezen voor " + editModel.nameAt(editRow)
             imageDialog.open()
@@ -262,7 +280,7 @@ Rectangle {
         if (selfTest === "addtile") {
             addOverlay.open(quickRow)
         } else if (selfTest === "podcasts") {
-            Qt.callLater(() => focusSection(2, 1, false))
+            Qt.callLater(() => focusSection(sectionDefs.findIndex(d => d.model === webPodcasts), 1, false))
         } else if (selfTest === "moveask") {
             focusSection(0, 2, false)
             editModel = webVideo
@@ -338,6 +356,19 @@ Rectangle {
             iptvScreen.pinInfo = selfTest === "m-bar"
             iptvScreen.autoGuide = selfTest === "m-guide" || selfTest === "m-guide2"
             iptvScreen.guideStart = selfTest === "m-guide2" ? 3 : 0
+            iptvScreen.open(mediaGrid())
+        } else if (selfTest === "resume") {
+            // Test: startscherm met de rij Verder kijken (geschiedenis door de test klaargezet)
+        } else if (selfTest === "epgrecord") {
+            // Test: in de gids het programma van nu en een later programma laten opnemen
+            if (iptv.sources.length === 0) {
+                iptv.addSource("m3u-file", "Gids-test", selfTestM3u, "", "")
+            }
+            recorder.folder = selfTestRecordDir
+            iptvScreen.autoPlay = true
+            iptvScreen.autoGuide = true
+            iptvScreen.autoGuideRecord = true
+            iptvScreen.guideStart = 3
             iptvScreen.open(mediaGrid())
         } else if (selfTest === "mpcplay") {
             // Test: eerste serie openen en vanaf de eerste aflevering afspelen in MPC-HC

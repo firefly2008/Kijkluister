@@ -25,6 +25,8 @@ class Recorder : public QObject
     Q_PROPERTY(int retries READ retries NOTIFY tick)
     Q_PROPERTY(bool available READ available CONSTANT)
     Q_PROPERTY(QVariantList recordings READ recordings NOTIFY recordingsChanged)
+    // Geplande opnames uit de tv-gids
+    Q_PROPERTY(QVariantList schedule READ schedule NOTIFY scheduleChanged)
     // De stream die wordt opgenomen, lokaal doorgegeven voor de speler (één verbinding met de aanbieder)
     Q_PROPERTY(QString relayUrl READ relayUrl NOTIFY stateChanged)
     Q_PROPERTY(QString url READ url NOTIFY stateChanged)
@@ -49,7 +51,13 @@ public:
     QString url() const { return m_active ? m_url : QString(); }
 
     // Opname starten: duur in minuten (0 = tot je zelf stopt)
-    Q_INVOKABLE bool start(const QString &channel, const QString &url, int minutes);
+    Q_INVOKABLE bool start(const QString &channel, const QString &url, int minutes, const QString &title = {});
+    QVariantList schedule() const { return m_schedule; }
+    // Programma uit de gids inplannen (tijden in seconden sinds 1970). Begint 2 min eerder, stopt 5 min later.
+    Q_INVOKABLE bool addToSchedule(const QString &channel, const QString &url, const QString &title, qint64 start, qint64 stop);
+    Q_INVOKABLE void removeFromSchedule(const QString &id);
+    Q_INVOKABLE bool isScheduled(const QString &url, qint64 start) const;
+    Q_INVOKABLE void toggleSchedule(const QString &channel, const QString &url, const QString &title, qint64 start, qint64 stop);
     Q_INVOKABLE void stop();
     Q_INVOKABLE QString localPath(const QUrl &url) const;
     Q_INVOKABLE QString defaultFolder() const;
@@ -64,6 +72,7 @@ Q_SIGNALS:
     void tick();
     void recordingsChanged();
     void finished(const QString &file, bool ok);
+    void scheduleChanged();
 
 private:
     void launch();
@@ -90,4 +99,12 @@ private:
     QStringList m_parts;
     QByteArray m_lastStderr;
     QString m_relayUrl;
+    QString m_title;
+    QString m_dataDir;
+    QVariantList m_schedule;
+    QString m_scheduledId;          // id van de geplande opname die nu loopt
+    QTimer m_scheduleTimer;
+    void checkSchedule();
+    void saveSchedule();
+    void keepAwake(bool on);
 };

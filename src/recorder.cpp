@@ -4,9 +4,18 @@
 #include <QCoreApplication>
 #include <QDesktopServices>
 #include <QDir>
+#include <QFile>
 #include <QFileInfo>
 #include <QStandardPaths>
 #include <QUrl>
+#include <QJsonArray>
+#include <QJsonDocument>
+
+#include <algorithm>
+
+#ifdef Q_OS_WIN
+#include <windows.h>
+#endif
 
 #include "components.h"
 #include "mpcplayer.h"
@@ -27,7 +36,17 @@ QString sanitize(QString name)
 Recorder::Recorder(const QString &dataDir, QObject *parent)
     : QObject(parent)
     , m_settings(dataDir + QStringLiteral("/settings.ini"), QSettings::IniFormat)
+    , m_dataDir(dataDir)
 {
+    // Geplande opnames inlezen en elke 15 seconden kijken of er een moet beginnen
+    QFile file(m_dataDir + QStringLiteral("/recordings-schedule.json"));
+    if (file.open(QIODevice::ReadOnly)) {
+        m_schedule = QJsonDocument::fromJson(file.readAll()).array().toVariantList();
+    }
+    m_scheduleTimer.setInterval(15000);
+    connect(&m_scheduleTimer, &QTimer::timeout, this, &Recorder::checkSchedule);
+    m_scheduleTimer.start();
+    QTimer::singleShot(3000, this, &Recorder::checkSchedule);
     m_folder = m_settings.value(QStringLiteral("recorder/folder")).toString();
     m_relayUrl = QStringLiteral("udp://127.0.0.1:47123");
     m_clock.setInterval(1000);
@@ -102,7 +121,7 @@ void Recorder::setStatus(const QString &status)
     Q_EMIT stateChanged();
 }
 
-bool Recorder::start(const QString &channel, const QString &url, int minutes)
+bool Recorder::start(const QString &channel, const QString &url, int minutes, const QString &title)
 {
     if (m_active) {
         setStatus(tr("Er loopt al een opname"));
@@ -116,9 +135,9 @@ bool Recorder::start(const QString &channel, const QString &url, int minutes)
         }
         // Eerst ffmpeg ophalen (eenmalig), dan de opname starten
         setStatus(tr("ffmpeg wordt opgehaald, de opname begint zo…"));
-        c->ensure(Components::Ffmpeg, [this, channel, url, minutes](bool ok) {
+        c->ensure(Components::Ffmpeg, [this, channel, url, minutes, title](bool ok) {
             if (ok) {
-                start(channel, url, minutes);
+                start(channel, url, minutes, title);
             } else {
                 setStatus(tr("ffmpeg kon niet worden opgehaald"));
             }
@@ -141,12 +160,15 @@ bool Recorder::start(const QString &channel, const QString &url, int minutes)
     m_parts.clear();
     m_stopping = false;
     m_active = true;
-    m_file = QDir::toNativeSeparators(m_folder + QLatin1Char('/') + sanitize(channel) + QStringLiteral(" - ")
+    m_title = title;
+    m_file = QDir::toNativeSeparators(m_folder + QLatin1Char('/') + (title.isEmpty() ? QString() : sanitize(title) + QStringLiteral(" - "))
+                                      + sanitize(channel) + QStringLiteral(" - ")
                                       + m_started.toString(QStringLiteral("yyyy-MM-dd HH.mm.ss")) + QStringLiteral(".mp4"));
     if (minutes > 0) {
         m_endTimer.start(minutes * 60 * 1000);
     }
     m_clock.start();
+    keepAwake(true);
     qInfo().noquote() << "Recorder: start" << channel << "->" << m_file << "minutes" << minutes;
     launch();
     return true;
@@ -230,6 +252,8 @@ void Recorder::onFinished(int code, QProcess::ExitStatus status)
         m_clock.stop();
         m_endTimer.stop();
         setStatus(tr("Opname opgeslagen"));
+        keepAwake(false);
+        m_scheduledId.clear();
         Q_EMIT finished(m_file, true);
         return;
     }
@@ -337,4 +361,137 @@ bool Recorder::remove(const QString &path)
     const bool ok = QFile::remove(path);
     refresh();
     return ok;
+}
+
+// ---------------------------------------------------------------------------
+// Geplande opnames (vanuit de tv-gids)
+// ---------------------------------------------------------------------------
+
+void Recorder::keepAwake(bool on)
+{
+#ifdef Q_OS_WIN
+    // Pc niet in slaap laten vallen zolang er opgenomen wordt
+    SetThreadExecutionState(on ? (ES_CONTINUOUS | ES_SYSTEM_REQUIRED) : ES_CONTINUOUS);
+#else
+    Q_UNUSED(on)
+#endif
+}
+
+void Recorder::saveSchedule()
+{
+    QFile file(m_dataDir + QStringLiteral("/recordings-schedule.json"));
+    if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        file.write(QJsonDocument(QJsonArray::fromVariantList(m_schedule)).toJson(QJsonDocument::Indented));
+    }
+    Q_EMIT scheduleChanged();
+}
+
+bool Recorder::isScheduled(const QString &url, qint64 start) const
+{
+    for (const QVariant &v : m_schedule) {
+        const QVariantMap m = v.toMap();
+        if (m.value(QStringLiteral("url")).toString() == url && m.value(QStringLiteral("start")).toLongLong() == start) {
+            return true;
+        }
+    }
+    return false;
+}
+
+bool Recorder::addToSchedule(const QString &channel, const QString &url, const QString &title, qint64 start, qint64 stop)
+{
+    const qint64 now = QDateTime::currentSecsSinceEpoch();
+    if (url.isEmpty() || stop <= now || stop <= start || isScheduled(url, start)) {
+        return false;
+    }
+    const QString id = QString::number(start) + QLatin1Char('-') + QString::number(qHash(url), 16);
+    m_schedule.append(QVariantMap{
+        {QStringLiteral("id"), id},
+        {QStringLiteral("channel"), channel},
+        {QStringLiteral("url"), url},
+        {QStringLiteral("title"), title},
+        {QStringLiteral("start"), start},
+        {QStringLiteral("stop"), stop},
+        {QStringLiteral("state"), QStringLiteral("gepland")},
+    });
+    std::sort(m_schedule.begin(), m_schedule.end(), [](const QVariant &a, const QVariant &b) {
+        return a.toMap().value(QStringLiteral("start")).toLongLong() < b.toMap().value(QStringLiteral("start")).toLongLong();
+    });
+    qInfo().noquote() << "Recorder: scheduled" << title << channel
+                      << QDateTime::fromSecsSinceEpoch(start).toString(Qt::ISODate) << "-" << QDateTime::fromSecsSinceEpoch(stop).toString(Qt::ISODate);
+    saveSchedule();
+    checkSchedule(); // loopt het programma al: meteen beginnen
+    return true;
+}
+
+void Recorder::removeFromSchedule(const QString &id)
+{
+    for (int i = 0; i < m_schedule.size(); ++i) {
+        if (m_schedule.at(i).toMap().value(QStringLiteral("id")).toString() == id) {
+            m_schedule.removeAt(i);
+            if (id == m_scheduledId && m_active) {
+                stop(); // de lopende opname van dit programma ook stoppen
+            }
+            saveSchedule();
+            return;
+        }
+    }
+}
+
+void Recorder::toggleSchedule(const QString &channel, const QString &url, const QString &title, qint64 start, qint64 stop)
+{
+    for (const QVariant &v : std::as_const(m_schedule)) {
+        const QVariantMap m = v.toMap();
+        if (m.value(QStringLiteral("url")).toString() == url && m.value(QStringLiteral("start")).toLongLong() == start) {
+            removeFromSchedule(m.value(QStringLiteral("id")).toString());
+            return;
+        }
+    }
+    addToSchedule(channel, url, title, start, stop);
+}
+
+void Recorder::checkSchedule()
+{
+    const qint64 now = QDateTime::currentSecsSinceEpoch();
+    bool changed = false;
+    for (int i = m_schedule.size() - 1; i >= 0; --i) {
+        QVariantMap m = m_schedule.at(i).toMap();
+        const qint64 begin = m.value(QStringLiteral("start")).toLongLong() - 120;   // 2 min eerder
+        const qint64 end = m.value(QStringLiteral("stop")).toLongLong() + 300;      // 5 min later
+        const QString state = m.value(QStringLiteral("state")).toString();
+        if (now >= end) {
+            // Afgelopen (opgenomen of gemist): uit de planning
+            qInfo().noquote() << "Recorder: schedule done" << m.value(QStringLiteral("title")).toString() << state;
+            m_schedule.removeAt(i);
+            changed = true;
+            continue;
+        }
+        if (now < begin || state == QLatin1String("bezig")) {
+            continue;
+        }
+        if (m_active) {
+            if (state != QLatin1String("overlap")) {
+                m[QStringLiteral("state")] = QStringLiteral("overlap");
+                m_schedule[i] = m;
+                changed = true;
+                qWarning().noquote() << "Recorder: scheduled" << m.value(QStringLiteral("title")).toString()
+                                     << "skipped, already recording" << m_channel;
+            }
+            continue;
+        }
+        const int minutes = int((end - now + 59) / 60);
+        m_scheduledId = m.value(QStringLiteral("id")).toString();
+        m[QStringLiteral("state")] = QStringLiteral("bezig");
+        m_schedule[i] = m;
+        changed = true;
+        qInfo().noquote() << "Recorder: scheduled start" << m.value(QStringLiteral("title")).toString() << minutes << "min";
+        if (!start(m.value(QStringLiteral("channel")).toString(), m.value(QStringLiteral("url")).toString(), minutes,
+                   m.value(QStringLiteral("title")).toString())) {
+            m[QStringLiteral("state")] = QStringLiteral("mislukt");
+            m_schedule[i] = m;
+            m_scheduledId.clear();
+        }
+    }
+    if (changed) {
+        saveSchedule();
+    }
 }

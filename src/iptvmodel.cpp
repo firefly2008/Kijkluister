@@ -942,6 +942,8 @@ QVariantList IptvModel::guide(int row) const
             {QStringLiteral("stop"), stop.toString(QStringLiteral("HH:mm"))},
             {QStringLiteral("day"), day},
             {QStringLiteral("duration"), int((p.stop - p.start) / 60)},
+            {QStringLiteral("startSecs"), double(p.start)},
+            {QStringLiteral("stopSecs"), double(p.stop)},
             {QStringLiteral("isNow"), p.start <= now},
             {QStringLiteral("progress"), p.start <= now ? double(now - p.start) / qMax<qint64>(1, p.stop - p.start) : 0.0},
         });

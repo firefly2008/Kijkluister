@@ -186,7 +186,7 @@ FocusScope {
                 visible: !recorder.recording
                 onClicked: panel.startRecording()
                 KeyNavigation.up: durationRow
-                KeyNavigation.down: list
+                KeyNavigation.down: planned.visible ? planned : list
             }
             FocusButton {
                 id: stopButton
@@ -195,7 +195,7 @@ FocusScope {
                 visible: recorder.recording
                 onClicked: recorder.stop()
                 KeyNavigation.up: durationRow
-                KeyNavigation.down: list
+                KeyNavigation.down: planned.visible ? planned : list
             }
             Column {
                 anchors.verticalCenter: parent.verticalCenter
@@ -239,6 +239,86 @@ FocusScope {
             visible: text !== ""
         }
 
+        // Geplande opnames (uit de tv-gids)
+        Text {
+            visible: recorder.schedule.length > 0
+            color: "#9fb4d0"
+            font.pixelSize: panel.unit * 2.2
+            text: "Gepland" + "   ·   F2 / X annuleren   ·   Kijkluister moet aan staan; de pc gaat tijdens een opname niet slapen"
+        }
+        ListView {
+            id: planned
+            visible: recorder.schedule.length > 0
+            width: content.width
+            height: Math.min(count, 4) * panel.unit * 5
+            clip: true
+            interactive: count > 4
+            model: recorder.schedule
+            KeyNavigation.up: recorder.recording ? stopButton : startButton
+            KeyNavigation.down: list
+            Keys.onPressed: (event) => {
+                if ((event.key === Qt.Key_F2 || event.key === Qt.Key_Menu) && currentItem) {
+                    recorder.removeFromSchedule(currentItem.modelData.id)
+                    event.accepted = true
+                }
+            }
+            function when(m) {
+                const d = new Date(m.start * 1000), e = new Date(m.stop * 1000)
+                const pad = n => (n < 10 ? "0" : "") + n
+                return d.toLocaleDateString(Qt.locale("nl_NL"), "ddd d MMM") + "  " + pad(d.getHours()) + ":" + pad(d.getMinutes())
+                       + " – " + pad(e.getHours()) + ":" + pad(e.getMinutes())
+            }
+            delegate: Rectangle {
+                id: prow
+                required property var modelData
+                required property int index
+                readonly property bool current: ListView.isCurrentItem && planned.activeFocus
+                width: planned.width
+                height: panel.unit * 4.6
+                radius: panel.unit
+                color: current ? "#ffffff" : "transparent"
+                MouseArea {
+                    anchors.fill: parent
+                    acceptedButtons: Qt.LeftButton | Qt.RightButton
+                    onClicked: (mouse) => {
+                        planned.currentIndex = prow.index
+                        planned.forceActiveFocus()
+                        if (mouse.button === Qt.RightButton) recorder.removeFromSchedule(prow.modelData.id)
+                    }
+                }
+                Row {
+                    anchors.verticalCenter: parent.verticalCenter
+                    x: panel.unit * 1.5
+                    spacing: panel.unit * 2
+                    Rectangle {
+                        anchors.verticalCenter: parent.verticalCenter
+                        width: panel.unit * 1.4; height: width; radius: width / 2
+                        color: prow.modelData.state === "bezig" ? "#e53935" : prow.modelData.state === "gepland" ? "#ff8a80" : "#9e9e9e"
+                    }
+                    Text {
+                        width: planned.width * 0.28
+                        color: prow.current ? "#202124" : "#d5d8dc"
+                        font.pixelSize: panel.unit * 2.2
+                        text: planned.when(prow.modelData)
+                    }
+                    Text {
+                        width: planned.width * 0.45
+                        elide: Text.ElideRight
+                        color: prow.current ? "#202124" : "white"
+                        font.pixelSize: panel.unit * 2.3
+                        text: prow.modelData.title + "  ·  " + prow.modelData.channel
+                    }
+                    Text {
+                        color: prow.current ? "#5f6368" : "#b0b4bb"
+                        font.pixelSize: panel.unit * 2.1
+                        text: prow.modelData.state === "bezig" ? "wordt opgenomen"
+                              : prow.modelData.state === "overlap" ? "overgeslagen: er liep al een opname"
+                              : prow.modelData.state === "mislukt" ? "mislukt" : "gepland"
+                    }
+                }
+            }
+        }
+
         // Eerdere opnames
         Text {
             color: "#9fb4d0"
@@ -252,7 +332,7 @@ FocusScope {
             clip: true
             model: recorder.recordings
             spacing: panel.unit * 0.4
-            KeyNavigation.up: recorder.recording ? stopButton : startButton
+            KeyNavigation.up: planned.visible ? planned : (recorder.recording ? stopButton : startButton)
             Keys.onReturnPressed: if (currentItem) recorder.play(currentItem.modelData.path)
             Keys.onEnterPressed: if (currentItem) recorder.play(currentItem.modelData.path)
             Keys.onPressed: (event) => {

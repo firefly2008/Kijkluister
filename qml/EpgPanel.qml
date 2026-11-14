@@ -54,7 +54,31 @@ FocusScope {
         if (event.key === Qt.Key_I) {
             close()
             event.accepted = true
+        } else if (event.key === Qt.Key_R) {
+            toggleRecord(list.currentIndex)
+            event.accepted = true
         }
+    }
+
+    // Programma opnemen (of de geplande opname weer weghalen)
+    function isPlanned(p) {
+        return recorderRevision >= 0 && p && channel.url ? recorder.isScheduled(channel.url, p.startSecs) : false
+    }
+    property int recorderRevision: 0
+    Connections {
+        target: recorder
+        function onScheduleChanged() { panel.recorderRevision++ }
+    }
+    function toggleRecord(index) {
+        const p = index >= 0 && index < programmes.length ? programmes[index] : null
+        if (!p || !channel.url) {
+            return
+        }
+        const was = isPlanned(p)
+        recorder.toggleSchedule(channel.name, channel.url, p.title, p.startSecs, p.stopSecs)
+        recordMessage.text = was ? "Opname geannuleerd"
+                                 : (p.isNow ? "Opname gestart: " + p.title : "Opname gepland: " + p.day.toLowerCase() + " " + p.start + "  " + p.title)
+        recordMessageTimer.restart()
     }
 
     Rectangle {
@@ -93,7 +117,7 @@ FocusScope {
             Text {
                 color: "#80848b"
                 font.pixelSize: panel.unit * 2
-                text: "↑ ↓ programma kiezen   ·   Esc / B / I sluiten"
+                text: "↑ ↓ programma kiezen   ·   R / RB opnemen   ·   Esc / B / I sluiten"
             }
         }
     }
@@ -154,12 +178,18 @@ FocusScope {
                     text: item.modelData.start
                 }
                 Text {
-                    width: list.width - panel.unit * 14
+                    width: list.width - panel.unit * 17
                     elide: Text.ElideRight
                     color: item.current ? "#202124" : "white"
                     font.pixelSize: panel.unit * 2.6
                     font.weight: item.modelData.isNow ? Font.DemiBold : Font.Normal
-                    text: (item.modelData.isNow ? "● " : "") + item.modelData.title
+                    text: (item.modelData.isNow ? "▶ " : "") + item.modelData.title
+                }
+                Rectangle {
+                    visible: panel.isPlanned(item.modelData)
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: panel.unit * 1.6; height: width; radius: width / 2
+                    color: "#e53935"
                 }
             }
         }
@@ -209,6 +239,25 @@ FocusScope {
                     radius: height / 2
                     color: "#ffb74d"
                 }
+            }
+            Row {
+                spacing: panel.unit * 1.5
+                FocusButton {
+                    id: recordButton
+                    unit: panel.unit
+                    text: details.p && panel.isPlanned(details.p)
+                          ? (details.p.isNow ? "■  Opname stoppen" : "Opname annuleren")
+                          : (details.p && details.p.isNow ? "●  Nu opnemen" : "●  Opnemen")
+                    onClicked: panel.toggleRecord(list.currentIndex)
+                }
+                Text {
+                    id: recordMessage
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: "#ffb74d"
+                    font.pixelSize: panel.unit * 2.2
+                    visible: recordMessageTimer.running
+                }
+                Timer { id: recordMessageTimer; interval: 4000 }
             }
             Text {
                 width: parent.width

@@ -32,6 +32,7 @@
 #include "paths.h"
 #include "recorder.h"
 #include "components.h"
+#include "resumemodel.h"
 #include "mpcplayer.h"
 #include "iptvmodel.h"
 
@@ -261,6 +262,8 @@ int main(int argc, char *argv[])
     view.rootContext()->setContextProperty(QStringLiteral("recorder"), &recorder);
     view.rootContext()->setContextProperty(QStringLiteral("mpc"), &mpc);
     view.rootContext()->setContextProperty(QStringLiteral("components"), &components);
+    ResumeModel resume(appDataDir(), &library);
+    view.rootContext()->setContextProperty(QStringLiteral("resume"), &resume);
     // MPC-HC en ffmpeg op de achtergrond ophalen of bijwerken (niet tijdens de tests)
     if (qEnvironmentVariable("BIGSCREEN_SELFTEST").isEmpty()) {
         QTimer::singleShot(20000, &components, &Components::startBackground);

@@ -12,6 +12,11 @@ Item {
     required property color accent
 
     property bool selected: false
+    // Verder kijken: groot plaatje, regel eronder en voortgangsbalk (anders leeg / -1)
+    property string backdrop: ""
+    property string subtitle: ""
+    property real progress: -1
+    readonly property bool wide: backdrop !== "" || progress >= 0
     // "glyph:<teken>": pictogram uit het Windows-lettertype in plaats van een afbeelding
     readonly property bool isGlyph: iconSource.startsWith("glyph:")
     signal activated()
@@ -46,8 +51,68 @@ Item {
             }
         }
 
+        // Verder kijken: plaatje over de hele tegel, titel en voortgang onderin
+        Image {
+            id: backdropImage
+            anchors.fill: parent
+            anchors.margins: card.border.width
+            visible: tile.wide && status === Image.Ready
+            source: tile.backdrop
+            sourceSize.width: 640
+            fillMode: Image.PreserveAspectCrop
+            asynchronous: true
+        }
+        Rectangle {
+            visible: tile.wide
+            anchors.fill: parent
+            anchors.margins: card.border.width
+            radius: card.radius
+            gradient: Gradient {
+                GradientStop { position: 0.35; color: "#00000000" }
+                GradientStop { position: 1.0; color: "#e0000000" }
+            }
+        }
+        Column {
+            visible: tile.wide
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.bottom: parent.bottom
+            anchors.margins: card.height * 0.08
+            spacing: card.height * 0.03
+            Text {
+                width: parent.width
+                color: "white"
+                font.pixelSize: card.height * 0.15
+                font.weight: Font.DemiBold
+                elide: Text.ElideRight
+                text: tile.name
+            }
+            Text {
+                width: parent.width
+                visible: text !== ""
+                color: "#d5d8dc"
+                font.pixelSize: card.height * 0.11
+                elide: Text.ElideRight
+                text: tile.subtitle
+            }
+            Rectangle {
+                visible: tile.progress >= 0
+                width: parent.width
+                height: Math.max(3, card.height * 0.035)
+                radius: height / 2
+                color: "#55ffffff"
+                Rectangle {
+                    width: parent.width * Math.max(0.02, Math.min(1, tile.progress))
+                    height: parent.height
+                    radius: height / 2
+                    color: "#ff5252"
+                }
+            }
+        }
+
         Row {
             id: content
+            visible: !tile.wide
             anchors.centerIn: parent
             spacing: card.height * 0.1
 
