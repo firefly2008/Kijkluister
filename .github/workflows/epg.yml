@@ -1,0 +1,70 @@
+# Dagelijkse tv-gids (XMLTV) voor de gratis zenders in Kijkluister.
+# Haalt met iptv-org/epg de gids op bij tvgids.nl, webtv.delta.nl, vrt.be, vtm.be en pickx.be,
+# alleen voor de zenders uit de iptv-org-lijsten voor Nederland en België, en zet die als
+# guide.xml.gz bij de release "epg". Kijkluister laadt die vanzelf bij de gratis zenders.
+name: Tv-gids
+
+on:
+  schedule:
+    - cron: '17 3 * * *'      # elke nacht (UTC)
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - .github/workflows/epg.yml
+      - scripts/epg-channels.py
+
+permissions:
+  contents: write
+
+concurrency:
+  group: epg
+  cancel-in-progress: false
+
+jobs:
+  guide:
+    runs-on: ubuntu-latest
+    timeout-minutes: 120
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: iptv-org/epg ophalen
+        run: |
+          git clone --depth 1 https://github.com/iptv-org/epg.git epg
+          cd epg && npm install --no-audit --no-fund
+
+      - name: Zenders koppelen
+        run: |
+          curl -fsSL https://iptv-org.github.io/iptv/countries/nl.m3u -o nl.m3u
+          curl -fsSL https://iptv-org.github.io/iptv/countries/be.m3u -o be.m3u
+          python3 scripts/epg-channels.py epg channels.xml nl.m3u be.m3u
+          cp channels.xml epg/kijkluister.channels.xml
+
+      - name: Gids ophalen (3 dagen)
+        working-directory: epg
+        run: |
+          npm run grab --- --channels=kijkluister.channels.xml --output=../guide.xml --days=3 --maxConnections=5 --timeout=30000
+          ls -la ../guide.xml
+          gzip -9 -k -f ../guide.xml
+          echo "Zenders in gids: $(grep -c '<channel ' ../guide.xml)"
+          echo "Programma's:    $(grep -c '<programme ' ../guide.xml)"
+          test "$(grep -c '<programme ' ../guide.xml)" -gt 100
+
+      - name: Publiceren als release "epg"
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: epg
+          name: Tv-gids (dagelijks bijgewerkt)
+          body: |
+            Tv-gids in XMLTV-formaat voor de gratis Nederlandse en Belgische zenders in Kijkluister.
+            Elke nacht opnieuw opgehaald met iptv-org/epg (bronnen: tvgids.nl, webtv.delta.nl, vrt.be, vtm.be, pickx.be).
+            Adres: https://github.com/${{ github.repository }}/releases/download/epg/guide.xml.gz
+          prerelease: true
+          make_latest: false
+          files: |
+            guide.xml.gz
+            channels.xml
