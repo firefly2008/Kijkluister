@@ -28,7 +28,8 @@ Rectangle {
     readonly property var webModels: [webVideo, webMusic, webPodcasts]
     // Rij "Verder kijken" verschijnt of verdwijnt: de rijen worden opnieuw gemaakt, focus terugzetten
     onSectionDefsChanged: Qt.callLater(() => {
-        if (!frameScreen.visible && !iptvScreen.visible && !libraryScreen.visible && root.currentSection === null) {
+        if (!frameScreen.visible && !iptvScreen.visible && !libraryScreen.visible && root.currentSection === null
+                && !quickRow.activeFocus && !menu.visible && !welcomeOverlay.visible && !addOverlay.visible) {
             focusSection(0, 0, false)
         }
     })
@@ -837,13 +838,13 @@ Rectangle {
         onDone: root.showToast("Klaar! Kies een tegel en druk op " + (gamepad.connectedCount > 0 ? "Ⓐ" : "Enter") + " om te beginnen")
     }
 
-    // Melding als Kijkluister MPC-HC of ffmpeg ophaalt (op de achtergrond)
+    // Melding als Kijkluister MPC-HC of ffmpeg ophaalt (op de achtergrond): bovenaan, uit de weg
     Rectangle {
         z: 950
         visible: components.status !== ""
         anchors.horizontalCenter: parent.horizontalCenter
-        anchors.bottom: parent.bottom
-        anchors.bottomMargin: root.height * 0.04
+        anchors.top: parent.top
+        anchors.topMargin: root.height * 0.02
         width: toastRow.implicitWidth + root.height * 0.05
         height: root.height * 0.06
         radius: height / 2

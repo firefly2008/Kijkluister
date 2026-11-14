@@ -70,7 +70,7 @@ FocusScope {
         Text {
             id: messageLabel
             visible: overlay.message !== ""
-            anchors.top: messageLabel.visible ? messageLabel.bottom : titleLabel.bottom
+            anchors.top: titleLabel.bottom
             anchors.topMargin: panel.unit * 1.5
             anchors.left: parent.left
             anchors.right: parent.right
@@ -84,7 +84,7 @@ FocusScope {
 
         ListView {
             id: list
-            anchors.top: titleLabel.bottom
+            anchors.top: messageLabel.visible ? messageLabel.bottom : titleLabel.bottom
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.margins: panel.unit * 3
