@@ -27,7 +27,10 @@ RadioModel::RadioModel(const QString &dataDir, QObject *parent)
         {QStringLiteral("Radio 10"), QStringLiteral("Hits van toen"), QStringLiteral("www.radio10.nl"), QStringLiteral("#c2410c"),
          {stw + QStringLiteral("RADIO10.mp3")}},
         {QStringLiteral("JOE"), QStringLiteral("Hits van de jaren 80, 90 en nu"), QStringLiteral("joe.nl"), QStringLiteral("#8a1d3f"),
-         {QStringLiteral("https://audio-streaming.joe.nl/Joe_nl.mp3"), QStringLiteral("https://stream.joe.nl/joe/mp3")}},
+         {QStringLiteral("https://icecast-qmusicnl-cdp.triple-it.nl/Joe_nl.mp3"),
+          QStringLiteral("https://icecast-qmusicnl-cdp.triple-it.nl/Joe_nl.mp3?aw_0_1st.playerId=redirect"),
+          QStringLiteral("https://icecast-qmusicnl-cdp.triple-it.nl/Joe_nl_high.aac"),
+          QStringLiteral("https://audio-streaming.joe.nl/Joe_nl.mp3")}},
         {QStringLiteral("Radio Veronica"), QStringLiteral("Rock en classics"), QStringLiteral("www.radioveronica.nl"), QStringLiteral("#3b2a7a"),
          {stw + QStringLiteral("VERONICA.mp3"), QStringLiteral("https://stream.radioveronica.nl/veronica")}},
     };
