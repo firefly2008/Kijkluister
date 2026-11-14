@@ -855,13 +855,13 @@ void IptvModel::setExtraEpgUrls(const QStringList &urls)
     m_settings.sync();
     Q_EMIT sourcesChanged();
     // Gidsadressen opnieuw verzamelen en de gids ophalen
-    QStringList urls = m_epgUrls;
+    QStringList all = m_epgUrls;
     for (const QString &u : std::as_const(m_extraEpgUrls)) {
-        if (!urls.contains(u)) {
-            urls << u;
+        if (!all.contains(u)) {
+            all << u;
         }
     }
-    m_epgUrls = urls;
+    m_epgUrls = all;
     m_settings.setValue(QStringLiteral("iptv/epgUrls"), m_epgUrls);
     reloadEpg();
 }
