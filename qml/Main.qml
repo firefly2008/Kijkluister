@@ -1485,11 +1485,18 @@ Rectangle {
             if (cec.connected) root.showToast("📺 Tv-afstandsbediening verbonden", 4000)
         }
     }
+    // Test: volgende zender zodra deze speelt of echt niet lukt (reserve-adressen krijgen de tijd)
     Timer {
         id: radioTestTimer
-        interval: 7000
+        property int waited: 0
+        interval: 1000
         repeat: true
         onTriggered: {
+            waited += 1
+            if (waited < 4 || (radioPlayer.loading && waited < 25)) {
+                return
+            }
+            waited = 0
             if (radioPlayer.row >= radio.count - 1) {
                 stop()
             } else {
