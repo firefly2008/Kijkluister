@@ -1,0 +1,37 @@
+name: radio-probe
+on:
+  push:
+    branches: ['probe/**']
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          for u in \
+            https://icecast.omroep.nl/radio2-bb-mp3 \
+            https://icecast.omroep.nl/radio1-bb-mp3 \
+            https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live_96.mp3 \
+            https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_live.mp3 \
+            https://stream.qmusic.nl/qmusic/mp3 \
+            https://icecast-qmusicnl-cdp.triple-it.nl/JOE_nl_live_96.mp3 \
+            https://icecast-qmusicnl-cdp.triple-it.nl/Joe_nl_1_96.mp3 \
+            https://icecast-qmusicnl-cdp.triple-it.nl/JOE_nl_live.mp3 \
+            https://stream.joe.nl/joe/mp3 \
+            https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO538.mp3 \
+            https://playerservices.streamtheworld.com/api/livestream-redirect/TLPSTR01.mp3 \
+            https://playerservices.streamtheworld.com/api/livestream-redirect/SKYRADIO.mp3 \
+            https://playerservices.streamtheworld.com/api/livestream-redirect/RADIO10.mp3 \
+            https://playerservices.streamtheworld.com/api/livestream-redirect/VERONICA.mp3 \
+            https://playerservices.streamtheworld.com/api/livestream-redirect/VERONICAAAC.aac \
+            https://21253.live.streamtheworld.com/VERONICA.mp3 \
+            https://stream.radioveronica.nl/veronica \
+            https://25323.live.streamtheworld.com/VERONICA.mp3 \
+            https://www.mp3streams.nl/zender/radio-veronica/stream/4-mp3-128 \
+            https://stream.100p.nl/100pctnl.mp3 ; do
+            r=$(curl -sL -o /tmp/s -w '%{http_code} %{content_type} %{url_effective}' --max-time 6 -r 0-40000 "$u"); echo "$u => $r size=$(stat -c%s /tmp/s 2>/dev/null)"; done
+          curl -s "https://api.radio-browser.info/json/stations/search?countrycode=NL&order=votes&reverse=true&limit=400&hidebroken=true" | python3 -c "
+          import json,sys
+          for s in json.load(sys.stdin):
+            n=s['name'].lower()
+            if any(k in n for k in ['veronica','joe','qmusic','538','sky radio','radio 10','npo radio 2']): print(s['name'],'|',s['url_resolved'],'|',s['codec'],s['bitrate'],'|',s['favicon'])
+          "
