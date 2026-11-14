@@ -81,7 +81,7 @@ FocusScope {
 
     Rectangle {
         anchors.fill: parent
-        color: "#e60b0c0f"
+        color: "#f50b0c0f"
         MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons; hoverEnabled: true }
     }
 

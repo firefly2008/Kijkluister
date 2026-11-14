@@ -121,7 +121,7 @@ bool Recorder::start(const QString &channel, const QString &url, int minutes)
     m_stopping = false;
     m_active = true;
     m_file = QDir::toNativeSeparators(m_folder + QLatin1Char('/') + sanitize(channel) + QStringLiteral(" - ")
-                                      + m_started.toString(QStringLiteral("yyyy-MM-dd HH.mm")) + QStringLiteral(".mp4"));
+                                      + m_started.toString(QStringLiteral("yyyy-MM-dd HH.mm.ss")) + QStringLiteral(".mp4"));
     if (minutes > 0) {
         m_endTimer.start(minutes * 60 * 1000);
     }
