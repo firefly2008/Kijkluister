@@ -1,5 +1,6 @@
 // Radio luisteren in Kijkluister zelf: schermvullend, met het logo van de zender groot in beeld.
-// Links/rechts: andere zender. Omhoog/omlaag: volume. Enter: pauze. Esc/B: stoppen.
+// Links/rechts: andere zender. Omhoog/omlaag: volume. Enter: pauze.
+// Esc/B: terug naar het startscherm, de radio speelt door. X/Menu/Delete: stoppen. Y: slaaptimer.
 // SPDX-License-Identifier: GPL-2.0-or-later
 import QtQuick
 import QtMultimedia
@@ -21,6 +22,11 @@ FocusScope {
                                      || (player.playbackState === MediaPlayer.PlayingState && player.mediaStatus === MediaPlayer.NoMedia))
     readonly property bool playing: player.playbackState === MediaPlayer.PlayingState && !loading && errorText === ""
     readonly property bool paused: player.playbackState === MediaPlayer.PausedState
+    // Speelt (of laadt) er een zender, ook als het scherm dicht is
+    readonly property bool active: row >= 0 && player.playbackState !== MediaPlayer.StoppedState
+    readonly property bool inBackground: active && !visible
+    signal sleepRequested()
+    property string sleepText: ""
 
     anchors.fill: parent
     visible: false
@@ -36,16 +42,40 @@ FocusScope {
         returnFocusTo = focusItem
         visible = true
         forceActiveFocus()
-        tune(stationRow)
+        if (stationRow !== row || !active) {
+            tune(stationRow)
+        }
     }
 
+    // Weer tonen terwijl hij op de achtergrond speelt
+    function show(focusItem) {
+        returnFocusTo = focusItem
+        visible = true
+        forceActiveFocus()
+    }
+
+    // Terug naar het startscherm; de radio speelt door
     function close() {
+        if (!active) {
+            stopPlayback()
+            return
+        }
+        console.info("Radio in background", radio.nameAt(row))
+        visible = false
+        if (returnFocusTo) {
+            returnFocusTo.forceActiveFocus()
+        }
+    }
+
+    function stopPlayback() {
         console.info("Radio closed")
+        stallTimer.stop()
         player.stop()
         player.source = ""
+        const wasVisible = visible
         visible = false
         row = -1
-        if (returnFocusTo) {
+        if (wasVisible && returnFocusTo) {
             returnFocusTo.forceActiveFocus()
         }
     }
@@ -135,6 +165,12 @@ FocusScope {
     Keys.onPressed: (event) => {
         if (event.key === Qt.Key_Escape || event.key === Qt.Key_Back || event.key === Qt.Key_Backspace) {
             close()
+            event.accepted = true
+        } else if (event.key === Qt.Key_Menu || event.key === Qt.Key_Delete || event.key === Qt.Key_X || event.key === Qt.Key_MediaStop) {
+            stopPlayback()
+            event.accepted = true
+        } else if (event.key === Qt.Key_I || event.key === Qt.Key_T) {
+            sleepRequested()
             event.accepted = true
         } else if (event.key === Qt.Key_Return || event.key === Qt.Key_Enter || event.key === Qt.Key_Space
                    || event.key === Qt.Key_MediaPlay || event.key === Qt.Key_MediaTogglePlayPause) {
@@ -317,13 +353,13 @@ FocusScope {
         spacing: radioPlayer.unit * 1.6
 
         Repeater {
-            model: radio
+            model: radio.count
             delegate: Rectangle {
                 required property int index
-                required property string name
-                required property string iconSource
+                readonly property string name: radio.nameAt(index)
+                readonly property string iconSource: radio.iconAt(index + radio.revision * 0)
                 readonly property bool current: index === radioPlayer.row
-                width: radioPlayer.unit * (current ? 10 : 8)
+                width: radioPlayer.unit * (current ? 10 : 8) * Math.min(1, 10 / Math.max(1, radio.count))
                 height: width
                 radius: width * 0.16
                 anchors.verticalCenter: parent ? parent.verticalCenter : undefined
@@ -369,7 +405,9 @@ FocusScope {
             { pad: "◀ ▶", key: "◀ ▶", label: "Andere zender" },
             { pad: "▲ ▼", key: "▲ ▼", label: "Volume" },
             { pad: "A", key: "Enter", label: radioPlayer.paused ? "Verder" : "Pauze" },
-            { pad: "B", key: "Esc", label: "Stoppen" }
+            { pad: "Y", key: "T", label: radioPlayer.sleepText !== "" ? "Slaaptimer: " + radioPlayer.sleepText : "Slaaptimer" },
+            { pad: "B", key: "Esc", label: "Terug (speelt door)" },
+            { pad: "X", key: "Del", label: "Stoppen" }
         ]
     }
 }

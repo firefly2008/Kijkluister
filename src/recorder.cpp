@@ -4,6 +4,8 @@
 #include <QCoreApplication>
 #include <QDesktopServices>
 #include <QDir>
+#include <QSet>
+#include <QStorageInfo>
 #include <QFile>
 #include <QFileInfo>
 #include <QStandardPaths>
@@ -57,6 +59,125 @@ Recorder::Recorder(const QString &dataDir, QObject *parent)
     connect(&m_retryTimer, &QTimer::timeout, this, &Recorder::launch);
     m_endTimer.setSingleShot(true);
     connect(&m_endTimer, &QTimer::timeout, this, &Recorder::stop);
+    // Opruimen: kort na de start en daarna elk uur kijken
+    m_cleanupTimer.setInterval(60 * 60 * 1000);
+    connect(&m_cleanupTimer, &QTimer::timeout, this, [this] { checkCleanup(false); });
+    m_cleanupTimer.start();
+    QTimer::singleShot(90 * 1000, this, [this] { checkCleanup(false); });
+}
+
+void Recorder::setKeepDays(int days)
+{
+    m_settings.setValue(QStringLiteral("recorder/keepDays"), qMax(0, days));
+    m_settings.remove(QStringLiteral("recorder/cleanupAsked"));
+    Q_EMIT cleanupSettingsChanged();
+}
+
+void Recorder::setMinFreeGb(int gb)
+{
+    m_settings.setValue(QStringLiteral("recorder/minFreeGb"), qMax(0, gb));
+    m_settings.remove(QStringLiteral("recorder/cleanupAsked"));
+    Q_EMIT cleanupSettingsChanged();
+}
+
+QString Recorder::diskText() const
+{
+    const QString dir = m_folder.isEmpty() ? defaultFolder() : m_folder;
+    QStorageInfo storage(QDir(dir).exists() ? dir : QDir::homePath());
+    if (!storage.isValid()) {
+        return {};
+    }
+    qint64 used = 0;
+    for (const QVariant &r : recordings()) {
+        used += r.toMap().value(QStringLiteral("size")).toLongLong();
+    }
+    return tr("Opnames: %1 GB · Vrij op de schijf: %2 GB")
+        .arg(QString::number(used / 1e9, 'f', 1), QString::number(storage.bytesAvailable() / 1e9, 'f', 0));
+}
+
+QVariantList Recorder::cleanupCandidates() const
+{
+    QVariantList result;
+    if (m_folder.isEmpty()) {
+        return result;
+    }
+    QFileInfoList files = QDir(m_folder).entryInfoList({QStringLiteral("*.mp4"), QStringLiteral("*.ts"), QStringLiteral("*.mkv")},
+                                                      QDir::Files, QDir::Time | QDir::Reversed);   // oudste eerst
+    QSet<QString> chosen;
+    const QDateTime now = QDateTime::currentDateTime();
+    auto add = [&](const QFileInfo &f, const QString &reason) {
+        const QString path = QDir::toNativeSeparators(f.absoluteFilePath());
+        if (chosen.contains(path) || (m_active && m_parts.contains(path))) {
+            return;
+        }
+        chosen.insert(path);
+        result.append(QVariantMap{{QStringLiteral("path"), path}, {QStringLiteral("name"), f.completeBaseName()},
+                                  {QStringLiteral("reason"), reason}, {QStringLiteral("size"), f.size()},
+                                  {QStringLiteral("date"), f.lastModified().toString(QStringLiteral("d MMM yyyy"))}});
+    };
+    if (keepDays() > 0) {
+        for (const QFileInfo &f : files) {
+            if (f.lastModified().daysTo(now) > keepDays()) {
+                add(f, tr("ouder dan %1 dagen").arg(keepDays()));
+            }
+        }
+    }
+    if (minFreeGb() > 0) {
+        QStorageInfo storage(m_folder);
+        qint64 freeBytes = storage.isValid() ? storage.bytesAvailable() : -1;
+        for (const QVariant &v : std::as_const(result)) {
+            freeBytes += v.toMap().value(QStringLiteral("size")).toLongLong();
+        }
+        const qint64 needed = qint64(minFreeGb()) * 1000 * 1000 * 1000;
+        for (const QFileInfo &f : files) {
+            if (freeBytes < 0 || freeBytes >= needed) {
+                break;
+            }
+            const QString path = QDir::toNativeSeparators(f.absoluteFilePath());
+            if (chosen.contains(path)) {
+                continue;
+            }
+            add(f, tr("schijf bijna vol"));
+            freeBytes += f.size();
+        }
+    }
+    return result;
+}
+
+int Recorder::cleanup(const QStringList &paths)
+{
+    int removed = 0;
+    for (const QString &path : paths) {
+        if (m_active && m_parts.contains(path)) {
+            continue;
+        }
+        // Alleen bestanden in de opnamemap
+        if (!m_folder.isEmpty() && QDir::cleanPath(QFileInfo(path).absolutePath()).compare(QDir::cleanPath(m_folder), Qt::CaseInsensitive) == 0
+            && QFile::remove(path)) {
+            ++removed;
+        }
+    }
+    qInfo() << "Recordings cleaned up:" << removed;
+    m_settings.remove(QStringLiteral("recorder/cleanupAsked"));
+    refresh();
+    return removed;
+}
+
+void Recorder::checkCleanup(bool force)
+{
+    const QVariantList list = cleanupCandidates();
+    if (list.isEmpty()) {
+        return;
+    }
+    // Hooguit eens per dag vragen (tenzij de lijst veranderd is)
+    const QString today = QDate::currentDate().toString(Qt::ISODate) + QLatin1Char('/') + QString::number(list.size());
+    if (!force && m_settings.value(QStringLiteral("recorder/cleanupAsked")).toString() == today) {
+        return;
+    }
+    m_settings.setValue(QStringLiteral("recorder/cleanupAsked"), today);
+    const QString reason = list.first().toMap().value(QStringLiteral("reason")).toString();
+    qInfo() << "Cleanup suggested:" << list.size() << reason;
+    Q_EMIT cleanupSuggested(int(list.size()), reason);
 }
 
 Recorder::~Recorder()

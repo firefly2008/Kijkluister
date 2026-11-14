@@ -33,6 +33,10 @@
 #include "recorder.h"
 #include "components.h"
 #include "radiomodel.h"
+#include "parental.h"
+#include "weather.h"
+#include "updater.h"
+#include "cec.h"
 #include "resumemodel.h"
 #include "mpcplayer.h"
 #include "iptvmodel.h"
@@ -267,6 +271,21 @@ int main(int argc, char *argv[])
     view.rootContext()->setContextProperty(QStringLiteral("radio"), &radio);
     ResumeModel resume(appDataDir(), &library);
     view.rootContext()->setContextProperty(QStringLiteral("resume"), &resume);
+    Parental parental;
+    view.rootContext()->setContextProperty(QStringLiteral("parental"), &parental);
+    Weather weather;
+    view.rootContext()->setContextProperty(QStringLiteral("weather"), &weather);
+    Updater updater;
+    view.rootContext()->setContextProperty(QStringLiteral("updater"), &updater);
+    Cec cec;
+    view.rootContext()->setContextProperty(QStringLiteral("cec"), &cec);
+    QObject::connect(&cec, &Cec::button, &gamepad, &GamepadNavigator::handleButton);
+    QObject::connect(&cec, &Cec::homeRequested, &gamepad, &GamepadNavigator::homeRequested);
+    if (qEnvironmentVariable("BIGSCREEN_SELFTEST").isEmpty()) {
+        QTimer::singleShot(4000, &weather, &Weather::refresh);
+        QTimer::singleShot(60000, &updater, [&updater] { updater.check(false); });
+        QTimer::singleShot(2000, &cec, &Cec::start);
+    }
     // MPC-HC en ffmpeg op de achtergrond ophalen of bijwerken (niet tijdens de tests)
     if (qEnvironmentVariable("BIGSCREEN_SELFTEST").isEmpty()) {
         QTimer::singleShot(20000, &components, &Components::startBackground);

@@ -1069,3 +1069,70 @@ bool IptvModel::loadEpgCache()
     }
     return QDateTime::currentSecsSinceEpoch() - saved < 6 * 3600;
 }
+
+QVariantList IptvModel::searchAll(const QString &query, int limit) const
+{
+    const QString q = query.trimmed();
+    QVariantList result;
+    if (q.size() < 2) {
+        return result;
+    }
+    QVariantList programmes;
+    const qint64 now = QDateTime::currentSecsSinceEpoch();
+    QSet<QString> seenChannels;
+    for (const Channel &c : m_all) {
+        if (seenChannels.contains(c.url)) {
+            continue;
+        }
+        seenChannels.insert(c.url);
+        if (c.name.contains(q, Qt::CaseInsensitive) && result.size() < limit) {
+            result.append(QVariantMap{{QStringLiteral("kind"), QStringLiteral("channel")}, {QStringLiteral("name"), c.name},
+                                      {QStringLiteral("detail"), c.group}, {QStringLiteral("icon"), c.logo},
+                                      {QStringLiteral("url"), c.url}});
+        }
+        if (programmes.size() >= limit) {
+            continue;
+        }
+        if (const QList<Programme> *list = programmesFor(c)) {
+            for (const Programme &p : *list) {
+                if (p.stop <= now || !p.title.contains(q, Qt::CaseInsensitive)) {
+                    continue;
+                }
+                const QDateTime start = QDateTime::fromSecsSinceEpoch(p.start).toLocalTime();
+                const qint64 days = QDate::currentDate().daysTo(start.date());
+                const QString day = p.start <= now ? tr("Nu") : days == 0 ? tr("Vandaag") : days == 1 ? tr("Morgen")
+                                  : QLocale(QLocale::Dutch).toString(start.date(), QStringLiteral("dddd"));
+                programmes.append(QVariantMap{{QStringLiteral("kind"), QStringLiteral("programme")}, {QStringLiteral("name"), p.title},
+                                              {QStringLiteral("detail"), QStringLiteral("%1 · %2 %3").arg(c.name, day, start.toString(QStringLiteral("HH:mm")))},
+                                              {QStringLiteral("icon"), c.logo}, {QStringLiteral("url"), c.url},
+                                              {QStringLiteral("channel"), c.name},
+                                              {QStringLiteral("startSecs"), double(p.start)}, {QStringLiteral("stopSecs"), double(p.stop)},
+                                              {QStringLiteral("isNow"), p.start <= now}});
+                if (programmes.size() >= limit) {
+                    break;
+                }
+            }
+        }
+    }
+    std::sort(programmes.begin(), programmes.end(), [](const QVariant &a, const QVariant &b) {
+        return a.toMap().value(QStringLiteral("startSecs")).toDouble() < b.toMap().value(QStringLiteral("startSecs")).toDouble();
+    });
+    result.append(programmes);
+    return result;
+}
+
+int IptvModel::showChannel(const QString &url)
+{
+    if (!m_search.isEmpty()) {
+        setSearch(QString());
+    }
+    if (m_group != allGroup) {
+        setGroup(allGroup);
+    }
+    for (int row = 0; row < m_visible.size(); ++row) {
+        if (m_all.at(m_visible.at(row)).url == url) {
+            return row;
+        }
+    }
+    return -1;
+}

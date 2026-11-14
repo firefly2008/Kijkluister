@@ -83,6 +83,10 @@ public:
     Q_INVOKABLE QVariantList guide(int row) const;
     Q_INVOKABLE void requestEpg(int row);   // Xtream: gids van deze zender ophalen
     Q_INVOKABLE void reloadEpg();
+    // Zoeken over alle zenders en de tv-gids (voor het zoekscherm)
+    Q_INVOKABLE QVariantList searchAll(const QString &query, int limit = 30) const;
+    // Groep "Alle zenders" kiezen en de rij van deze zender teruggeven (-1 = niet gevonden)
+    Q_INVOKABLE int showChannel(const QString &url);
 
 Q_SIGNALS:
     void countChanged();

@@ -6,3 +6,7 @@
 #include <QString>
 
 QString appDataDir();
+
+#include <QSettings>
+// Alle instellingen in één bestand: %LOCALAPPDATA%\Kijkluister\settings.ini
+inline QString appSettingsFile() { return appDataDir() + QStringLiteral("/settings.ini"); }

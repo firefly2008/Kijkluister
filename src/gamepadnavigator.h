@@ -20,6 +20,8 @@ public:
     ~GamepadNavigator() override;
 
     int connectedCount() const { return m_pads.size(); }
+    // Ook gebruikt door de tv-afstandsbediening (HDMI-CEC): knop als SDL-gamepadknop
+    void handleButton(int button, bool pressed);
 
 Q_SIGNALS:
     void connectedCountChanged();
@@ -29,7 +31,6 @@ private:
     void poll();
     void sendKey(int qtKey, bool pressed);
     void tapKey(int qtKey);
-    void handleButton(int button, bool pressed);
     void handleStick();
 
     QTimer m_timer;

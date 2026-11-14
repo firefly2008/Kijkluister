@@ -1,0 +1,314 @@
+// Zoekscherm: zoekveld + schermtoetsenbord links, resultaten rechts (met kopjes per soort).
+// Gebruikt voor: alles zoeken, radiozenders toevoegen en de plaats voor het weer.
+// results: [{ name, detail, icon, section, badge }]; icon = url, "glyph:X" of een emoji.
+// SPDX-License-Identifier: GPL-2.0-or-later
+import QtQuick
+
+FocusScope {
+    id: picker
+
+    property string title
+    property string placeholder: "Typ om te zoeken"
+    property var results: []
+    property bool busy: false
+    property string emptyText: "Niets gevonden"
+    property string pickLabel: "Openen"
+    property Item returnFocusTo: null
+    property alias text: field.text
+    readonly property real unit: height / 100
+    signal query(string text)
+    signal picked(int index)
+    signal secondary(int index)   // Menu-knop op een resultaat (bv. opnemen)
+
+    anchors.fill: parent
+    visible: false
+    z: 70
+
+    function open(pickerTitle, focusItem, startText) {
+        title = pickerTitle
+        returnFocusTo = focusItem
+        field.text = startText || ""
+        results = []
+        visible = true
+        keyboard.currentRow = 1
+        keyboard.currentCol = 0
+        keyboard.forceActiveFocus()
+        if (field.text !== "") {
+            query(field.text)
+        }
+    }
+
+    function close() {
+        visible = false
+        if (returnFocusTo) {
+            returnFocusTo.forceActiveFocus()
+        }
+    }
+
+    // Resultaten in een ListModel: dan werken de kopjes (section) per soort
+    onResultsChanged: {
+        resultModel.clear()
+        for (const r of results) {
+            resultModel.append({ name: r.name || "", detail: r.detail || "", icon: r.icon || "",
+                                 section: r.section || "", badge: r.badge || "" })
+        }
+    }
+    ListModel { id: resultModel }
+
+    function nameAt(index) {
+        return index >= 0 && index < results.length ? results[index].name : ""
+    }
+
+    Timer {
+        id: debounce
+        interval: 350
+        onTriggered: picker.query(field.text.trim())
+    }
+
+    Keys.onPressed: (event) => {
+        if (event.key === Qt.Key_Escape || event.key === Qt.Key_Back) {
+            close()
+            event.accepted = true
+        }
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        color: "#f00b0c0f"
+        MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons }
+    }
+
+    Text {
+        id: titleLabel
+        x: picker.unit * 5
+        y: picker.unit * 4
+        text: picker.title
+        color: "white"
+        font.pixelSize: picker.unit * 4 * appModel.fontScale
+        font.weight: Font.DemiBold
+    }
+
+    // Zoekveld
+    Rectangle {
+        id: fieldBox
+        anchors.left: titleLabel.left
+        anchors.top: titleLabel.bottom
+        anchors.topMargin: picker.unit * 2.5
+        width: keyboard.width
+        height: picker.unit * 7
+        radius: picker.unit * 1.2
+        color: "#1b1f26"
+        border.color: keyboard.activeFocus ? "#5b8fd8" : "#3a3f48"
+        border.width: picker.unit * 0.25
+        Text {
+            anchors.left: parent.left
+            anchors.leftMargin: picker.unit * 2
+            anchors.verticalCenter: parent.verticalCenter
+            text: ""
+            font.family: "Segoe Fluent Icons, Segoe MDL2 Assets"
+            font.pixelSize: picker.unit * 2.8
+            color: "#a8acb3"
+        }
+        TextInput {
+            id: field
+            anchors.left: parent.left
+            anchors.leftMargin: picker.unit * 6.5
+            anchors.right: parent.right
+            anchors.rightMargin: picker.unit * 2
+            anchors.verticalCenter: parent.verticalCenter
+            color: "white"
+            font.pixelSize: picker.unit * 3.2 * appModel.fontScale
+            clip: true
+            activeFocusOnPress: false
+            onTextChanged: debounce.restart()
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: field.text === ""
+                text: picker.placeholder
+                color: "#80848b"
+                font.pixelSize: picker.unit * 3 * appModel.fontScale
+            }
+            // Knipperende cursor
+            Rectangle {
+                x: field.contentWidth + 2
+                anchors.verticalCenter: parent.verticalCenter
+                width: picker.unit * 0.25
+                height: picker.unit * 3.6
+                color: "white"
+                visible: picker.visible && cursorBlink.on
+                Timer {
+                    id: cursorBlink
+                    property bool on: true
+                    interval: 530; repeat: true; running: picker.visible
+                    onTriggered: on = !on
+                }
+            }
+        }
+    }
+
+    OnScreenKeyboard {
+        id: keyboard
+        anchors.left: fieldBox.left
+        anchors.top: fieldBox.bottom
+        anchors.topMargin: picker.unit * 2.5
+        unit: picker.unit
+        target: field
+        focus: true
+        onExitRight: if (list.count > 0) list.forceActiveFocus()
+    }
+
+    // Resultaten
+    Text {
+        anchors.left: list.left
+        anchors.top: list.top
+        anchors.topMargin: picker.unit * 2
+        width: list.width
+        wrapMode: Text.WordWrap
+        visible: list.count === 0
+        color: "#a8acb3"
+        font.pixelSize: picker.unit * 2.8 * appModel.fontScale
+        text: picker.busy ? "Zoeken…" : field.text.trim().length < 2 ? "Typ minstens twee letters." : picker.emptyText
+    }
+
+    ListView {
+        id: list
+        anchors.left: keyboard.right
+        anchors.leftMargin: picker.unit * 5
+        anchors.right: parent.right
+        anchors.rightMargin: picker.unit * 5
+        anchors.top: fieldBox.top
+        anchors.bottom: hints.top
+        anchors.bottomMargin: picker.unit * 2
+        clip: true
+        model: resultModel
+        keyNavigationEnabled: true
+        highlightMoveDuration: 120
+        section.property: "section"
+        section.delegate: Text {
+            required property string section
+            visible: section !== ""
+            height: section !== "" ? picker.unit * 5.5 : 0
+            verticalAlignment: Text.AlignBottom
+            bottomPadding: picker.unit * 0.8
+            text: section
+            color: "#a8acb3"
+            font.pixelSize: picker.unit * 2.3 * appModel.fontScale
+            font.weight: Font.DemiBold
+        }
+        onCountChanged: currentIndex = 0
+
+        delegate: Rectangle {
+            id: resultRow
+            required property int index
+            required property string name
+            required property string detail
+            required property string icon
+            required property string badge
+            readonly property bool current: list.activeFocus && list.currentIndex === index
+            width: list.width
+            height: picker.unit * 8.4
+            radius: picker.unit * 1.2
+            color: current ? "#3d6fb4" : "transparent"
+
+            Item {
+                id: iconBox
+                anchors.left: parent.left
+                anchors.leftMargin: picker.unit * 1.4
+                anchors.verticalCenter: parent.verticalCenter
+                width: picker.unit * 6
+                height: width
+                readonly property string icon: resultRow.icon
+                Rectangle {
+                    anchors.fill: parent
+                    radius: picker.unit
+                    color: "#ffffff"
+                    visible: iconImage.status === Image.Ready
+                }
+                Image {
+                    id: iconImage
+                    anchors.fill: parent
+                    anchors.margins: picker.unit * 0.5
+                    source: iconBox.icon.startsWith("http") || iconBox.icon.startsWith("file:") || iconBox.icon.startsWith("qrc:")
+                            || iconBox.icon.startsWith("image:") ? iconBox.icon : ""
+                    fillMode: Image.PreserveAspectFit
+                    asynchronous: true
+                    sourceSize: Qt.size(128, 128)
+                }
+                Text {
+                    anchors.centerIn: parent
+                    visible: iconImage.source.toString() === ""
+                    text: iconBox.icon.startsWith("glyph:") ? iconBox.icon.substring(6) : (iconBox.icon || "•")
+                    font.family: iconBox.icon.startsWith("glyph:") ? "Segoe Fluent Icons, Segoe MDL2 Assets" : "Segoe UI Emoji"
+                    font.pixelSize: picker.unit * 3.4
+                    color: "white"
+                }
+            }
+            Column {
+                anchors.left: iconBox.right
+                anchors.leftMargin: picker.unit * 2
+                anchors.right: badgeLabel.left
+                anchors.rightMargin: picker.unit
+                anchors.verticalCenter: parent.verticalCenter
+                Text {
+                    width: parent.width
+                    elide: Text.ElideRight
+                    text: resultRow.name
+                    color: "white"
+                    font.pixelSize: picker.unit * 2.9 * appModel.fontScale
+                }
+                Text {
+                    width: parent.width
+                    elide: Text.ElideRight
+                    visible: text !== ""
+                    text: resultRow.detail
+                    color: resultRow.current ? "#e6e8eb" : "#a8acb3"
+                    font.pixelSize: picker.unit * 2.2 * appModel.fontScale
+                }
+            }
+            Text {
+                id: badgeLabel
+                anchors.right: parent.right
+                anchors.rightMargin: picker.unit * 2
+                anchors.verticalCenter: parent.verticalCenter
+                text: resultRow.badge
+                color: resultRow.current ? "white" : "#a8acb3"
+                font.pixelSize: picker.unit * 2.2 * appModel.fontScale
+            }
+            MouseArea {
+                anchors.fill: parent
+                onClicked: { list.currentIndex = resultRow.index; picker.picked(resultRow.index) }
+            }
+        }
+
+        Keys.onLeftPressed: keyboard.forceActiveFocus()
+        Keys.onReturnPressed: picker.picked(currentIndex)
+        Keys.onEnterPressed: picker.picked(currentIndex)
+        Keys.onPressed: (event) => {
+            if (event.key === Qt.Key_Menu || event.key === Qt.Key_R) {
+                picker.secondary(currentIndex)
+                event.accepted = true
+            } else if (event.key === Qt.Key_Backspace || (event.text.length === 1 && event.text > " " && !(event.modifiers & Qt.ControlModifier))) {
+                // Verder typen: terug naar het zoekveld
+                keyboard.forceActiveFocus()
+                if (event.key === Qt.Key_Backspace) {
+                    keyboard.press("⌫")
+                } else {
+                    field.text += event.text
+                }
+                event.accepted = true
+            }
+        }
+    }
+
+    HintBar {
+        id: hints
+        anchors.left: parent.left
+        anchors.leftMargin: picker.unit * 5
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: picker.unit * 3
+        unit: picker.unit
+        items: list.activeFocus
+               ? [{ pad: "A", key: "Enter", label: picker.pickLabel }, { pad: "◀", key: "◀", label: "Toetsenbord" }, { pad: "B", key: "Esc", label: "Terug" }]
+               : [{ pad: "A", key: "Typen", label: "Letter kiezen" }, { pad: "▶", key: "▶", label: "Naar de resultaten" }, { pad: "B", key: "Esc", label: "Terug" }]
+    }
+}

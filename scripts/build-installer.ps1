@@ -14,7 +14,7 @@ Set-Location $root
 cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=Release `
     "-DCMAKE_PREFIX_PATH=$QtDir" `
     "-DCMAKE_TOOLCHAIN_FILE=$VcpkgRoot\scripts\buildsystems\vcpkg.cmake" `
-    -DVCPKG_TARGET_TRIPLET=x64-windows
+    -DVCPKG_TARGET_TRIPLET=x64-windows "-DKIJKLUISTER_VERSION=$Version"
 if ($LASTEXITCODE) { throw "cmake configure mislukt" }
 cmake --build build
 if ($LASTEXITCODE) { throw "build mislukt" }

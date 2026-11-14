@@ -84,9 +84,16 @@ FocusScope {
         }
     }
 
+    signal pinRequired(int row)
+
     function play(row) {
         const ch = iptv.channelAt(row)
         if (!ch.url) {
+            return
+        }
+        // Kinderslot: zenders voor volwassenen alleen met de pincode
+        if (parental.enabled && !parental.unlocked && parental.isAdultChannel(ch.group || "", ch.name || "")) {
+            pinRequired(row)
             return
         }
         playingRow = row

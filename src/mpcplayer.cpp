@@ -201,3 +201,11 @@ bool MpcPlayer::handleButton(int sdlButton, bool pressed)
     return false;
 #endif
 }
+
+void MpcPlayer::stop()
+{
+    if (m_process && m_process->state() != QProcess::NotRunning) {
+        qInfo() << "MPC-HC: stop (sleep timer)";
+        m_process->terminate();   // WM_CLOSE: MPC-HC slaat de positie op
+    }
+}

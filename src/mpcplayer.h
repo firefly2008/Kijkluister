@@ -27,6 +27,8 @@ public:
     QString executable();      // door Kijkluister opgehaalde MPC-HC, anders een geïnstalleerde
     // Speel één bestand, of een reeks (eerste = nu, rest = daarna). closeAtEnd: MPC-HC sluit na afloop.
     bool play(const QStringList &files, bool closeAtEnd);
+    // Slaaptimer: MPC-HC netjes sluiten (positie wordt onthouden)
+    Q_INVOKABLE void stop();
 
     // Gamepad naar MPC-HC (alleen zolang die speelt en voorop staat)
     bool handleButton(int sdlButton, bool pressed);

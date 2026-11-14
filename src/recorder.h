@@ -30,6 +30,11 @@ class Recorder : public QObject
     // De stream die wordt opgenomen, lokaal doorgegeven voor de speler (één verbinding met de aanbieder)
     Q_PROPERTY(QString relayUrl READ relayUrl NOTIFY stateChanged)
     Q_PROPERTY(QString url READ url NOTIFY stateChanged)
+    // Opruimen: opnames ouder dan keepDays dagen (0 = altijd bewaren) en/of als er minder dan
+    // minFreeGb vrij is op de schijf. Er wordt altijd eerst gevraagd (cleanupSuggested).
+    Q_PROPERTY(int keepDays READ keepDays WRITE setKeepDays NOTIFY cleanupSettingsChanged)
+    Q_PROPERTY(int minFreeGb READ minFreeGb WRITE setMinFreeGb NOTIFY cleanupSettingsChanged)
+    Q_PROPERTY(QString diskText READ diskText NOTIFY recordingsChanged)
 
 public:
     explicit Recorder(const QString &dataDir, QObject *parent = nullptr);
@@ -65,6 +70,15 @@ public:
     Q_INVOKABLE bool play(const QString &path);
     Q_INVOKABLE bool remove(const QString &path);
     Q_INVOKABLE void refresh();
+    int keepDays() const { return m_settings.value(QStringLiteral("recorder/keepDays"), 0).toInt(); }
+    void setKeepDays(int days);
+    int minFreeGb() const { return m_settings.value(QStringLiteral("recorder/minFreeGb"), 10).toInt(); }
+    void setMinFreeGb(int gb);
+    QString diskText() const;
+    // Welke opnames weg mogen volgens de regels (oudste eerst): [{path, name, reason, size}]
+    Q_INVOKABLE QVariantList cleanupCandidates() const;
+    Q_INVOKABLE int cleanup(const QStringList &paths);
+    Q_INVOKABLE void checkCleanup(bool force = false);   // meldt cleanupSuggested als er iets op te ruimen is
 
 Q_SIGNALS:
     void folderChanged();
@@ -73,6 +87,8 @@ Q_SIGNALS:
     void recordingsChanged();
     void finished(const QString &file, bool ok);
     void scheduleChanged();
+    void cleanupSettingsChanged();
+    void cleanupSuggested(int count, const QString &reason);
 
 private:
     void launch();
@@ -104,6 +120,7 @@ private:
     QVariantList m_schedule;
     QString m_scheduledId;          // id van de geplande opname die nu loopt
     QTimer m_scheduleTimer;
+    QTimer m_cleanupTimer;
     void checkSchedule();
     void saveSchedule();
     void keepAwake(bool on);

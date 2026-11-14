@@ -18,6 +18,16 @@ Rectangle {
 
     color: "#0b0c0f"
 
+    // Typen op het startscherm: meteen zoeken
+    Keys.onPressed: (event) => {
+        const overlayOpen = iptvScreen.visible || libraryScreen.visible || frameScreen.visible || radioPlayer.visible || menu.visible
+                            || picker.visible || welcomeOverlay.visible || addOverlay.visible || pinPad.visible || placesPicker.visible
+        if (!overlayOpen && event.text.length === 1 && /[a-zA-Z0-9]/.test(event.text) && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier))) {
+            root.openPicker("all", "Zoeken", root.currentSection ? root.currentSection.grid : quickRow, event.text)
+            event.accepted = true
+        }
+    }
+
     // De rijen op de startpagina, van boven naar beneden
     readonly property var sectionDefs: (resume.count > 0 ? [{ title: "Verder kijken", model: resume }] : []).concat([
         { title: "Video", model: webVideo },
@@ -133,17 +143,33 @@ Rectangle {
         }
     }
 
-    function launch(model, row) {
+    function launch(model, row, pinOk) {
         if (row < 0) {
             return
         }
         if (model === radio) {
+            if (radio.isAddTile(row)) {
+                openRadioSearch()
+                return
+            }
             // Radio speelt in Kijkluister zelf
             const section = sectionFor(radio)
             radioPlayer.open(row, section ? section.grid : mediaGrid())
             return
         }
+        const path = model.pathAt ? model.pathAt(row) : ""
         const name = model.nameAt(row)
+        // Kinderslot: eerst de pincode
+        if (!pinOk && parental.needsPin(path)) {
+            pinPad.ask(name + " is vergrendeld", "Vul de pincode van het kinderslot in.",
+                       (pin) => { if (!parental.check(pin)) return false; root.launch(model, row, true); return true },
+                       currentSection ? currentSection.grid : quickRow)
+            return
+        }
+        // Een andere app of film: radio stoppen (bij het schilderij mag hij doorspelen)
+        if (radioPlayer.row >= 0 && path !== "bigscreen:frame") {
+            radioPlayer.stopPlayback()
+        }
         if (model.launch(row)) {
             // Blijft staan tot het venster echt open is (Kijkluister gaat dan naar de achtergrond)
             showToast(name + " wordt geopend…", 12000)
@@ -185,8 +211,14 @@ Rectangle {
         editModel = model
         editRow = row
         if (model === radio) {
+            if (radio.isAddTile(row)) {
+                openRadioSearch()
+                return
+            }
             menu.open(model.nameAt(row), [
                 { label: "Luisteren", action: "radio-play" },
+                { label: "Zender toevoegen…", action: "radio-add" },
+                { label: "Van startpagina verwijderen", action: "radio-remove" },
                 { label: "Annuleren", action: "" }
             ], focusItem)
             return
@@ -207,6 +239,11 @@ Rectangle {
             if (root.moveLimit(model, row, dir) > 0) {
                 entries.push({ label: root.moveLabels[dir] + " verplaatsen…", action: "move-" + dir })
             }
+        }
+        if (parental.enabled && model.pathAt) {
+            entries.push(parental.isLocked(model.pathAt(row))
+                         ? { label: "🔓 Kinderslot van deze tegel halen", action: "parental-unlock-tile" }
+                         : { label: "🔒 Kinderslot op deze tegel", action: "parental-lock-tile" })
         }
         entries.push({ label: "Van startpagina verwijderen", action: "hide" })
         entries.push({ label: "Annuleren", action: "" })
@@ -244,7 +281,8 @@ Rectangle {
             { label: "Achtergrond kiezen…", action: "background" },
             { label: appModel.showHero ? "Grote naam en logo linksboven verbergen" : "Grote naam en logo linksboven tonen", action: "toggle-hero" },
             { label: appModel.fontScale > 1 ? "Tekst normaal" : "Tekst groter (kijken op afstand)", action: "font-scale" },
-            { label: "Diensten kiezen…", action: "welcome" }
+            { label: "Diensten kiezen…", action: "welcome" },
+            { label: "Meer instellingen…", action: "more" }
         ]
         if (appModel.background !== "") {
             entries.push({ label: "Standaardachtergrond herstellen", action: "background-reset" })
@@ -253,6 +291,7 @@ Rectangle {
         for (const m of webModels) {
             hidden += m.hiddenCount
         }
+        hidden += radio.hiddenCount
         if (hidden > 0) {
             entries.push({ label: "Verwijderde tegels terugzetten (" + hidden + ")", action: "unhide" })
         }
@@ -260,8 +299,184 @@ Rectangle {
         menu.open("Aanpassen", entries, quickRow)
     }
 
+    // --- Meer instellingen: kinderslot, weer, opnames, tv-afstandsbediening, bijwerken ---
+    function openMoreMenu() {
+        menu.open("Meer instellingen", [
+            { label: "Kinderslot…  (" + (parental.enabled ? "aan" : "uit") + ")", action: "parental" },
+            { label: "Weer…  (" + (weather.enabled ? (weather.place || "aan") : "uit") + ")", action: "weather" },
+            { label: "Opnames opruimen…", action: "cleanup-settings" },
+            { label: "Tv-afstandsbediening (HDMI-CEC)…", action: "cec" },
+            { label: "Zoeken naar een nieuwe versie", action: "update-check" },
+            { label: "Sluiten", action: "" }
+        ], quickRow, "Kijkluister " + updater.current)
+    }
+
+    function openParentalMenu() {
+        if (!parental.enabled) {
+            menu.open("Kinderslot", [
+                { label: "Kinderslot aanzetten…", action: "parental-set" },
+                { label: "Sluiten", action: "" }
+            ], quickRow, "Met een eigen pincode vergrendel je Live tv, Films, Series en tegels die je kiest. Zenders voor volwassenen zijn dan altijd vergrendeld.")
+            return
+        }
+        menu.open("Kinderslot", [
+            { label: "Nu vergrendelen", action: "parental-lock-now" },
+            { label: "Pincode wijzigen…", action: "parental-change" },
+            { label: "Kinderslot uitzetten…", action: "parental-off" },
+            { label: "Sluiten", action: "" }
+        ], quickRow, (parental.unlocked ? "Nu ontgrendeld (een uur na de pincode). " : "")
+                     + "Vergrendelde tegels: kies een tegel, druk op Menu en kies Kinderslot.")
+    }
+
+    function askNewPin() {
+        pinPad.ask("Nieuwe pincode", "Kies vier cijfers die kinderen niet weten.", (first) => {
+            Qt.callLater(() => pinPad.ask("Pincode herhalen", "Vul dezelfde vier cijfers nog een keer in.", (second) => {
+                if (second !== first) {
+                    root.showToast("De pincodes waren niet gelijk. Probeer het opnieuw.", 5000)
+                    return true
+                }
+                const wasOn = parental.enabled
+                parental.setPin(first)
+                root.showToast(wasOn ? "Nieuwe pincode ingesteld" : "Kinderslot staat aan: Live tv, Films en Series vragen nu om de pincode", 6000)
+                return true
+            }, quickRow))
+            return true
+        }, quickRow)
+    }
+
+    function withPin(title, action) {
+        pinPad.ask(title, "Vul de pincode van het kinderslot in.", (pin) => {
+            if (!parental.check(pin)) return false
+            action(pin)
+            return true
+        }, currentSection ? currentSection.grid : quickRow)
+    }
+
+    function openCleanupMenu() {
+        const days = recorder.keepDays
+        const gb = recorder.minFreeGb
+        menu.open("Opnames opruimen", [
+            { label: "Bewaren: " + (days > 0 ? days + " dagen" : "altijd") + "  (wijzigen)", action: "cleanup-days" },
+            { label: "Ruimte vrijhouden: " + (gb > 0 ? gb + " GB" : "uit") + "  (wijzigen)", action: "cleanup-space" },
+            { label: "Nu opruimen…", action: "cleanup-now" },
+            { label: "Sluiten", action: "" }
+        ], quickRow, recorder.diskText + ". Kijkluister vraagt het altijd eerst voordat er iets wordt gewist.")
+    }
+
+    function askCleanup(manual) {
+        const list = recorder.cleanupCandidates()
+        if (list.length === 0) {
+            if (manual) showToast("Er hoeft niets opgeruimd te worden", 4000)
+            return
+        }
+        let bytes = 0
+        for (const r of list) bytes += r.size
+        cleanupPaths = list.map(r => r.path)
+        const names = list.slice(0, 3).map(r => "• " + r.name + " (" + r.date + ")").join("\n")
+        menu.open(list.length === 1 ? "1 opname opruimen?" : list.length + " opnames opruimen?", [
+            { label: "Wissen (" + (bytes / 1e9).toFixed(1) + " GB)", action: "cleanup-confirm" },
+            { label: "Laten staan", action: "" }
+        ], currentSection ? currentSection.grid : quickRow,
+           "Reden: " + list[0].reason + ".\n" + names + (list.length > 3 ? "\n… en " + (list.length - 3) + " meer" : ""))
+    }
+    property var cleanupPaths: []
+
+    function openCecMenu() {
+        const entries = []
+        if (!cec.installed) {
+            entries.push({ label: "libCEC ophalen en installeren", action: "cec-install" })
+        } else {
+            entries.push({ label: "Opnieuw verbinden", action: "cec-start" })
+        }
+        entries.push({ label: "Sluiten", action: "" })
+        menu.open("Tv-afstandsbediening", entries, quickRow,
+                  (cec.installed ? cec.status + ". " : "")
+                  + "Bedien Kijkluister met de afstandsbediening van je tv. Nodig: een USB-CEC-adapter van Pulse-Eight tussen computer en tv (HDMI).")
+    }
+
+    function openSleepMenu(focusItem) {
+        const entries = [15, 30, 45, 60, 90].map(m => ({ label: m + " minuten", action: "sleep-" + m }))
+        if (sleepTimer.active) {
+            entries.unshift({ label: "Slaaptimer uitzetten", action: "sleep-0" })
+        }
+        entries.push({ label: "Annuleren", action: "" })
+        menu.open("Slaaptimer", entries, focusItem || quickRow,
+                  sleepTimer.active ? "Nog " + sleepTimer.remainingText + ". Daarna stoppen radio, tv en films vanzelf."
+                                    : "Radio, tv en films stoppen vanzelf na de gekozen tijd.")
+    }
+
     function handleMenuAction(action) {
-        if (action === "quit") {
+        if (action === "more") {
+            openMoreMenu()
+        } else if (action === "parental") {
+            openParentalMenu()
+        } else if (action === "parental-set") {
+            askNewPin()
+        } else if (action === "parental-change") {
+            withPin("Pincode wijzigen", () => Qt.callLater(askNewPin))
+        } else if (action === "parental-off") {
+            withPin("Kinderslot uitzetten", (pin) => { parental.disable(pin); root.showToast("Kinderslot staat uit") })
+        } else if (action === "parental-lock-now") {
+            parental.lockNow()
+            showToast("Vergrendeld")
+        } else if (action === "parental-lock-tile") {
+            parental.setLocked(editModel.pathAt(editRow), true)
+            showToast("🔒 " + editModel.nameAt(editRow) + " vraagt nu om de pincode")
+        } else if (action === "parental-unlock-tile") {
+            const m = editModel, r = editRow
+            withPin("Kinderslot van " + m.nameAt(r) + " halen", () => { parental.setLocked(m.pathAt(r), false); root.showToast(m.nameAt(r) + " is niet meer vergrendeld") })
+        } else if (action === "weather") {
+            menu.open("Weer", [
+                { label: "Plaats kiezen…", action: "weather-place" },
+                { label: weather.enabled ? "Weer niet tonen" : "Weer tonen", action: "weather-toggle" },
+                { label: "Sluiten", action: "" }
+            ], quickRow, weather.available ? weather.place + ": " + weather.summary + " (Open-Meteo)" : "Het weer staat naast de klok (Open-Meteo).")
+        } else if (action === "weather-place") {
+            openPicker("place", "Plaats voor het weer", quickRow)
+        } else if (action === "weather-toggle") {
+            weather.enabled = !weather.enabled
+        } else if (action === "cleanup-settings") {
+            openCleanupMenu()
+        } else if (action === "cleanup-days") {
+            menu.open("Opnames bewaren", [0, 7, 14, 30, 60, 90].map(d => ({ label: d === 0 ? "Altijd" : d + " dagen", action: "cleanup-days-" + d })), quickRow)
+        } else if (action.startsWith("cleanup-days-")) {
+            recorder.keepDays = parseInt(action.substring(13))
+            openCleanupMenu()
+        } else if (action === "cleanup-space") {
+            menu.open("Ruimte vrijhouden op de schijf", [0, 5, 10, 25, 50].map(g => ({ label: g === 0 ? "Uit" : g + " GB", action: "cleanup-space-" + g })), quickRow,
+                      "Is de schijf voller, dan stelt Kijkluister voor de oudste opnames te wissen.")
+        } else if (action.startsWith("cleanup-space-")) {
+            recorder.minFreeGb = parseInt(action.substring(14))
+            openCleanupMenu()
+        } else if (action === "cleanup-now") {
+            askCleanup(true)
+        } else if (action === "cleanup-confirm") {
+            const n = recorder.cleanup(cleanupPaths)
+            showToast(n === 1 ? "1 opname gewist" : n + " opnames gewist")
+        } else if (action === "cec") {
+            openCecMenu()
+        } else if (action === "cec-install") {
+            cec.install()
+            showToast("libCEC wordt opgehaald…", 5000)
+        } else if (action === "cec-start") {
+            cec.start()
+        } else if (action === "update-check") {
+            updater.check(true)
+            showToast("Zoeken naar een nieuwe versie…")
+        } else if (action === "update-install") {
+            updater.install()
+        } else if (action === "update-later") {
+            updater.dismiss()
+        } else if (action.startsWith("sleep-")) {
+            sleepTimer.set(parseInt(action.substring(6)))
+        } else if (action === "radio-add") {
+            openRadioSearch()
+        } else if (action === "radio-remove") {
+            const name = radio.nameAt(editRow)
+            if (radioPlayer.row === editRow) radioPlayer.stopPlayback()
+            radio.remove(editRow)
+            showToast(name + " verwijderd")
+        } else if (action === "quit") {
             Qt.quit()
         } else if (action === "resume-play") {
             launch(resume, editRow)
@@ -305,6 +520,7 @@ Rectangle {
         } else if (action === "background-reset") {
             appModel.clearBackground()
         } else if (action === "unhide") {
+            radio.restoreHidden()
             appModel.restoreHidden()
             for (const m of webModels) {
                 m.restoreHidden()
@@ -329,9 +545,11 @@ Rectangle {
             quickRow.currentIndex = 4
             quickRow.forceActiveFocus()
         } else if (mode === "u-quit") {
-            quickRow.currentIndex = 6
+            let quit = 0
+            for (let i = 0; i < quickModel.count; ++i) if (quickModel.get(i).uri === "") quit = i
+            quickRow.currentIndex = quit
             quickRow.forceActiveFocus()
-            quickRow.trigger(6)
+            quickRow.trigger(quit)
         } else if (mode === "u-personalize") {
             openPersonalizeMenu()
         } else if (mode === "u-welcome") {
@@ -479,6 +697,51 @@ Rectangle {
             // Test: alle zeven zenders na elkaar laten spelen (log: "Radio playing")
             radioPlayer.open(0, mediaGrid())
             radioTestTimer.start()
+        } else if (selfTest === "search") {
+            Qt.callLater(() => root.openPicker("all", "Zoeken", quickRow, "npo"))
+            testStep.run(2500, () => { if (picker.results.length > 0) console.info("Search results", picker.results.length) })
+        } else if (selfTest === "radioadd") {
+            Qt.callLater(() => { root.openRadioSearch(); picker.text = "gelderland" })
+            testStep.run(8000, () => { root.pickResult(0); console.info("Radio count", radio.count) })
+        } else if (selfTest === "parental") {
+            parental.setPin("2468")
+            console.info("Parental check wrong", parental.check("1111"))
+            console.info("Parental check right", parental.check("2468"))
+            parental.lockNow()
+            testStep.run(1500, () => {
+                for (let r = 0; r < appModel.count; ++r) {
+                    if (appModel.pathAt(r) === "bigscreen:iptv") root.launch(appModel, r)
+                }
+                pinPad.press("1"); pinPad.press("3")
+            })
+        } else if (selfTest === "sleep") {
+            radioPlayer.open(0, mediaGrid())
+            sleepTimer.setSeconds(10)
+        } else if (selfTest === "weather") {
+            weather.refresh()
+            Qt.callLater(() => focusSection(0, 0, false))
+        } else if (selfTest === "update") {
+            updater.check(true)
+        } else if (selfTest === "cec") {
+            Qt.callLater(() => focusSection(0, 0, false))
+            testStep.run(2000, () => {
+                cec.parseLine("NOTICE:  [    1532]	connection opened")
+                cec.parseLine("DEBUG:   [    2012]	key pressed: right (4) current(ff) duration(0)")
+                cec.parseLine("DEBUG:   [    2112]	key released: right (4) D:100ms")
+                cec.parseLine("DEBUG:   [    2312]	key pressed: right (4) current(ff) duration(0)")
+                cec.parseLine("DEBUG:   [    2412]	key released: right (4) D:100ms")
+            })
+        } else if (selfTest === "cleanup") {
+            recorder.folder = selfTestRecordDir
+            recorder.keepDays = 30
+            testStep.run(1500, () => recorder.checkCleanup(true))
+        } else if (selfTest === "radiobg") {
+            radioPlayer.open(0, mediaGrid())
+            testStep.run(5000, () => {
+                radioPlayer.close()
+                for (let i = 0; i < quickModel.count; ++i) if (quickModel.get(i).uri === "radio") quickRow.currentIndex = i
+                quickRow.forceActiveFocus()
+            })
         } else if (selfTest === "radiohome") {
             Qt.callLater(() => focusSection(sectionDefs.findIndex(d => d.model === radio), 0, false))
         } else if (selfTest === "resume") {
@@ -539,12 +802,14 @@ Rectangle {
 
     ListModel {
         id: quickModel
+        ListElement { label: "Zoeken"; code: 0xE721; uri: "search"; about: "Zoek apps, zenders, programma's, films en radio" }
         ListElement { label: "Instellingen"; code: 0xE713; uri: "ms-settings:"; about: "Windows-instellingen openen" }
         ListElement { label: "Wifi"; code: 0xE701; uri: "ms-settings:network-wifi"; about: "Verbinding met internet kiezen" }
         ListElement { label: "Bluetooth"; code: 0xE702; uri: "ms-settings:bluetooth"; about: "Koptelefoon of controller koppelen" }
         ListElement { label: "Beeldscherm"; code: 0xE7F4; uri: "ms-settings:display"; about: "Schermgrootte en helderheid" }
         ListElement { label: "Geluid"; code: 0xE767; uri: "ms-settings:sound"; about: "Luidsprekers en volume" }
-        ListElement { label: "Aanpassen"; code: 0xE771; uri: "personalize"; about: "Tegels, achtergrond en tekstgrootte" }
+        ListElement { label: "Slaaptimer"; code: 0xE708; uri: "sleep"; about: "Radio, tv en films stoppen vanzelf" }
+        ListElement { label: "Aanpassen"; code: 0xE771; uri: "personalize"; about: "Tegels, achtergrond, kinderslot en meer" }
         ListElement { label: "Sluiten"; code: 0xE711; uri: ""; about: "Kijkluister sluiten (de computer blijft aan)" }
     }
 
@@ -593,6 +858,33 @@ Rectangle {
             color: "#c4c7cc"
             font.pixelSize: (root.unit * 2.4) * appModel.fontScale
         }
+        // Weer (Open-Meteo) en de slaaptimer naast de datum
+        Row {
+            id: statusRow
+            anchors.right: dateLabel.left
+            anchors.rightMargin: root.unit * 2
+            anchors.verticalCenter: parent.verticalCenter
+            spacing: root.unit * 1.6
+            Text {
+                visible: sleepTimer.active
+                anchors.verticalCenter: parent.verticalCenter
+                text: "🌙 " + sleepTimer.remainingText
+                color: "#c4c7cc"
+                font.pixelSize: (root.unit * 2.4) * appModel.fontScale
+            }
+            Text {
+                id: weatherLabel
+                visible: weather.available
+                anchors.verticalCenter: parent.verticalCenter
+                text: weather.icon + " " + weather.summary
+                color: "#c4c7cc"
+                font.pixelSize: (root.unit * 2.4) * appModel.fontScale
+                MouseArea {
+                    anchors.fill: parent
+                    onClicked: root.handleMenuAction("weather")
+                }
+            }
+        }
     }
 
     Timer {
@@ -612,7 +904,7 @@ Rectangle {
         anchors.left: header.left
         anchors.leftMargin: brand.x + brand.width + root.unit * 3
         width: Math.min(root.unit * 19 * quickModel.count,
-                        header.width - brand.x - brand.width - clock.width - dateLabel.width - root.unit * 10)
+                        header.width - brand.x - brand.width - clock.width - dateLabel.width - statusRow.width - root.unit * 12)
         height: root.unit * 5.6
         orientation: ListView.Horizontal
         model: quickModel
@@ -631,6 +923,12 @@ Rectangle {
                     : "Je computer blijft aan.")
             } else if (item.uri === "personalize") {
                 root.openPersonalizeMenu()
+            } else if (item.uri === "search") {
+                root.openPicker("all", "Zoeken", quickRow)
+            } else if (item.uri === "sleep") {
+                root.openSleepMenu(quickRow)
+            } else if (item.uri === "radio") {
+                radioPlayer.show(quickRow)
             } else {
                 appModel.openUri(item.uri)
                 root.showToast(item.label + " openen…")
@@ -742,7 +1040,7 @@ Rectangle {
                     model: modelData.model
                     columns: root.columns
                     unit: root.unit
-                    canHover: () => !menu.visible && !addOverlay.visible && !placesPicker.visible && root.mouseActive()
+                    canHover: () => !menu.visible && !addOverlay.visible && !placesPicker.visible && !picker.visible && !pinPad.visible && root.mouseActive()
                     onExitUp: (column) => root.focusSection(index - 1, column, true)
                     onExitDown: (column) => root.focusSection(index + 1, column, false)
                     onLaunchRequested: (row) => root.launch(sectionItem.model, row)
@@ -846,6 +1144,8 @@ Rectangle {
 
     // Live tv: zenderlijst en speler
     IptvScreen {
+        onPinRequired: (row) => pinPad.ask(iptv.channelAt(row).name + " is vergrendeld", "Zender voor volwassenen. Vul de pincode van het kinderslot in.",
+                                           (pin) => { if (!parental.check(pin)) return false; iptvScreen.play(row); return true }, iptvScreen)
         id: iptvScreen
     }
 
@@ -902,6 +1202,288 @@ Rectangle {
     // Radio: zenders luisteren in Kijkluister zelf
     RadioPlayer {
         id: radioPlayer
+        sleepText: sleepTimer.active ? sleepTimer.remainingText : ""
+        onSleepRequested: root.openSleepMenu(radioPlayer)
+        // Speelt hij op de achtergrond: knop "Radio" in de bovenbalk
+        onInBackgroundChanged: root.syncRadioButton()
+        onRowChanged: root.syncRadioButton()
+    }
+
+    function syncRadioButton() {
+        let index = -1
+        for (let i = 0; i < quickModel.count; ++i) {
+            if (quickModel.get(i).uri === "radio") index = i
+        }
+        if (radioPlayer.inBackground) {
+            const label = "Radio: " + radio.nameAt(radioPlayer.row)
+            if (index < 0) {
+                quickModel.insert(1, { label: label, code: 0xEC4F, uri: "radio", about: "Speelt nu. Kies om te wisselen of te stoppen" })
+            } else {
+                quickModel.setProperty(index, "label", label)
+            }
+        } else if (index >= 0) {
+            if (quickRow.currentIndex >= index && quickRow.currentIndex > 0) quickRow.currentIndex -= 1
+            quickModel.remove(index)
+        }
+    }
+
+    Connections {
+        target: radio
+        function onAddRequested() { root.openRadioSearch() }
+    }
+
+    // --- Slaaptimer: na de gekozen tijd stopt alles wat speelt ---
+    Item {
+        id: sleepTimer
+        property double endAt: 0
+        property double now: Date.now()
+        readonly property bool active: endAt > 0
+        readonly property int remainingMinutes: active ? Math.max(0, Math.ceil((endAt - now) / 60000)) : 0
+        readonly property string remainingText: remainingMinutes + " min"
+
+        function set(minutes) {
+            setSeconds(minutes * 60)
+            root.showToast(minutes > 0 ? "Slaaptimer: over " + minutes + " minuten stopt alles" : "Slaaptimer staat uit")
+        }
+        function setSeconds(seconds) {
+            endAt = seconds > 0 ? Date.now() + seconds * 1000 : 0
+            now = Date.now()
+            warned = false
+            console.info("Sleep timer", seconds, "s")
+        }
+        property bool warned: false
+
+        Timer {
+            interval: 1000
+            repeat: true
+            running: sleepTimer.active
+            onTriggered: {
+                sleepTimer.now = Date.now()
+                const left = sleepTimer.endAt - sleepTimer.now
+                if (!sleepTimer.warned && left < 60000 && left > 5000) {
+                    sleepTimer.warned = true
+                    root.showToast("Slaaptimer: over een minuut stopt alles", 8000)
+                }
+                if (left <= 0) {
+                    sleepTimer.endAt = 0
+                    root.sleepNow()
+                }
+            }
+        }
+    }
+
+    function sleepNow() {
+        console.info("Sleep timer fired")
+        radioPlayer.stopPlayback()
+        if (iptvScreen.visible) iptvScreen.close()
+        mpc.stop()
+        showToast("Slaaptimer: alles is gestopt. Welterusten!", 10000)
+    }
+
+    // --- Zoeken (alles, radiozenders, plaats voor het weer) ---
+    property string pickerMode: ""
+    property var pickerItems: []
+
+    function openPicker(mode, title, focusItem, startText) {
+        pickerMode = mode
+        picker.placeholder = mode === "radio" ? "Naam van de zender, bv. Omroep Gelderland"
+                           : mode === "place" ? "Naam van je woonplaats"
+                           : "Zoek een app, zender, programma, film of radiozender"
+        picker.pickLabel = mode === "radio" ? "Toevoegen" : mode === "place" ? "Kiezen" : "Openen"
+        picker.emptyText = mode === "radio" ? "Geen zender gevonden. Probeer een ander woord." : "Niets gevonden"
+        picker.open(title, focusItem, startText)
+    }
+
+    function openRadioSearch() {
+        const section = sectionFor(radio)
+        openPicker("radio", "Radiozender toevoegen", section ? section.grid : quickRow)
+    }
+
+    function searchAll(q) {
+        const items = []
+        if (q.length < 2) return items
+        const lower = q.toLowerCase()
+        const models = [appModel].concat(webModels)
+        for (const m of models) {
+            for (let r = 0; r < m.count; ++r) {
+                const name = m.nameAt(r)
+                if (name.toLowerCase().indexOf(lower) >= 0) {
+                    const icon = m.iconAt(r)
+                    items.push({ name: name, detail: "", icon: icon.startsWith("glyph:") ? icon : icon, section: "Apps en diensten",
+                                 kind: "app", model: m, row: r, badge: parental.enabled && parental.isLocked(m.pathAt(r)) ? "🔒" : "" })
+                }
+            }
+        }
+        for (let r = 0; r < radio.count; ++r) {
+            if (radio.nameAt(r).toLowerCase().indexOf(lower) >= 0) {
+                items.push({ name: radio.nameAt(r), detail: radio.subtitleAt(r), icon: radio.iconAt(r), section: "Radio", kind: "radio", row: r })
+            }
+        }
+        const lib = []
+        for (const item of library.movies.concat(library.shows)) {
+            if ((item.title || "").toLowerCase().indexOf(lower) >= 0) {
+                lib.push({ name: item.title, detail: (item.kind === "show" ? "Serie" : "Film") + (item.year ? " · " + item.year : ""),
+                           icon: item.localPoster || item.poster || "glyph:\uE8B2", section: "Films en series", kind: "library", item: item })
+            }
+        }
+        items.push(...lib.slice(0, 20))
+        for (const r of iptv.searchAll(q, 25)) {
+            const programme = r.kind === "programme"
+            const scheduled = programme && recorder.isScheduled(r.url, r.startSecs)
+            items.push({ name: r.name, detail: r.detail, icon: r.icon || "glyph:\uE7F4",
+                         section: programme ? "Tv-gids" : "Live tv", kind: r.kind, data: r,
+                         badge: programme ? (r.isNow ? "Nu op tv" : scheduled ? "● Opname gepland" : "Menu: opnemen") : "" })
+        }
+        return items
+    }
+
+    SearchPicker {
+        id: picker
+        onQuery: (q) => {
+            if (root.pickerMode === "radio") {
+                radio.searchStations(q)
+            } else if (root.pickerMode === "place") {
+                if (q.length >= 2) weather.searchPlaces(q)
+            } else {
+                root.pickerItems = root.searchAll(q)
+                picker.results = root.pickerItems
+                console.info("Search", q, root.pickerItems.length)
+            }
+        }
+        onPicked: (index) => root.pickResult(index)
+        onSecondary: (index) => root.pickResult(index, true)
+    }
+    Connections {
+        target: radio
+        function onResultsChanged() {
+            if (root.pickerMode !== "radio") return
+            picker.busy = radio.searching
+            picker.results = radio.results.map((r, i) => ({ name: r.name, detail: r.detail, icon: r.logo,
+                                                             badge: radio.hasResult(i) ? "✓ Toegevoegd" : "" }))
+        }
+    }
+    Connections {
+        target: weather
+        function onPlacesChanged() {
+            if (root.pickerMode !== "place") return
+            picker.results = weather.places.map(p => ({ name: p.name, detail: p.detail, icon: "📍" }))
+        }
+    }
+
+    function pickResult(index, secondary) {
+        if (index < 0) return
+        if (pickerMode === "radio") {
+            if (radio.addResult(index)) {
+                showToast(picker.nameAt(index) + " staat nu in de rij Radio")
+                picker.results = radio.results.map((r, i) => ({ name: r.name, detail: r.detail, icon: r.logo,
+                                                                 badge: radio.hasResult(i) ? "✓ Toegevoegd" : "" }))
+            } else {
+                showToast(picker.nameAt(index) + " staat al in de rij Radio")
+            }
+            return
+        }
+        if (pickerMode === "place") {
+            weather.choosePlace(index)
+            picker.close()
+            showToast("Weer voor " + picker.nameAt(index))
+            return
+        }
+        const it = pickerItems[index]
+        if (!it) return
+        if (it.kind === "programme" && (secondary || !it.data.isNow)) {
+            // Toekomstig programma: opnemen in- of uitplannen
+            const d = it.data
+            recorder.toggleSchedule(d.channel, d.url, d.name, d.startSecs, d.stopSecs)
+            const on = recorder.isScheduled(d.url, d.startSecs)
+            showToast(on ? "● Wordt opgenomen: " + d.name : "Opname geannuleerd: " + d.name, 5000)
+            pickerItems[index].badge = on ? "● Opname gepland" : "Menu: opnemen"
+            picker.results = pickerItems
+            return
+        }
+        picker.visible = false
+        const back = picker.returnFocusTo
+        if (back) back.forceActiveFocus()
+        if (it.kind === "app") {
+            launch(it.model, it.row)
+        } else if (it.kind === "radio") {
+            radioPlayer.open(it.row, back || quickRow)
+        } else if (it.kind === "library") {
+            const open = () => {
+                libraryScreen.open(it.item.kind === "show" ? "shows" : "movies", back || mediaGrid())
+                libraryScreen.showDetail(it.item)
+            }
+            const path = it.item.kind === "show" ? "bigscreen:shows" : "bigscreen:movies"
+            if (parental.needsPin(path)) {
+                pinPad.ask(it.name + " is vergrendeld", "Vul de pincode van het kinderslot in.", (pin) => { if (!parental.check(pin)) return false; open(); return true }, back || quickRow)
+            } else {
+                open()
+            }
+        } else {
+            const playChannel = () => {
+                radioPlayer.stopPlayback()
+                iptvScreen.open(back || mediaGrid())
+                const row = iptv.showChannel(it.data.url)
+                if (row >= 0) iptvScreen.play(row)
+            }
+            if (parental.needsPin("bigscreen:iptv")) {
+                pinPad.ask("Live tv is vergrendeld", "Vul de pincode van het kinderslot in.", (pin) => { if (!parental.check(pin)) return false; playChannel(); return true }, back || quickRow)
+            } else {
+                playChannel()
+            }
+        }
+    }
+
+    PinPad {
+        id: pinPad
+    }
+
+    // Alleen voor de tests: iets later uitvoeren
+    Timer {
+        id: testStep
+        property var action: null
+        function run(ms, fn) { action = fn; interval = ms; restart() }
+        onTriggered: if (action) action()
+    }
+
+    // Opruimen van opnames: Kijkluister vraagt het eerst
+    Connections {
+        target: recorder
+        function onCleanupSuggested(count, reason) {
+            if (iptvScreen.visible || libraryScreen.visible || radioPlayer.visible || menu.visible) {
+                return   // later nog eens (de opnemer vraagt het hooguit eens per dag)
+            }
+            root.askCleanup(false)
+        }
+    }
+
+    // Nieuwe versie
+    Connections {
+        target: updater
+        function onChecked(manual) {
+            if (updater.shouldOffer() || (manual && updater.updateAvailable)) {
+                menu.open("Kijkluister " + updater.latest + " is er", [
+                    { label: "Nu bijwerken", action: "update-install" },
+                    { label: "Later", action: "update-later" }
+                ], root.currentSection ? root.currentSection.grid : quickRow,
+                   "Je hebt nu " + updater.current + ". Bijwerken duurt ongeveer een minuut; daarna start Kijkluister vanzelf weer.")
+            } else if (manual) {
+                root.showToast(updater.status, 6000)
+            }
+        }
+    }
+    Connections {
+        target: updater
+        function onChanged() {
+            if (updater.busy && updater.status !== "") {
+                root.showToast(updater.status + (updater.progress > 0 ? "  " + Math.round(updater.progress * 100) + "%" : ""), 60000)
+            }
+        }
+    }
+    Connections {
+        target: cec
+        function onChanged() {
+            if (cec.connected) root.showToast("📺 Tv-afstandsbediening verbonden", 4000)
+        }
     }
     Timer {
         id: radioTestTimer
