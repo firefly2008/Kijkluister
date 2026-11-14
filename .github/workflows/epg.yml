@@ -54,6 +54,18 @@ jobs:
           echo "Programma's:    $(grep -c '<programme ' ../guide.xml)"
           test "$(grep -c '<programme ' ../guide.xml)" -gt 100
 
+      - name: Publiceren op branch "epg-data" (vaste raw-link voor Kijkluister)
+        run: |
+          mkdir pub && cp guide.xml.gz channels.xml pub/
+          cd pub
+          git init -q -b epg-data
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -q -m "Tv-gids $(date -u +%Y-%m-%d)"
+          git push -q -f "https://x-access-token:${{ github.token }}@github.com/${{ github.repository }}.git" epg-data
+          echo "https://raw.githubusercontent.com/${{ github.repository }}/epg-data/guide.xml.gz"
+
       - name: Publiceren als release "epg"
         uses: softprops/action-gh-release@v2
         with:
@@ -62,7 +74,7 @@ jobs:
           body: |
             Tv-gids in XMLTV-formaat voor de gratis Nederlandse en Belgische zenders in Kijkluister.
             Elke nacht opnieuw opgehaald met iptv-org/epg (bronnen: tvgids.nl, webtv.delta.nl, vrt.be, vtm.be, pickx.be).
-            Adres: https://github.com/${{ github.repository }}/releases/download/epg/guide.xml.gz
+            Adres voor apps: https://raw.githubusercontent.com/${{ github.repository }}/epg-data/guide.xml.gz
           prerelease: true
           make_latest: false
           files: |

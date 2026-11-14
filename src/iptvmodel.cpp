@@ -126,6 +126,7 @@ IptvModel::IptvModel(const QString &dataDir, QObject *parent)
     applyFilter();
     m_epgUrls = m_settings.value(QStringLiteral("iptv/epgUrls")).toStringList();
     m_extraEpgUrls = m_settings.value(QStringLiteral("iptv/extraEpg")).toStringList();
+    m_epgUrls.removeAll(QStringLiteral("https://github.com/firefly2008/bigscreen-host-windows/releases/download/epg/guide.xml.gz"));
     // Bestaande installaties met gratis zenders: gratis gids er meteen bij
     for (const QVariant &v : std::as_const(m_sources)) {
         if (v.toMap().value(QStringLiteral("free")).toBool() && !m_epgUrls.contains(freeGuideUrl())) {
@@ -707,7 +708,9 @@ void IptvModel::downloadNextEpg()
         if (reply->error() == QNetworkReply::NoError) {
             m_epgFiles.append(reply->readAll());
         } else {
-            qWarning().noquote() << "EPG download failed" << reply->url().host() << reply->errorString();
+            qWarning().noquote() << "EPG download failed"
+                                 << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()
+                                 << reply->url().toString() << reply->errorString() << reply->readAll().left(160);
         }
         downloadNextEpg();
     });
@@ -836,7 +839,8 @@ void IptvModel::rebuildEpgIndex()
 
 QString IptvModel::freeGuideUrl()
 {
-    return QStringLiteral("https://github.com/firefly2008/bigscreen-host-windows/releases/download/epg/guide.xml.gz");
+    // Vaste link zonder doorsturen (branch "epg-data", elke nacht overschreven)
+    return QStringLiteral("https://raw.githubusercontent.com/firefly2008/bigscreen-host-windows/epg-data/guide.xml.gz");
 }
 
 void IptvModel::setExtraEpgUrls(const QStringList &urls)
