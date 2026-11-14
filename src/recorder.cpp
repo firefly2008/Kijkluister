@@ -4,6 +4,7 @@
 #include <QCoreApplication>
 #include <QDesktopServices>
 #include <QDir>
+#include <QLocale>
 #include <QSet>
 #include <QStorageInfo>
 #include <QFile>
@@ -113,7 +114,7 @@ QVariantList Recorder::cleanupCandidates() const
         chosen.insert(path);
         result.append(QVariantMap{{QStringLiteral("path"), path}, {QStringLiteral("name"), f.completeBaseName()},
                                   {QStringLiteral("reason"), reason}, {QStringLiteral("size"), f.size()},
-                                  {QStringLiteral("date"), f.lastModified().toString(QStringLiteral("d MMM yyyy"))}});
+                                  {QStringLiteral("date"), QLocale(QLocale::Dutch).toString(f.lastModified(), QStringLiteral("d MMM yyyy"))}});
     };
     if (keepDays() > 0) {
         for (const QFileInfo &f : files) {
@@ -467,7 +468,7 @@ QVariantList Recorder::recordings() const
             {QStringLiteral("name"), f.completeBaseName()},
             {QStringLiteral("path"), QDir::toNativeSeparators(f.absoluteFilePath())},
             {QStringLiteral("size"), f.size()},
-            {QStringLiteral("date"), f.lastModified().toString(QStringLiteral("d MMM yyyy HH:mm"))},
+            {QStringLiteral("date"), QLocale(QLocale::Dutch).toString(f.lastModified(), QStringLiteral("d MMM yyyy HH:mm"))},
             {QStringLiteral("busy"), m_active && m_parts.contains(QDir::toNativeSeparators(f.absoluteFilePath()))},
         });
     }

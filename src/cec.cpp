@@ -120,7 +120,7 @@ bool Cec::parseLine(const QString &line)
         setStatus(tr("Verbonden met de tv"));
         return false;
     }
-    static const QRegularExpression keyRe(QStringLiteral("key (pressed|released): .*\\(([0-9a-fA-F]+)\\)"));
+    static const QRegularExpression keyRe(QStringLiteral("key (pressed|released): [^(]*\\(([0-9a-fA-F]+)\\)"));
     const QRegularExpressionMatch m = keyRe.match(line);
     if (!m.hasMatch()) {
         return false;

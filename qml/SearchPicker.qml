@@ -74,7 +74,7 @@ FocusScope {
 
     Rectangle {
         anchors.fill: parent
-        color: "#f00b0c0f"
+        color: "#0b0c0f"
         MouseArea { anchors.fill: parent; acceptedButtons: Qt.AllButtons }
     }
 
@@ -105,7 +105,7 @@ FocusScope {
             anchors.leftMargin: picker.unit * 2
             anchors.verticalCenter: parent.verticalCenter
             text: ""
-            font.family: "Segoe Fluent Icons, Segoe MDL2 Assets"
+            font.family: "Segoe MDL2 Assets"
             font.pixelSize: picker.unit * 2.8
             color: "#a8acb3"
         }
@@ -236,9 +236,11 @@ FocusScope {
                 }
                 Text {
                     anchors.centerIn: parent
-                    visible: iconImage.source.toString() === ""
-                    text: iconBox.icon.startsWith("glyph:") ? iconBox.icon.substring(6) : (iconBox.icon || "•")
-                    font.family: iconBox.icon.startsWith("glyph:") ? "Segoe Fluent Icons, Segoe MDL2 Assets" : "Segoe UI Emoji"
+                    visible: iconImage.status !== Image.Ready
+                    readonly property bool emoji: iconBox.icon !== "" && !iconBox.icon.startsWith("glyph:") && !iconBox.icon.startsWith("http")
+                                                  && !iconBox.icon.startsWith("file:") && !iconBox.icon.startsWith("image:") && !iconBox.icon.startsWith("qrc:")
+                    text: iconBox.icon.startsWith("glyph:") ? iconBox.icon.substring(6) : emoji ? iconBox.icon : "\uE8D6"
+                    font.family: emoji ? "Segoe UI Emoji" : "Segoe MDL2 Assets"
                     font.pixelSize: picker.unit * 3.4
                     color: "white"
                 }

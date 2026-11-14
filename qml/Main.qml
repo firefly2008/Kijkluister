@@ -372,9 +372,10 @@ Rectangle {
         let bytes = 0
         for (const r of list) bytes += r.size
         cleanupPaths = list.map(r => r.path)
+        const sizeText = bytes >= 1e8 ? (bytes / 1e9).toFixed(1) + " GB" : Math.max(1, Math.round(bytes / 1e6)) + " MB"
         const names = list.slice(0, 3).map(r => "• " + r.name + " (" + r.date + ")").join("\n")
         menu.open(list.length === 1 ? "1 opname opruimen?" : list.length + " opnames opruimen?", [
-            { label: "Wissen (" + (bytes / 1e9).toFixed(1) + " GB)", action: "cleanup-confirm" },
+            { label: "Wissen (" + sizeText + ")", action: "cleanup-confirm" },
             { label: "Laten staan", action: "" }
         ], currentSection ? currentSection.grid : quickRow,
            "Reden: " + list[0].reason + ".\n" + names + (list.length > 3 ? "\n… en " + (list.length - 3) + " meer" : ""))

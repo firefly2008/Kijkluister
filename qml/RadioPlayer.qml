@@ -241,7 +241,7 @@ FocusScope {
                 anchors.centerIn: parent
                 visible: radioPlayer.logo.startsWith("glyph:")
                 text: radioPlayer.logo.substring(6)
-                font.family: "Segoe Fluent Icons, Segoe MDL2 Assets"
+                font.family: "Segoe MDL2 Assets"
                 font.pixelSize: parent.width * 0.5
                 color: radioPlayer.accent
             }
