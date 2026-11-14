@@ -8,6 +8,8 @@
 #include <QFileInfo>
 #include <QStandardPaths>
 #include <QUrl>
+#include <QUdpSocket>
+#include <QRandomGenerator>
 #include <QJsonArray>
 #include <QJsonDocument>
 
@@ -48,7 +50,7 @@ Recorder::Recorder(const QString &dataDir, QObject *parent)
     m_scheduleTimer.start();
     QTimer::singleShot(3000, this, &Recorder::checkSchedule);
     m_folder = m_settings.value(QStringLiteral("recorder/folder")).toString();
-    m_relayUrl = QStringLiteral("udp://127.0.0.1:47123");
+
     m_clock.setInterval(1000);
     connect(&m_clock, &QTimer::timeout, this, &Recorder::tick);
     m_retryTimer.setSingleShot(true);
@@ -68,6 +70,15 @@ Recorder::~Recorder()
             m_process->kill();
         }
     }
+}
+
+quint16 Recorder::freeUdpPort()
+{
+    QUdpSocket socket;
+    if (socket.bind(QHostAddress::LocalHost, 0)) {
+        return socket.localPort();
+    }
+    return quint16(47000 + QRandomGenerator::global()->bounded(2000));
 }
 
 QString Recorder::ffmpegPath() const
@@ -199,7 +210,7 @@ void Recorder::launch()
     }
     // Zelfde opzet als IPTV-Recorder: niets hercoderen, alleen kopiëren naar MP4.
     // -movflags: ook een afspeelbaar bestand als de stroom onverwacht stopt.
-    const QStringList args{
+    QStringList args{
         QStringLiteral("-hide_banner"), QStringLiteral("-loglevel"), QStringLiteral("warning"), QStringLiteral("-y"),
         QStringLiteral("-user_agent"), QStringLiteral("VLC/3.0.9 LibVLC/3.0.9"),
         QStringLiteral("-reconnect"), QStringLiteral("1"), QStringLiteral("-reconnect_streamed"), QStringLiteral("1"),
@@ -224,6 +235,16 @@ void Recorder::launch()
         QStringLiteral("-recovery_wait_time"), QStringLiteral("1"),
         m_relayUrl + QStringLiteral("?pkt_size=1316"),
     };
+    // Doorgifte naar de speler op een vrije poort (een vaste poort kan nog bezet zijn);
+    // ffmpeg verstuurt vanaf een andere vrije poort, zodat de speler de zijne kan openen
+    if (m_part == 0 || m_relayUrl.isEmpty()) {
+        const quint16 relay = freeUdpPort();
+        m_relayUrl = QStringLiteral("udp://127.0.0.1:%1").arg(relay);
+    }
+    {
+        const QString target = m_relayUrl + QStringLiteral("?pkt_size=1316&localport=") + QString::number(freeUdpPort());
+        args[args.size() - 1] = target;
+    }
     m_lastStderr.clear();
     setStatus(m_part > 0 ? tr("Opname hervat (deel %1)").arg(m_part + 1) : tr("Opname loopt"));
     m_process->start(ffmpegPath(), args);

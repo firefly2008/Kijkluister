@@ -154,8 +154,9 @@ jobs:
             if (Test-Path $log) { "--- log ---"; Get-Content $log } else { "NO LOG FILE" }
             if (-not (Test-Path $log) -or -not (Select-String -Path $log -Pattern "Window shown" -Quiet)) { throw "Rooktest mislukt: venster niet getoond" }
             if ($mode -like 'frame*esc' -and -not (Select-String -Path $log -Pattern "Frame closed" -Quiet)) { throw "Rooktest mislukt: Esc stopt het schilderij niet ($mode)" }
+            # Opnames die nog liepen (ffmpeg is een apart proces) niet laten doorlopen naar de volgende test
+            Get-Process ffmpeg -ErrorAction SilentlyContinue | Stop-Process -Force
             if ($mode -eq 'epgrecord') {
-              Get-Process ffmpeg -ErrorAction SilentlyContinue | Stop-Process -Force
               Select-String -Path $log -Pattern "Recorder: (scheduled|start)" | ForEach-Object { $_.Line }
               if (-not (Select-String -Path $log -Pattern "Recorder: scheduled start" -Quiet)) { throw "Rooktest mislukt: opname vanuit de gids start niet" }
             }

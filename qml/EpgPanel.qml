@@ -83,7 +83,7 @@ FocusScope {
 
     Rectangle {
         anchors.fill: parent
-        color: "#f00b0c0f"
+        color: "#0b0c0f"
         MouseArea { anchors.fill: parent; onClicked: {} }
     }
 

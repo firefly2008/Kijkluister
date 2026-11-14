@@ -107,4 +107,5 @@ private:
     void checkSchedule();
     void saveSchedule();
     void keepAwake(bool on);
+    static quint16 freeUdpPort();
 };
