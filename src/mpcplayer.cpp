@@ -6,7 +6,6 @@
 #include <QDirIterator>
 #include <QFile>
 #include <QFileInfo>
-#include <QSettings>
 #include <QTextStream>
 
 #include <SDL3/SDL.h>
@@ -103,24 +102,22 @@ bool MpcPlayer::preparePortable()
     if (!copyTree(src, m_portableDir)) {
         return false;
     }
-    if (!oldIni.isEmpty()) {
+    if (!oldIni.isEmpty() && oldIni.contains("InterfaceLanguage")) {
         QFile f(ini);
         if (f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
             f.write(oldIni);
         }
     } else {
-        // Eerste keer: Nederlands, schermvullend, onthouden waar je was, geen updatemeldingen
-        QSettings s(ini, QSettings::IniFormat);
-        s.beginGroup(QStringLiteral("Settings"));
-        s.setValue(QStringLiteral("Language"), 1043);
-        s.setValue(QStringLiteral("LaunchFullScreen"), 1);
-        s.setValue(QStringLiteral("RememberFilePos"), 1);
-        s.setValue(QStringLiteral("RememberPosForAudioFiles"), 0);
-        s.setValue(QStringLiteral("HideCDROMsSubMenu"), 1);
-        s.endGroup();
-        s.beginGroup(QStringLiteral("Settings/UpdateChecker"));
-        s.setValue(QStringLiteral("UpdaterAutoCheck"), 0);
-        s.endGroup();
+        // Eerste keer: Nederlands, schermvullend, onthouden waar je was, geen updatevraag
+        // (namen uit MPC-HC SettingsDefines.h; alles in de sectie [Settings])
+        QFile f(ini);
+        if (f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+            f.write("[Settings]\r\n"
+                    "InterfaceLanguage=1043\r\n"
+                    "LaunchFullScreen=1\r\n"
+                    "RememberFilePos=1\r\n"
+                    "UpdaterAutoCheck=0\r\n");
+        }
     }
     if (QFile out(m_portableDir + QStringLiteral("/kijkluister-versie.txt")); out.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         out.write(stamp.toUtf8());
