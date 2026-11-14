@@ -343,6 +343,7 @@ Rectangle {
                 iptvScreen.openSources()
             }
         } else if (selfTest === "iptvbar" || selfTest === "iptvepg") {
+            iptv.group = "Alle zenders"   // test: de testzenders staan niet in de groep Nederland
             // Test: eigen lijst met gids (aangemaakt door de CI)
             if (iptv.sources.length === 0) {
                 iptv.addSource("m3u-file", "Gids-test", selfTestM3u, "", "")
@@ -362,6 +363,7 @@ Rectangle {
                 frameScreen.openSettings()
             }
         } else if (selfTest === "record" || selfTest === "recordpanel") {
+            iptv.group = "Alle zenders"   // test: de testzenders staan niet in de groep Nederland
             // Test: zender uit de testlijst 20 seconden opnemen naar een testmap
             if (iptv.sources.length === 0) {
                 iptv.addSource("m3u-file", "Gids-test", selfTestM3u, "", "")
@@ -399,6 +401,7 @@ Rectangle {
         } else if (selfTest === "resume") {
             // Test: startscherm met de rij Verder kijken (geschiedenis door de test klaargezet)
         } else if (selfTest === "epgrecord") {
+            iptv.group = "Alle zenders"   // test: de testzenders staan niet in de groep Nederland
             // Test: in de gids het programma van nu en een later programma laten opnemen
             if (iptv.sources.length === 0) {
                 iptv.addSource("m3u-file", "Gids-test", selfTestM3u, "", "")
@@ -413,9 +416,13 @@ Rectangle {
             // Test: eerste serie openen en vanaf de eerste aflevering afspelen in MPC-HC
             libraryScreen.autoOpen = "play"
             libraryScreen.open("shows", mediaGrid())
-        } else if (selfTest === "librarysetup") {
+        } else if (selfTest === "librarysetup" || selfTest === "libraryunlock") {
             libraryScreen.open("movies", mediaGrid())
             libraryScreen.openSetup()
+            if (selfTest === "libraryunlock") {
+                // Test: verkeerde en juiste pincode
+                console.info("Unlock test wrong:", library.unlock("0000"), "right:", library.unlock("1973"))
+            }
         }
     }
 

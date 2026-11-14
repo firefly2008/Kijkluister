@@ -18,21 +18,20 @@ FocusScope {
     visible: false
     z: 100
 
-    property bool showKey: false
+    // De sleutel is ingebouwd en vergrendeld; na de juiste pincode is hij te zien en te wijzigen
+    readonly property bool showKey: !library.keyLocked
+    property bool askPin: false
 
     function open(isFirstRun) {
         firstRun = isFirstRun
         moviesPaths = library.moviesFolders.slice()
         showsPaths = library.showsFolders.slice()
-        keyField.text = library.apiKey
-        showKey = library.apiKey !== ""
+        library.lock()
+        askPin = false
+        pinField.text = ""
         warning.text = ""
         visible = true
         moviesButton.forceActiveFocus()
-    }
-
-    function close() {
-        visible = false
     }
 
     function addPath(kind, path) {
@@ -89,6 +88,24 @@ FocusScope {
                     onClicked: setup.removePath(fl.kind, index)
                 }
             }
+        }
+    }
+
+    function close() {
+        library.lock()
+        visible = false
+    }
+
+    function tryPin() {
+        if (library.unlock(pinField.text)) {
+            askPin = false
+            warning.text = ""
+            keyField.text = library.effectiveKey()
+            keyField.forceActiveFocus()
+        } else {
+            warning.text = "Pincode klopt niet."
+            pinField.text = ""
+            pinField.forceActiveFocus()
         }
     }
 
@@ -188,14 +205,69 @@ FocusScope {
             FolderList { kind: "shows"; paths: setup.showsPaths }
 
             // Sleutel van TMDB: niet nodig om te beginnen, dus ingeklapt
-            FocusButton {
-                id: moreButton
-                unit: setup.unit
+            Row {
                 visible: !setup.showKey
-                text: "Meer gegevens bij films (optioneel)…"
-                onClicked: { setup.showKey = true; keyField.forceActiveFocus() }
-                KeyNavigation.up: showsButton
-                KeyNavigation.down: saveButton
+                spacing: setup.unit * 1.5
+                Text {
+                    anchors.verticalCenter: parent.verticalCenter
+                    color: "#c4c7cc"
+                    font.pixelSize: (setup.unit * 2.2) * appModel.fontScale
+                    text: "🔒  Gegevens bij films: ingebouwde sleutel (vergrendeld)"
+                }
+                FocusButton {
+                    id: moreButton
+                    unit: setup.unit
+                    visible: !setup.askPin
+                    text: "Ontgrendelen…"
+                    onClicked: { setup.askPin = true; pinField.forceActiveFocus() }
+                    KeyNavigation.up: showsButton
+                    KeyNavigation.down: saveButton
+                }
+                // Pincode
+                Rectangle {
+                    visible: setup.askPin
+                    anchors.verticalCenter: parent.verticalCenter
+                    width: setup.unit * 16
+                    height: setup.unit * 6
+                    radius: setup.unit
+                    color: "#0f1115"
+                    border.width: pinField.activeFocus ? 3 : 1
+                    border.color: pinField.activeFocus ? "#e8eaed" : "#33ffffff"
+                    TextInput {
+                        id: pinField
+                        anchors.fill: parent
+                        anchors.margins: setup.unit * 1.5
+                        verticalAlignment: TextInput.AlignVCenter
+                        horizontalAlignment: TextInput.AlignHCenter
+                        color: "white"
+                        font.pixelSize: (setup.unit * 2.6) * appModel.fontScale
+                        font.letterSpacing: setup.unit * 0.6
+                        echoMode: TextInput.Password
+                        maximumLength: 8
+                        inputMethodHints: Qt.ImhDigitsOnly
+                        validator: RegularExpressionValidator { regularExpression: /[0-9]*/ }
+                        onAccepted: setup.tryPin()
+                        KeyNavigation.up: showsButton
+                        KeyNavigation.right: pinOk
+                        KeyNavigation.down: saveButton
+                    }
+                    Text {
+                        anchors.centerIn: parent
+                        visible: pinField.text === "" && !pinField.activeFocus
+                        color: "#a8acb3"
+                        font.pixelSize: (setup.unit * 2.2) * appModel.fontScale
+                        text: "Pincode"
+                    }
+                }
+                FocusButton {
+                    id: pinOk
+                    visible: setup.askPin
+                    unit: setup.unit
+                    text: "OK"
+                    onClicked: setup.tryPin()
+                    KeyNavigation.left: pinField
+                    KeyNavigation.down: saveButton
+                }
             }
             Text {
                 visible: setup.showKey
@@ -203,7 +275,7 @@ FocusScope {
                 wrapMode: Text.Wrap
                 color: "#9fb4d0"
                 font.pixelSize: (setup.unit * 2.2) * appModel.fontScale
-                text: "Sleutel van TMDB (optioneel): daarmee krijgen ook films een poster, beschrijving en cast"
+                text: "Sleutel van TMDB (ontgrendeld). Leeg laten = de ingebouwde sleutel gebruiken."
             }
             Rectangle {
                 visible: setup.showKey
@@ -260,7 +332,7 @@ FocusScope {
                     unit: setup.unit
                     text: "Opslaan en zoeken"
                     onClicked: setup.save()
-                    KeyNavigation.up: setup.showKey ? keyField : moreButton
+                    KeyNavigation.up: setup.showKey ? keyField : (setup.askPin ? pinField : moreButton)
                     KeyNavigation.right: cancelButton
                 }
                 FocusButton {
@@ -271,7 +343,7 @@ FocusScope {
                         setup.close()
                         setup.cancelled()
                     }
-                    KeyNavigation.up: setup.showKey ? keyField : moreButton
+                    KeyNavigation.up: setup.showKey ? keyField : (setup.askPin ? pinField : moreButton)
                     KeyNavigation.left: saveButton
                 }
             }

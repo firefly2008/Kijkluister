@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "builtinkey.h"
 #include "mpcplayer.h"
 #include "medialibrary.h"
 #include "appmodel.h"
@@ -199,7 +200,11 @@ MediaLibrary::MediaLibrary(const QString &dataDir, QObject *parent)
     if (m_showsFolders.isEmpty() && !oldShows.isEmpty()) {
         m_showsFolders << oldShows;
     }
-    m_apiKey = m_settings.value(QStringLiteral("library/tmdbKey")).toString();
+    m_userKey = m_settings.value(QStringLiteral("library/tmdbKey")).toString();
+    if (m_userKey == BuiltinKey::token()) {
+        m_userKey.clear();
+    }
+    m_apiKey = m_userKey.isEmpty() ? BuiltinKey::token() : m_userKey;
 
     QFile file(m_dataDir + QStringLiteral("/library.json"));
     if (file.open(QIODevice::ReadOnly)) {
@@ -267,16 +272,20 @@ void MediaLibrary::configureFolders(const QStringList &moviesFolders, const QStr
     };
     m_moviesFolders = clean(moviesFolders);
     m_showsFolders = clean(showsFolders);
-    m_apiKey = apiKey.trimmed();
+    // Alleen na ontgrendelen mag de sleutel veranderen; dezelfde als de ingebouwde = niets opslaan
+    if (m_unlocked) {
+        m_userKey = apiKey.trimmed() == BuiltinKey::token() ? QString() : apiKey.trimmed();
+    }
+    m_apiKey = m_userKey.isEmpty() ? BuiltinKey::token() : m_userKey;
     m_keyRejected = false;
     m_settings.setValue(QStringLiteral("library/moviesFolders"), m_moviesFolders);
     m_settings.setValue(QStringLiteral("library/showsFolders"), m_showsFolders);
     m_settings.setValue(QStringLiteral("library/moviesFolder"), moviesFolder());
     m_settings.setValue(QStringLiteral("library/showsFolder"), showsFolder());
-    m_settings.setValue(QStringLiteral("library/tmdbKey"), m_apiKey);
+    m_settings.setValue(QStringLiteral("library/tmdbKey"), m_userKey);
     m_settings.sync();
     Q_EMIT settingsChanged();
-    qInfo() << "Library folders" << m_moviesFolders << m_showsFolders << "key" << !m_apiKey.isEmpty();
+    qInfo() << "Library folders" << m_moviesFolders << m_showsFolders << "key" << (m_userKey.isEmpty() ? "builtin" : "own");
     scan(false);
 }
 
@@ -833,4 +842,18 @@ bool MediaLibrary::play(const QString &path)
     }
     qInfo() << "Play with default program" << path;
     return QDesktopServices::openUrl(QUrl::fromLocalFile(path));
+}
+
+bool MediaLibrary::unlock(const QString &pin)
+{
+    m_unlocked = BuiltinKey::pinMatches(pin);
+    qInfo() << "Library key unlock" << (m_unlocked ? "ok" : "wrong pin");
+    Q_EMIT settingsChanged();
+    return m_unlocked;
+}
+
+void MediaLibrary::lock()
+{
+    m_unlocked = false;
+    Q_EMIT settingsChanged();
 }

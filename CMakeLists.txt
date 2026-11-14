@@ -24,6 +24,7 @@ qt_add_executable(bigscreen-host WIN32
     src/gamepadnavigator.h
     src/medialibrary.cpp
     src/medialibrary.h
+    src/builtinkey.h
     src/resumemodel.cpp
     src/resumemodel.h
     src/components.cpp
