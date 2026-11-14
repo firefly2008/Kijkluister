@@ -94,7 +94,7 @@ FocusScope {
         playing = true
         if (player) {
             player.stop()
-            player.source = ch.url
+            player.source = sourceFor(ch.url)
             player.play()
         }
         iptv.requestEpg(row)
@@ -127,6 +127,28 @@ FocusScope {
         }
     }
     Timer { id: recordStopTimer; interval: 20000; onTriggered: recorder.stop() }
+
+    // Wordt deze zender opgenomen, dan kijken we via de lokale doorgifte van de opname
+    // (één verbinding met de aanbieder; veel abonnementen staan er maar één toe)
+    function sourceFor(url) {
+        return recorder.recording && recorder.url === url && recorder.relayUrl !== "" ? recorder.relayUrl : url
+    }
+
+    Connections {
+        target: recorder
+        function onStateChanged() {
+            if (!tv.playing || !tv.player || !tv.channel.url) {
+                return
+            }
+            const wanted = tv.sourceFor(tv.channel.url)
+            if (String(tv.player.source) !== wanted) {
+                console.info("IPTV switch source:", wanted === recorder.relayUrl ? "relay" : "direct")
+                tv.player.stop()
+                tv.player.source = wanted
+                tv.player.play()
+            }
+        }
+    }
 
     function openRecord(row) {
         recordPanel.open(row >= 0 ? iptv.channelAt(row) : channel, playing ? playerView : grid)
@@ -527,7 +549,7 @@ FocusScope {
                     }
                     onMediaStatusChanged: {
                         if (mediaStatus === MediaPlayer.BufferedMedia) {
-                            console.info("IPTV playing:", tv.channel.name)
+                            console.info("IPTV playing:", tv.channel.name, String(source).startsWith("udp://") ? "(relay)" : "")
                         }
                     }
                 }

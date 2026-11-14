@@ -148,6 +148,7 @@ jobs:
               "Opnames: " + (($rec | ForEach-Object { "$($_.Name) $($_.Length) bytes" }) -join ', ')
               if (-not $rec -or ($rec | Measure-Object Length -Sum).Sum -lt 200000) { throw "Rooktest mislukt: geen opname van formaat" }
               & dist\ffmpeg\ffmpeg.exe -v error -i $rec[0].FullName -f null - 2>&1 | Select-Object -First 5
+              if (-not (Select-String -Path $log -Pattern "IPTV playing: .*\(relay\)" -Quiet)) { throw "Rooktest mislukt: speler speelt niet via de doorgifte tijdens opnemen" }
             }
           }
       - uses: actions/upload-artifact@v4

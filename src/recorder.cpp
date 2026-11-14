@@ -13,7 +13,7 @@
 namespace {
 QString sanitize(QString name)
 {
-    static const QString forbidden = QStringLiteral("<>:\"/\\|?*");
+    static const QString forbidden = QStringLiteral("<>:\"/\\|?*[]");
     for (QChar &c : name) {
         if (forbidden.contains(c) || c.unicode() < 32) {
             c = QLatin1Char('_');
@@ -28,6 +28,7 @@ Recorder::Recorder(const QString &dataDir, QObject *parent)
     , m_settings(dataDir + QStringLiteral("/settings.ini"), QSettings::IniFormat)
 {
     m_folder = m_settings.value(QStringLiteral("recorder/folder")).toString();
+    m_relayUrl = QStringLiteral("udp://127.0.0.1:47123");
     m_clock.setInterval(1000);
     connect(&m_clock, &QTimer::timeout, this, &Recorder::tick);
     m_retryTimer.setSingleShot(true);
@@ -165,10 +166,13 @@ void Recorder::launch()
         QStringLiteral("-i"), m_url,
         QStringLiteral("-map"), QStringLiteral("0:v?"), QStringLiteral("-map"), QStringLiteral("0:a?"),
         QStringLiteral("-c"), QStringLiteral("copy"),
-        QStringLiteral("-bsf:a"), QStringLiteral("aac_adtstoasc"),
-        QStringLiteral("-movflags"), QStringLiteral("+frag_keyframe+empty_moov+default_base_moof"),
-        QStringLiteral("-f"), QStringLiteral("mp4"),
-        target,
+        // Eén keer ophalen, twee kanten op: het bestand (MP4) en een lokale doorgifte (MPEG-TS
+        // over UDP) waar de speler op overschakelt. Zo blijft er één verbinding met de aanbieder,
+        // want veel abonnementen staan er maar één toe.
+        QStringLiteral("-f"), QStringLiteral("tee"), QStringLiteral("-use_fifo"), QStringLiteral("1"),
+        QStringLiteral("[f=mp4:bsfs/a=aac_adtstoasc:movflags=+frag_keyframe+empty_moov+default_base_moof]")
+            + QString(target).replace(QLatin1Char('\\'), QLatin1Char('/')).replace(QLatin1Char(':'), QStringLiteral("\\:"))
+            + QStringLiteral("|[f=mpegts:onfail=ignore]") + m_relayUrl + QStringLiteral("?pkt_size=1316"),
     };
     m_lastStderr.clear();
     setStatus(m_part > 0 ? tr("Opname hervat (deel %1)").arg(m_part + 1) : tr("Opname loopt"));

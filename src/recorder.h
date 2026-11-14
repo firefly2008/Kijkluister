@@ -25,6 +25,9 @@ class Recorder : public QObject
     Q_PROPERTY(int retries READ retries NOTIFY tick)
     Q_PROPERTY(bool available READ available CONSTANT)
     Q_PROPERTY(QVariantList recordings READ recordings NOTIFY recordingsChanged)
+    // De stream die wordt opgenomen, lokaal doorgegeven voor de speler (één verbinding met de aanbieder)
+    Q_PROPERTY(QString relayUrl READ relayUrl NOTIFY stateChanged)
+    Q_PROPERTY(QString url READ url NOTIFY stateChanged)
 
 public:
     explicit Recorder(const QString &dataDir, QObject *parent = nullptr);
@@ -42,6 +45,8 @@ public:
     int retries() const { return m_retries; }
     bool available() const;      // ffmpeg.exe gevonden
     QVariantList recordings() const;
+    QString relayUrl() const { return m_active ? m_relayUrl : QString(); }
+    QString url() const { return m_active ? m_url : QString(); }
 
     // Opname starten: duur in minuten (0 = tot je zelf stopt)
     Q_INVOKABLE bool start(const QString &channel, const QString &url, int minutes);
@@ -84,4 +89,5 @@ private:
     int m_part = 0;
     QStringList m_parts;
     QByteArray m_lastStderr;
+    QString m_relayUrl;
 };
