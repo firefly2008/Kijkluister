@@ -415,8 +415,8 @@ FocusScope {
                 font.pixelSize: lib.unit * 2.6
                 text: library.busy ? "Bezig met zoeken…"
                       : lib.section === "movies"
-                        ? (library.moviesFolder !== "" ? "Geen films gevonden in " + library.moviesFolder : "Nog geen map met films gekozen: kies Mappen en sleutel")
-                        : (library.showsFolder !== "" ? "Geen series gevonden in " + library.showsFolder : "Nog geen map met series gekozen: kies Mappen en sleutel")
+                        ? (library.moviesFolder !== "" ? "Geen films gevonden in " + library.moviesFolders.join(", ") : "Nog geen map met films gekozen: kies Mappen en sleutel")
+                        : (library.showsFolder !== "" ? "Geen series gevonden in " + library.showsFolders.join(", ") : "Nog geen map met series gekozen: kies Mappen en sleutel")
             }
         }
     }

@@ -8,8 +8,8 @@ FocusScope {
     id: setup
 
     readonly property real unit: height / 100
-    property string moviesPath
-    property string showsPath
+    property var moviesPaths: []
+    property var showsPaths: []
     property bool firstRun: false
     signal saved()
     signal cancelled()
@@ -20,8 +20,8 @@ FocusScope {
 
     function open(isFirstRun) {
         firstRun = isFirstRun
-        moviesPath = library.moviesFolder
-        showsPath = library.showsFolder
+        moviesPaths = library.moviesFolders.slice()
+        showsPaths = library.showsFolders.slice()
         keyField.text = library.apiKey
         warning.text = ""
         visible = true
@@ -32,13 +32,70 @@ FocusScope {
         visible = false
     }
 
+    function addPath(kind, path) {
+        if (path === "") return
+        const list = kind === "movies" ? moviesPaths.slice() : showsPaths.slice()
+        if (list.some(p => p.toLowerCase() === path.toLowerCase())) return
+        list.push(path)
+        if (kind === "movies") moviesPaths = list; else showsPaths = list
+    }
+    function removePath(kind, index) {
+        const list = kind === "movies" ? moviesPaths.slice() : showsPaths.slice()
+        list.splice(index, 1)
+        if (kind === "movies") moviesPaths = list; else showsPaths = list
+    }
+
+    // Lijst met gekozen mappen; F2 / X / Delete of de knop haalt er een weg
+    component FolderList: Column {
+        id: fl
+        property string kind
+        property var paths: []
+        width: content.width
+        spacing: setup.unit * 0.6
+        Text {
+            visible: fl.paths.length === 0
+            color: "#7d8188"
+            font.pixelSize: setup.unit * 2.3
+            text: "Nog geen map gekozen (mag leeg blijven)"
+        }
+        Repeater {
+            model: fl.paths
+            delegate: Row {
+                required property string modelData
+                required property int index
+                spacing: setup.unit * 1.5
+                Rectangle {
+                    width: content.width - removeButton.width - parent.spacing
+                    height: setup.unit * 5.5
+                    radius: setup.unit
+                    color: "#0f1115"
+                    Text {
+                        anchors.fill: parent
+                        anchors.margins: setup.unit * 1.5
+                        verticalAlignment: Text.AlignVCenter
+                        elide: Text.ElideMiddle
+                        color: "white"
+                        font.pixelSize: setup.unit * 2.3
+                        text: modelData
+                    }
+                }
+                FocusButton {
+                    id: removeButton
+                    unit: setup.unit
+                    text: "Weg"
+                    onClicked: setup.removePath(fl.kind, index)
+                }
+            }
+        }
+    }
+
     function save() {
-        if (moviesPath === "" && showsPath === "") {
+        if (moviesPaths.length === 0 && showsPaths.length === 0) {
             warning.text = "Kies minstens één map."
             moviesButton.forceActiveFocus()
             return
         }
-        library.configure(moviesPath, showsPath, keyField.text)
+        library.configureFolders(moviesPaths, showsPaths, keyField.text)
         close()
         saved()
     }
@@ -51,12 +108,12 @@ FocusScope {
     FolderDialog {
         id: moviesDialog
         title: "Map met films kiezen"
-        onAccepted: setup.moviesPath = library.localPath(selectedFolder)
+        onAccepted: setup.addPath("movies", library.localPath(selectedFolder))
     }
     FolderDialog {
         id: showsDialog
         title: "Map met series kiezen"
-        onAccepted: setup.showsPath = library.localPath(selectedFolder)
+        onAccepted: setup.addPath("shows", library.localPath(selectedFolder))
     }
 
     Rectangle {
@@ -94,67 +151,40 @@ FocusScope {
                 wrapMode: Text.Wrap
                 color: "#c4c7cc"
                 font.pixelSize: setup.unit * 2.2
-                text: "Kies de mappen met je films en series. Kijkluister zoekt daarin de video's en haalt titel, "
+                text: "Kies de mappen met je films en series; per soort kunnen dat er meer zijn, ook op een NAS of "
+                      + "externe schijf. Kijkluister zoekt daarin de video's en haalt titel, "
                       + "beschrijving, poster, achtergrond en cast op, zoals Kodi dat doet. Zet elke serie in een eigen "
                       + "map (bijvoorbeeld Series\\Westworld (2016)) en noem afleveringen S01E01, S01E02 enzovoort."
             }
 
-            // Films
-            Text { color: "#9fb4d0"; font.pixelSize: setup.unit * 2.2; text: "Map met films" }
+            // Films: een of meer mappen/locaties
             Row {
-                spacing: setup.unit * 1.5
-                Rectangle {
-                    width: content.width - moviesButton.width - parent.spacing
-                    height: setup.unit * 6
-                    radius: setup.unit
-                    color: "#0f1115"
-                    Text {
-                        anchors.fill: parent
-                        anchors.margins: setup.unit * 1.5
-                        verticalAlignment: Text.AlignVCenter
-                        elide: Text.ElideMiddle
-                        color: setup.moviesPath !== "" ? "white" : "#7d8188"
-                        font.pixelSize: setup.unit * 2.3
-                        text: setup.moviesPath !== "" ? setup.moviesPath : "Nog niet gekozen (mag leeg blijven)"
-                    }
-                }
+                spacing: setup.unit * 2
+                Text { anchors.verticalCenter: parent.verticalCenter; color: "#9fb4d0"; font.pixelSize: setup.unit * 2.2; text: "Mappen met films" }
                 FocusButton {
                     id: moviesButton
                     unit: setup.unit
-                    text: "Kiezen…"
+                    text: "+ Map toevoegen…"
                     onClicked: moviesDialog.open()
                     KeyNavigation.down: showsButton
                 }
             }
+            FolderList { kind: "movies"; paths: setup.moviesPaths }
 
-            // Series
-            Text { color: "#9fb4d0"; font.pixelSize: setup.unit * 2.2; text: "Map met series" }
+            // Series: een of meer mappen/locaties
             Row {
-                spacing: setup.unit * 1.5
-                Rectangle {
-                    width: content.width - showsButton.width - parent.spacing
-                    height: setup.unit * 6
-                    radius: setup.unit
-                    color: "#0f1115"
-                    Text {
-                        anchors.fill: parent
-                        anchors.margins: setup.unit * 1.5
-                        verticalAlignment: Text.AlignVCenter
-                        elide: Text.ElideMiddle
-                        color: setup.showsPath !== "" ? "white" : "#7d8188"
-                        font.pixelSize: setup.unit * 2.3
-                        text: setup.showsPath !== "" ? setup.showsPath : "Nog niet gekozen (mag leeg blijven)"
-                    }
-                }
+                spacing: setup.unit * 2
+                Text { anchors.verticalCenter: parent.verticalCenter; color: "#9fb4d0"; font.pixelSize: setup.unit * 2.2; text: "Mappen met series" }
                 FocusButton {
                     id: showsButton
                     unit: setup.unit
-                    text: "Kiezen…"
+                    text: "+ Map toevoegen…"
                     onClicked: showsDialog.open()
                     KeyNavigation.up: moviesButton
                     KeyNavigation.down: keyField
                 }
             }
+            FolderList { kind: "shows"; paths: setup.showsPaths }
 
             // TMDB-sleutel
             Text { color: "#9fb4d0"; font.pixelSize: setup.unit * 2.2; text: "TMDB API-sleutel (gratis, nodig voor films)" }

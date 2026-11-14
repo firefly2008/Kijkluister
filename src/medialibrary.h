@@ -30,6 +30,9 @@ class MediaLibrary : public QObject
     Q_OBJECT
     Q_PROPERTY(QString moviesFolder READ moviesFolder NOTIFY settingsChanged)
     Q_PROPERTY(QString showsFolder READ showsFolder NOTIFY settingsChanged)
+    // Meerdere mappen/locaties per soort (bijvoorbeeld een interne schijf en een NAS)
+    Q_PROPERTY(QStringList moviesFolders READ moviesFolders NOTIFY settingsChanged)
+    Q_PROPERTY(QStringList showsFolders READ showsFolders NOTIFY settingsChanged)
     Q_PROPERTY(QString apiKey READ apiKey NOTIFY settingsChanged)
     Q_PROPERTY(bool configured READ configured NOTIFY settingsChanged)
     Q_PROPERTY(bool busy READ busy NOTIFY statusChanged)
@@ -42,14 +45,17 @@ public:
 
     QString moviesFolder() const;
     QString showsFolder() const;
+    QStringList moviesFolders() const;
+    QStringList showsFolders() const;
     QString apiKey() const { return m_apiKey; }
-    bool configured() const { return !m_moviesFolder.isEmpty() || !m_showsFolder.isEmpty(); }
+    bool configured() const { return !m_moviesFolders.isEmpty() || !m_showsFolders.isEmpty(); }
     bool busy() const { return m_busy; }
     QString status() const { return m_status; }
     QVariantList movies() const { return m_movies; }
     QVariantList shows() const { return m_shows; }
 
     Q_INVOKABLE void configure(const QString &moviesFolder, const QString &showsFolder, const QString &apiKey);
+    Q_INVOKABLE void configureFolders(const QStringList &moviesFolders, const QStringList &showsFolders, const QString &apiKey);
     Q_INVOKABLE void scan(bool refreshAll = false);
     Q_INVOKABLE bool play(const QString &path);
     Q_INVOKABLE QString localPath(const QUrl &url) const;
@@ -78,8 +84,8 @@ private:
     QString m_dataDir;
     QSettings m_settings;
     QNetworkAccessManager m_network;
-    QString m_moviesFolder;
-    QString m_showsFolder;
+    QStringList m_moviesFolders;
+    QStringList m_showsFolders;
     QString m_apiKey;
     QJsonObject m_cache; // sleutel: pad van film of seriemap
     QStringList m_queue;

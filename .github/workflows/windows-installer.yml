@@ -48,7 +48,9 @@ jobs:
             New-Item -ItemType File -Force $f | Out-Null
           }
           New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\BigscreenHost" | Out-Null
-          "[library]`r`nmoviesFolder=$($films -replace '\\','/')`r`nshowsFolder=$($series -replace '\\','/')`r`n" | Set-Content "$env:LOCALAPPDATA\BigscreenHost\settings.ini"
+          $films2 = "$env:RUNNER_TEMP\media2\Meer films"; New-Item -ItemType Directory -Force $films2 | Out-Null
+          New-Item -ItemType File -Force "$films2\Blade.Runner.1982.Final.Cut.mkv" | Out-Null
+          "[library]`r`nmoviesFolder=$($films -replace '\\','/')`r`nshowsFolder=$($series -replace '\\','/')`r`nmoviesFolders=$($films -replace '\\','/'), $($films2 -replace '\\','/')`r`n" | Set-Content "$env:LOCALAPPDATA\BigscreenHost\settings.ini"
           # Gids-test: een paar echte zenders (iptv-org) met een eigen XMLTV-gids (gzip) rond dit moment
           $tv = "$env:RUNNER_TEMP\tv"; New-Item -ItemType Directory -Force $tv | Out-Null
           Invoke-WebRequest -UseBasicParsing https://iptv-org.github.io/iptv/countries/nl.m3u -OutFile "$tv\nl.m3u"

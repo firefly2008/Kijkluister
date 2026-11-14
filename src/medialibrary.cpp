@@ -187,8 +187,17 @@ MediaLibrary::MediaLibrary(const QString &dataDir, QObject *parent)
     , m_dataDir(dataDir)
     , m_settings(dataDir + QStringLiteral("/settings.ini"), QSettings::IniFormat)
 {
-    m_moviesFolder = m_settings.value(QStringLiteral("library/moviesFolder")).toString();
-    m_showsFolder = m_settings.value(QStringLiteral("library/showsFolder")).toString();
+    // Lijsten van mappen; de enkele map van oudere versies wordt overgenomen
+    m_moviesFolders = m_settings.value(QStringLiteral("library/moviesFolders")).toStringList();
+    m_showsFolders = m_settings.value(QStringLiteral("library/showsFolders")).toStringList();
+    const QString oldMovies = m_settings.value(QStringLiteral("library/moviesFolder")).toString();
+    const QString oldShows = m_settings.value(QStringLiteral("library/showsFolder")).toString();
+    if (m_moviesFolders.isEmpty() && !oldMovies.isEmpty()) {
+        m_moviesFolders << oldMovies;
+    }
+    if (m_showsFolders.isEmpty() && !oldShows.isEmpty()) {
+        m_showsFolders << oldShows;
+    }
     m_apiKey = m_settings.value(QStringLiteral("library/tmdbKey")).toString();
 
     QFile file(m_dataDir + QStringLiteral("/library.json"));
@@ -206,12 +215,30 @@ MediaLibrary::MediaLibrary(const QString &dataDir, QObject *parent)
 
 QString MediaLibrary::moviesFolder() const
 {
-    return QDir::toNativeSeparators(m_moviesFolder);
+    return m_moviesFolders.isEmpty() ? QString() : QDir::toNativeSeparators(m_moviesFolders.first());
 }
 
 QString MediaLibrary::showsFolder() const
 {
-    return QDir::toNativeSeparators(m_showsFolder);
+    return m_showsFolders.isEmpty() ? QString() : QDir::toNativeSeparators(m_showsFolders.first());
+}
+
+QStringList MediaLibrary::moviesFolders() const
+{
+    QStringList list;
+    for (const QString &f : m_moviesFolders) {
+        list << QDir::toNativeSeparators(f);
+    }
+    return list;
+}
+
+QStringList MediaLibrary::showsFolders() const
+{
+    QStringList list;
+    for (const QString &f : m_showsFolders) {
+        list << QDir::toNativeSeparators(f);
+    }
+    return list;
 }
 
 QString MediaLibrary::localPath(const QUrl &url) const
@@ -221,16 +248,34 @@ QString MediaLibrary::localPath(const QUrl &url) const
 
 void MediaLibrary::configure(const QString &moviesFolder, const QString &showsFolder, const QString &apiKey)
 {
-    m_moviesFolder = toFolder(moviesFolder);
-    m_showsFolder = toFolder(showsFolder);
+    configureFolders(moviesFolder.isEmpty() ? QStringList() : QStringList{moviesFolder},
+                     showsFolder.isEmpty() ? QStringList() : QStringList{showsFolder}, apiKey);
+}
+
+void MediaLibrary::configureFolders(const QStringList &moviesFolders, const QStringList &showsFolders, const QString &apiKey)
+{
+    auto clean = [](const QStringList &in) {
+        QStringList out;
+        for (const QString &f : in) {
+            const QString folder = toFolder(f);
+            if (!folder.isEmpty() && !out.contains(folder, Qt::CaseInsensitive)) {
+                out << folder;
+            }
+        }
+        return out;
+    };
+    m_moviesFolders = clean(moviesFolders);
+    m_showsFolders = clean(showsFolders);
     m_apiKey = apiKey.trimmed();
     m_keyRejected = false;
-    m_settings.setValue(QStringLiteral("library/moviesFolder"), m_moviesFolder);
-    m_settings.setValue(QStringLiteral("library/showsFolder"), m_showsFolder);
+    m_settings.setValue(QStringLiteral("library/moviesFolders"), m_moviesFolders);
+    m_settings.setValue(QStringLiteral("library/showsFolders"), m_showsFolders);
+    m_settings.setValue(QStringLiteral("library/moviesFolder"), moviesFolder());
+    m_settings.setValue(QStringLiteral("library/showsFolder"), showsFolder());
     m_settings.setValue(QStringLiteral("library/tmdbKey"), m_apiKey);
     m_settings.sync();
     Q_EMIT settingsChanged();
-    qInfo() << "Library folders" << m_moviesFolder << m_showsFolder << "key" << !m_apiKey.isEmpty();
+    qInfo() << "Library folders" << m_moviesFolders << m_showsFolders << "key" << !m_apiKey.isEmpty();
     scan(false);
 }
 
@@ -252,9 +297,13 @@ void MediaLibrary::scan(bool refreshAll)
     QJsonObject fresh;
     QStringList queue;
 
-    if (!m_moviesFolder.isEmpty() && QDir(m_moviesFolder).exists()) {
-        const QDir root(m_moviesFolder);
-        QDirIterator it(m_moviesFolder, QDir::Files, QDirIterator::Subdirectories);
+    for (const QString &moviesFolder : std::as_const(m_moviesFolders)) {
+        if (!QDir(moviesFolder).exists()) {
+            qWarning() << "Library: movies folder not reachable" << moviesFolder;
+            continue;
+        }
+        const QDir root(moviesFolder);
+        QDirIterator it(moviesFolder, QDir::Files, QDirIterator::Subdirectories);
         while (it.hasNext()) {
             const QFileInfo info(it.next());
             if (!videoExtensions.contains(info.suffix().toLower())) {
@@ -299,8 +348,12 @@ void MediaLibrary::scan(bool refreshAll)
         }
     }
 
-    if (!m_showsFolder.isEmpty() && QDir(m_showsFolder).exists()) {
-        const auto dirs = QDir(m_showsFolder).entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
+    for (const QString &showsFolder : std::as_const(m_showsFolders)) {
+        if (!QDir(showsFolder).exists()) {
+            qWarning() << "Library: shows folder not reachable" << showsFolder;
+            continue;
+        }
+        const auto dirs = QDir(showsFolder).entryInfoList(QDir::Dirs | QDir::NoDotAndDotDot, QDir::Name);
         for (const QFileInfo &dirInfo : dirs) {
             const QJsonArray episodes = scanEpisodes(dirInfo.absoluteFilePath());
             if (episodes.isEmpty()) {
@@ -743,7 +796,7 @@ QString MediaLibrary::summary() const
     QString text = tr("%1 films  ·  %2 series").arg(m_movies.size()).arg(m_shows.size());
     if (m_keyRejected) {
         text += tr("  ·  TMDB-sleutel geweigerd, controleer hem via Mappen en sleutel");
-    } else if (m_apiKey.isEmpty() && !m_moviesFolder.isEmpty()) {
+    } else if (m_apiKey.isEmpty() && !m_moviesFolders.isEmpty()) {
         text += tr("  ·  zonder TMDB-sleutel alleen filmtitels");
     }
     return text;
