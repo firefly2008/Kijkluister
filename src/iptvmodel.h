@@ -152,6 +152,7 @@ private:
 
     QStringList m_epgUrls;
     QStringList m_extraEpgUrls;
+    int m_epgFailures = 0;
     QHash<QString, QString> m_epgBase;   // gids-id zonder "@SD"/"@HD" (klein) -> gids-id
     void rebuildEpgIndex();
     QStringList m_loadingEpgUrls;

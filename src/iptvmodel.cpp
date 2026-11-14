@@ -126,7 +126,7 @@ IptvModel::IptvModel(const QString &dataDir, QObject *parent)
     applyFilter();
     m_epgUrls = m_settings.value(QStringLiteral("iptv/epgUrls")).toStringList();
     m_extraEpgUrls = m_settings.value(QStringLiteral("iptv/extraEpg")).toStringList();
-    m_epgUrls.removeAll(QStringLiteral("https://github.com/firefly2008/bigscreen-host-windows/releases/download/epg/guide.xml.gz"));
+    m_epgUrls.removeIf([](const QString &u) { return u.contains(QLatin1String("firefly2008/bigscreen-host-windows")); });
     // Bestaande installaties met gratis zenders: gratis gids er meteen bij
     for (const QVariant &v : std::as_const(m_sources)) {
         if (v.toMap().value(QStringLiteral("free")).toBool() && !m_epgUrls.contains(freeGuideUrl())) {
@@ -684,6 +684,7 @@ void IptvModel::reloadEpg()
         return;
     }
     m_epgBusy = true;
+    m_epgFailures = 0;
     m_epgFiles.clear();
     m_epgIndex = -1;
     m_epgStatus = tr("Gids laden…");
@@ -708,6 +709,7 @@ void IptvModel::downloadNextEpg()
         if (reply->error() == QNetworkReply::NoError) {
             m_epgFiles.append(reply->readAll());
         } else {
+            ++m_epgFailures;
             qWarning().noquote() << "EPG download failed"
                                  << reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt()
                                  << reply->url().toString() << reply->errorString() << reply->readAll().left(160);
@@ -839,8 +841,8 @@ void IptvModel::rebuildEpgIndex()
 
 QString IptvModel::freeGuideUrl()
 {
-    // Vaste link zonder doorsturen (branch "epg-data", elke nacht overschreven)
-    return QStringLiteral("https://raw.githubusercontent.com/firefly2008/bigscreen-host-windows/epg-data/guide.xml.gz");
+    // Openbare repo kijkluister-epg, elke nacht overschreven door de workflow "Tv-gids"
+    return QStringLiteral("https://raw.githubusercontent.com/firefly2008/kijkluister-epg/main/guide.xml.gz");
 }
 
 void IptvModel::setExtraEpgUrls(const QStringList &urls)
@@ -1019,7 +1021,8 @@ void IptvModel::saveEpgCache() const
     QFile file(m_dataDir + QStringLiteral("/iptv-epg.json"));
     if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         file.write(QJsonDocument(QJsonObject{{QStringLiteral("saved"), double(QDateTime::currentSecsSinceEpoch())},
-                                             {QStringLiteral("urls"), QJsonArray::fromStringList(m_epgUrls)},
+                                             // Mislukte download: niet als "vers" bewaren, de volgende start probeert het opnieuw
+                                             {QStringLiteral("urls"), m_epgFailures > 0 ? QJsonArray() : QJsonArray::fromStringList(m_epgUrls)},
                                              {QStringLiteral("programmes"), programmes},
                                              {QStringLiteral("names"), names}}).toJson(QJsonDocument::Compact));
     }
