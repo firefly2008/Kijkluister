@@ -47,6 +47,11 @@ FocusScope {
         setup.open(!library.configured)
     }
 
+    // Schermafbeelding: pincodevak met ingevulde (verborgen) cijfers
+    function demoPin() {
+        setup.demoPin()
+    }
+
     function close() {
         visible = false
         detail = null

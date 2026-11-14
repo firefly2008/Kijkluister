@@ -296,6 +296,64 @@ Rectangle {
         }
     }
 
+    // Schermafbeeldingen van de verbeteringen (alleen via BIGSCREEN_SELFTEST=u-...)
+    function runImprovementShot(mode) {
+        appModel.fontScale = mode === "u-bigtext" ? 1.25 : 1.0
+        iptv.search = ""
+        const testSource = () => {
+            if (!iptv.sources.some(s => s.name === "Gids-test")) iptv.addSource("m3u-file", "Gids-test", selfTestM3u, "", "")
+        }
+        const mediaIndex = () => sectionDefs.findIndex(d => d.model === appModel)
+        if (mode === "u-library") {
+            libraryScreen.open("movies", mediaGrid())
+        } else if (mode === "u-home" || mode === "u-bigtext") {
+            focusSection(0, 0, false)
+        } else if (mode === "u-header") {
+            quickRow.currentIndex = 4
+            quickRow.forceActiveFocus()
+        } else if (mode === "u-quit") {
+            quickRow.currentIndex = 6
+            quickRow.forceActiveFocus()
+            quickRow.trigger(6)
+        } else if (mode === "u-personalize") {
+            openPersonalizeMenu()
+        } else if (mode === "u-welcome") {
+            welcomeOverlay.open(mediaGrid())
+        } else if (mode === "u-sources") {
+            testSource()
+            iptvScreen.open(mediaGrid())
+            iptvScreen.openSources()
+        } else if (mode === "u-error") {
+            iptv.addFreeSources(false)
+            iptv.group = "Nederland"
+            iptv.search = "NPO 1"
+            iptvScreen.autoPlay = true
+            iptvScreen.open(mediaGrid())
+        } else if (mode === "u-guiderecord") {
+            testSource()
+            recorder.folder = selfTestRecordDir
+            iptv.group = "Alle zenders"
+            iptvScreen.autoPlay = true
+            iptvScreen.autoGuide = true
+            iptvScreen.autoGuideRecord = true
+            iptvScreen.guideStart = 3
+            iptvScreen.open(mediaGrid())
+        } else if (mode === "u-badge") {
+            Qt.callLater(() => focusSection(mediaIndex(), 2, false))
+        } else if (mode === "u-recordpanel") {
+            testSource()
+            recorder.folder = selfTestRecordDir
+            iptv.group = "Alle zenders"
+            iptvScreen.autoPlay = true
+            iptvScreen.autoRecord = "panelonly"
+            iptvScreen.open(mediaGrid())
+        } else if (mode === "u-libsetup") {
+            libraryScreen.open("movies", mediaGrid())
+            libraryScreen.openSetup()
+            libraryScreen.demoPin()
+        }
+    }
+
     function addTile(name, target) {
         // Een pad naar een bestand is een programma; al het andere een webadres
         const isFile = /^[a-zA-Z]:[\\/]/.test(target.trim()) || target.trim().startsWith("\\\\")
@@ -380,6 +438,8 @@ Rectangle {
             iptvScreen.autoPlay = true
             iptvScreen.pinInfo = true
             iptvScreen.open(mediaGrid())
+        } else if (selfTest.startsWith("u-")) {
+            root.runImprovementShot(selfTest)
         } else if (selfTest === "iptvfree") {
             iptvScreen.open(mediaGrid())
         } else if (selfTest.startsWith("m-")) {

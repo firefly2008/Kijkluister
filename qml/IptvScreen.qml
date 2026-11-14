@@ -137,8 +137,10 @@ FocusScope {
         interval: 4000
         onTriggered: {
             const ch = iptv.channelAt(tv.playingRow)
-            recorder.start(ch.name, ch.url, 0)
-            if (mode === "recordpanel") {
+            if (mode !== "panelonly") {
+                recorder.start(ch.name, ch.url, 0)
+            }
+            if (mode === "recordpanel" || mode === "panelonly") {
                 tv.openRecord(tv.playingRow)
             } else {
                 recordStopTimer.start()

@@ -100,6 +100,9 @@ jobs:
           if ($manual) {
             # Schermafbeeldingen voor de handleiding, op Full HD
             $modes = 'm-home', 'm-channels', 'm-search', 'm-favorites', 'm-sources', 'm-xtream', 'm-bar', 'm-guide', 'm-guide2', 'm-guidelist'
+            if ('${{ github.ref }}' -like 'refs/heads/screenshots/verbeteringen*') {
+              $modes = 'u-library', 'u-home', 'u-header', 'u-quit', 'u-personalize', 'u-bigtext', 'u-welcome', 'u-sources', 'u-error', 'u-guiderecord', 'u-badge', 'u-recordpanel', 'u-libsetup'
+            }
             Add-Type @"
           using System; using System.Runtime.InteropServices;
           public class Disp {
@@ -116,13 +119,20 @@ jobs:
           }
           foreach ($mode in $modes) {
             $env:BIGSCREEN_SELFTEST = $mode
+            if ($mode -eq 'u-home' -or $mode -eq 'u-bigtext') {
+              # Verder kijken laten zien: geschiedenis zoals MPC-HC hem schrijft, plus de lengte van het bestand
+              $ep = "$series\Breaking Bad\Seizoen 2\Breaking.Bad.2x04.mp4"
+              New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\Kijkluister\mpc-hc" | Out-Null
+              "[MediaHistory\TESTRESUME]`r`nFilename=$ep`r`nFilePosition=120000`r`nLastOpened=2099-01-01T00:00:00`r`n" | Set-Content -Encoding UTF8 "$env:LOCALAPPDATA\Kijkluister\mpc-hc\mpc-hc64.ini"
+              @{ $ep = 300000 } | ConvertTo-Json -Compress | Set-Content -Encoding UTF8 "$env:LOCALAPPDATA\Kijkluister\resume-durations.json"
+            }
             if ($mode -eq 'resume') {
               # Nagemaakte MPC-HC-geschiedenis: 2x04 (5 min) gestopt na 2 minuten
               $ini = "$env:LOCALAPPDATA\Kijkluister\mpc-hc\mpc-hc64.ini"
               "`r`n[MediaHistory\TESTRESUME]`r`nFilename=$series\Breaking Bad\Seizoen 2\Breaking.Bad.2x04.mp4`r`nFilePosition=120000`r`nLastOpened=2099-01-01T00:00:00`r`n" | Add-Content -Encoding UTF8 $ini
             }
             $p = Start-Process dist\Kijkluister.exe -PassThru
-            Start-Sleep $(if ($manual -or $mode -like 'frame*') { 20 } elseif ($mode -eq 'record') { 75 } elseif ($mode -eq 'iptvfreeguide' -or $mode -eq 'mpcplay') { 45 } elseif ($mode -eq 'epgrecord') { 30 } else { 14 })
+            Start-Sleep $(if ($mode -eq 'u-guiderecord') { 13 } elseif ($mode -eq 'u-library') { 30 } elseif ($manual -or $mode -like 'frame*') { 20 } elseif ($mode -eq 'record') { 75 } elseif ($mode -eq 'iptvfreeguide' -or $mode -eq 'mpcplay') { 45 } elseif ($mode -eq 'epgrecord') { 30 } else { 14 })
             if ($mode -like 'frame*esc') {
               # Echte toetsaanslag Esc naar het venster sturen (zoals toetsenbord of gamepad-B)
               Add-Type -ErrorAction SilentlyContinue @"

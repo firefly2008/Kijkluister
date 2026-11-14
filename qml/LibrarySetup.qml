@@ -96,6 +96,12 @@ FocusScope {
         visible = false
     }
 
+    function demoPin() {
+        askPin = true
+        pinField.text = "1973"
+        pinField.forceActiveFocus()
+    }
+
     function tryPin() {
         if (library.unlock(pinField.text)) {
             askPin = false
