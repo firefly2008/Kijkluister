@@ -32,6 +32,7 @@
 #include "paths.h"
 #include "recorder.h"
 #include "components.h"
+#include "radiomodel.h"
 #include "resumemodel.h"
 #include "mpcplayer.h"
 #include "iptvmodel.h"
@@ -262,6 +263,8 @@ int main(int argc, char *argv[])
     view.rootContext()->setContextProperty(QStringLiteral("recorder"), &recorder);
     view.rootContext()->setContextProperty(QStringLiteral("mpc"), &mpc);
     view.rootContext()->setContextProperty(QStringLiteral("components"), &components);
+    RadioModel radio(appDataDir());
+    view.rootContext()->setContextProperty(QStringLiteral("radio"), &radio);
     ResumeModel resume(appDataDir(), &library);
     view.rootContext()->setContextProperty(QStringLiteral("resume"), &resume);
     // MPC-HC en ffmpeg op de achtergrond ophalen of bijwerken (niet tijdens de tests)

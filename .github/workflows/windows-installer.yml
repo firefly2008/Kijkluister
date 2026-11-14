@@ -95,7 +95,7 @@ jobs:
           $env:BIGSCREEN_TEST_M3U = "$tv\test.m3u"
           $env:BIGSCREEN_TEST_RECORD_DIR = "$env:RUNNER_TEMP\opnames"
           Get-Content "$tv\test.m3u"
-          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel', 'librarysetup', 'iptvsources', 'iptvfreeguide', 'mpcplay', 'resume', 'epgrecord', 'welcome', 'libraryunlock'
+          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel', 'librarysetup', 'iptvsources', 'iptvfreeguide', 'mpcplay', 'resume', 'epgrecord', 'welcome', 'libraryunlock', 'radio', 'radiohome'
           $manual = '${{ github.ref }}' -like 'refs/heads/screenshots/*'
           if ($manual) {
             # Schermafbeeldingen voor de handleiding, op Full HD
@@ -132,7 +132,7 @@ jobs:
               "`r`n[MediaHistory\TESTRESUME]`r`nFilename=$series\Breaking Bad\Seizoen 2\Breaking.Bad.2x04.mp4`r`nFilePosition=120000`r`nLastOpened=2099-01-01T00:00:00`r`n" | Add-Content -Encoding UTF8 $ini
             }
             $p = Start-Process dist\Kijkluister.exe -PassThru
-            Start-Sleep $(if ($mode -eq 'u-guiderecord') { 13 } elseif ($mode -eq 'u-library') { 30 } elseif ($manual -or $mode -like 'frame*') { 20 } elseif ($mode -eq 'record') { 75 } elseif ($mode -eq 'iptvfreeguide' -or $mode -eq 'mpcplay') { 45 } elseif ($mode -eq 'epgrecord') { 30 } else { 14 })
+            Start-Sleep $(if ($mode -eq 'u-guiderecord') { 13 } elseif ($mode -eq 'u-library') { 30 } elseif ($manual -or $mode -like 'frame*') { 20 } elseif ($mode -eq 'record') { 75 } elseif ($mode -eq 'iptvfreeguide' -or $mode -eq 'mpcplay') { 45 } elseif ($mode -eq 'epgrecord') { 30 } elseif ($mode -eq 'radio') { 58 } else { 14 })
             if ($mode -like 'frame*esc') {
               # Echte toetsaanslag Esc naar het venster sturen (zoals toetsenbord of gamepad-B)
               Add-Type -ErrorAction SilentlyContinue @"
@@ -169,6 +169,12 @@ jobs:
             if ($mode -eq 'epgrecord') {
               Select-String -Path $log -Pattern "Recorder: (scheduled|start)" | ForEach-Object { $_.Line }
               if (-not (Select-String -Path $log -Pattern "Recorder: scheduled start" -Quiet)) { throw "Rooktest mislukt: opname vanuit de gids start niet" }
+            }
+            if ($mode -eq 'radio') {
+              Select-String -Path $log -Pattern "Radio (playing|stream failed|closed)" | ForEach-Object { $_.Line }
+              $ok = @(Select-String -Path $log -Pattern "Radio playing (.+?) http" | ForEach-Object { $_.Matches[0].Groups[1].Value } | Sort-Object -Unique)
+              "Radiozenders die spelen: $($ok.Count) ($($ok -join ', '))"
+              if ($ok.Count -lt 7) { throw "Rooktest mislukt: niet alle 7 radiozenders spelen" }
             }
             if ($mode -eq 'resume') {
               Select-String -Path $log -Pattern "Resume:" | ForEach-Object { $_.Line }

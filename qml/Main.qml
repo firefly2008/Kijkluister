@@ -22,13 +22,14 @@ Rectangle {
     readonly property var sectionDefs: (resume.count > 0 ? [{ title: "Verder kijken", model: resume }] : []).concat([
         { title: "Video", model: webVideo },
         { title: "Muziek", model: webMusic },
+        { title: "Radio", model: radio },
         { title: "Podcasts", model: webPodcasts },
         { title: "Media", model: appModel }
     ])
     readonly property var webModels: [webVideo, webMusic, webPodcasts]
     // Rij "Verder kijken" verschijnt of verdwijnt: de rijen worden opnieuw gemaakt, focus terugzetten
     onSectionDefsChanged: Qt.callLater(() => {
-        if (!frameScreen.visible && !iptvScreen.visible && !libraryScreen.visible && root.currentSection === null
+        if (!frameScreen.visible && !iptvScreen.visible && !libraryScreen.visible && !radioPlayer.visible && root.currentSection === null
                 && !quickRow.activeFocus && !menu.visible && !welcomeOverlay.visible && !addOverlay.visible) {
             focusSection(0, 0, false)
         }
@@ -46,7 +47,7 @@ Rectangle {
     function mouseActive() {
         // Muis boven een volledig scherm (schilderij, live tv, bibliotheek): de tegels
         // eronder mogen dan geen focus pakken, anders werken Esc/B niet meer
-        if (frameScreen.visible || iptvScreen.visible || libraryScreen.visible) {
+        if (frameScreen.visible || iptvScreen.visible || libraryScreen.visible || radioPlayer.visible) {
             return false
         }
         return Date.now() - lastMouseMove < 400
@@ -136,6 +137,12 @@ Rectangle {
         if (row < 0) {
             return
         }
+        if (model === radio) {
+            // Radio speelt in Kijkluister zelf
+            const section = sectionFor(radio)
+            radioPlayer.open(row, section ? section.grid : mediaGrid())
+            return
+        }
         const name = model.nameAt(row)
         if (model.launch(row)) {
             // Blijft staan tot het venster echt open is (Kijkluister gaat dan naar de achtergrond)
@@ -177,6 +184,13 @@ Rectangle {
         }
         editModel = model
         editRow = row
+        if (model === radio) {
+            menu.open(model.nameAt(row), [
+                { label: "Luisteren", action: "radio-play" },
+                { label: "Annuleren", action: "" }
+            ], focusItem)
+            return
+        }
         if (model === resume) {
             menu.open(model.nameAt(row), [
                 { label: "Verder kijken", action: "resume-play" },
@@ -251,6 +265,8 @@ Rectangle {
             Qt.quit()
         } else if (action === "resume-play") {
             launch(resume, editRow)
+        } else if (action === "radio-play") {
+            launch(radio, editRow)
         } else if (action === "resume-remove") {
             resume.remove(editRow)
         } else if (action === "icon") {
@@ -459,6 +475,12 @@ Rectangle {
             iptvScreen.autoGuide = selfTest === "m-guide" || selfTest === "m-guide2"
             iptvScreen.guideStart = selfTest === "m-guide2" ? 3 : 0
             iptvScreen.open(mediaGrid())
+        } else if (selfTest === "radio") {
+            // Test: alle zeven zenders na elkaar laten spelen (log: "Radio playing")
+            radioPlayer.open(0, mediaGrid())
+            radioTestTimer.start()
+        } else if (selfTest === "radiohome") {
+            Qt.callLater(() => focusSection(sectionDefs.findIndex(d => d.model === radio), 0, false))
         } else if (selfTest === "resume") {
             // Test: startscherm met de rij Verder kijken (geschiedenis door de test klaargezet)
         } else if (selfTest === "epgrecord") {
@@ -873,6 +895,23 @@ Rectangle {
                     radius: height / 2
                     color: "#ffb74d"
                 }
+            }
+        }
+    }
+
+    // Radio: zenders luisteren in Kijkluister zelf
+    RadioPlayer {
+        id: radioPlayer
+    }
+    Timer {
+        id: radioTestTimer
+        interval: 7000
+        repeat: true
+        onTriggered: {
+            if (radioPlayer.row >= radio.count - 1) {
+                stop()
+            } else {
+                radioPlayer.tune(radioPlayer.row + 1)
             }
         }
     }
