@@ -23,7 +23,7 @@ class ArtFrame : public QObject
     Q_PROPERTY(QString status READ status NOTIFY statusChanged)
 
 public:
-    explicit ArtFrame(QObject *parent = nullptr);
+    explicit ArtFrame(const QString &dataDir, QObject *parent = nullptr);
 
     QStringList sources() const;
     int source() const { return m_source; }

@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "paths.h"
 #include "appmodel.h"
 
 #include <QCryptographicHash>
@@ -21,13 +22,7 @@
 namespace {
 QString dataDir()
 {
-    QString base = qEnvironmentVariable("LOCALAPPDATA");
-    if (base.isEmpty()) {
-        base = QStandardPaths::writableLocation(QStandardPaths::AppLocalDataLocation);
-    }
-    const QString dir = QDir::fromNativeSeparators(base) + QStringLiteral("/BigscreenHost");
-    QDir().mkpath(dir);
-    return dir;
+    return appDataDir();
 }
 
 void removeLocalFile(const QString &fileUrl)

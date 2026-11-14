@@ -52,8 +52,9 @@ int randomInt(int max)
 }
 }
 
-ArtFrame::ArtFrame(QObject *parent)
+ArtFrame::ArtFrame(const QString &dataDir, QObject *parent)
     : QObject(parent)
+    , m_settings(dataDir + QStringLiteral("/settings.ini"), QSettings::IniFormat)
 {
     m_source = qBound(0, m_settings.value(QStringLiteral("frame/source"), 0).toInt(), int(Mix));
     m_interval = qBound(1, m_settings.value(QStringLiteral("frame/interval"), 5).toInt(), 120);
@@ -230,10 +231,12 @@ void ArtFrame::get(const QUrl &url, const Callback &callback, const QByteArray &
             return; // intussen andere bron gekozen
         }
         const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
-        if (reply->error() != QNetworkReply::NoError) {
-            qWarning().noquote() << "Frame: request failed" << reply->url().host() << status << reply->errorString();
+        const QByteArray data = reply->readAll();
+        if (reply->error() != QNetworkReply::NoError || status != 200) {
+            qWarning().noquote() << "Frame: request failed" << reply->url().host() << status << reply->errorString()
+                                 << data.left(200);
         }
-        callback(reply->readAll(), status);
+        callback(data, status);
     });
 }
 
@@ -321,7 +324,7 @@ void ArtFrame::fetchMet()
         for (const QJsonValue &v : QJsonDocument::fromJson(data).object().value(QStringLiteral("objectIDs")).toArray()) {
             m_metIds.append(v.toInt());
         }
-        qInfo() << "Frame: Met gave" << m_metIds.size() << "objects";
+        qInfo() << "Frame: Met gave" << m_metIds.size() << "objects" << (m_metIds.isEmpty() ? data.left(300) : QByteArray());
         if (m_metIds.isEmpty()) {
             setStatus(tr("The Met is niet bereikbaar"), false);
             return;
@@ -408,7 +411,7 @@ void ArtFrame::fetchCommons()
                 {QStringLiteral("credit"), tr("Wikimedia Commons · %1").arg(field("LicenseShortName"))},
             });
         }
-        qInfo() << "Frame: Commons gave" << items.size() << "photos";
+        qInfo() << "Frame: Commons gave" << items.size() << "photos" << (items.isEmpty() ? data.left(300) : QByteArray());
         addCandidates(items);
     });
 }

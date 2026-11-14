@@ -38,7 +38,7 @@ jobs:
         shell: pwsh
         run: |
           Add-Type -AssemblyName System.Windows.Forms, System.Drawing
-          $log = "$env:LOCALAPPDATA\BigscreenHost\bigscreen-host.log"
+          $log = "$env:LOCALAPPDATA\Kijkluister\kijkluister.log"
           # Testbibliotheek: lege videobestanden met namen zoals ze in het echt voorkomen
           $films = "$env:RUNNER_TEMP\media\Films"; $series = "$env:RUNNER_TEMP\media\Series"
           New-Item -ItemType Directory -Force "$films\The.Matrix.1999.1080p.BluRay.x264", "$series\Westworld (2016)\Season 1", "$series\Breaking Bad\Seizoen 2" | Out-Null

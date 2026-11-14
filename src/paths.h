@@ -1,0 +1,8 @@
+// Map met instellingen, log, bibliotheek en cache: %LOCALAPPDATA%\\Kijkluister
+// (tot en met 3.8.1 heette die map BigscreenHost; hij wordt bij de eerste start hernoemd).
+// SPDX-License-Identifier: GPL-2.0-or-later
+#pragma once
+
+#include <QString>
+
+QString appDataDir();

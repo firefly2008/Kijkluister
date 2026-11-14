@@ -13,6 +13,8 @@ AppName={#AppName}
 AppVersion={#AppVersion}
 AppPublisher=Kijkluister (gebaseerd op KDE Plasma Bigscreen)
 DefaultDirName={autopf}\{#AppName}
+; Niet de oude map "Bigscreen Host" hergebruiken: vanaf 3.8.3 heet de programmamap Kijkluister
+UsePreviousAppDir=no
 DefaultGroupName={#AppName}
 DisableProgramGroupPage=yes
 LicenseFile=..\LICENSE-GPL-2.0.txt
@@ -38,6 +40,7 @@ Name: "autostart"; Description: "Kijkluister automatisch starten bij aanmelden (
 [InstallDelete]
 ; Overblijfselen van de oude naam "Bigscreen Host"
 Type: files; Name: "{app}\bigscreen-host.exe"
+Type: filesandordirs; Name: "{autopf}\Bigscreen Host"
 Type: files; Name: "{userstartup}\Bigscreen Host.lnk"
 Type: files; Name: "{autodesktop}\Bigscreen Host.lnk"
 Type: filesandordirs; Name: "{autoprograms}\Bigscreen Host"

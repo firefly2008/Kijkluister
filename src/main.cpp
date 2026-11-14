@@ -29,10 +29,12 @@
 #include "gamepadnavigator.h"
 #include "medialibrary.h"
 #include "artframe.h"
+#include "paths.h"
 #include "iptvmodel.h"
 
 #include <QNetworkAccessManager>
 #include <QNetworkDiskCache>
+#include <QNetworkReply>
 #include <QQmlNetworkAccessManagerFactory>
 
 #ifdef Q_OS_WIN
@@ -57,9 +59,27 @@ public:
         : m_dir(dir)
     {
     }
+    // Afbeeldingen in QML krijgen een herkenbare User-Agent: sommige beeldbanken
+    // (museum-IIIF-servers, Wikimedia) weigeren verzoeken zonder.
+    class Manager : public QNetworkAccessManager
+    {
+    public:
+        using QNetworkAccessManager::QNetworkAccessManager;
+    protected:
+        QNetworkReply *createRequest(Operation op, const QNetworkRequest &original, QIODevice *data) override
+        {
+            QNetworkRequest request(original);
+            if (!request.hasRawHeader("User-Agent")) {
+                request.setRawHeader("User-Agent",
+                                     "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Kijkluister/3.8 (+https://github.com/firefly2008/bigscreen-host-windows)");
+            }
+            return QNetworkAccessManager::createRequest(op, request, data);
+        }
+    };
+
     QNetworkAccessManager *create(QObject *parent) override
     {
-        auto *manager = new QNetworkAccessManager(parent);
+        auto *manager = new Manager(parent);
         auto *cache = new QNetworkDiskCache(manager);
         cache->setCacheDirectory(m_dir);
         cache->setMaximumCacheSize(512LL * 1024 * 1024);
@@ -71,19 +91,34 @@ private:
     QString m_dir;
 };
 
+} // namespace
+
 QString appDataDir()
 {
-    QString base = qEnvironmentVariable("LOCALAPPDATA");
-    if (base.isEmpty()) {
-        base = QDir::tempPath();
-    }
-    const QString dir = QDir::fromNativeSeparators(base) + QStringLiteral("/BigscreenHost");
-    QDir().mkpath(dir);
+    static const QString dir = [] {
+        QString base = qEnvironmentVariable("LOCALAPPDATA");
+        if (base.isEmpty()) {
+            base = QDir::tempPath();
+        }
+        base = QDir::fromNativeSeparators(base);
+        const QString oldDir = base + QStringLiteral("/BigscreenHost");
+        const QString newDir = base + QStringLiteral("/Kijkluister");
+        // Oude map (tot en met 3.8.1) meenemen: instellingen, bibliotheek, zenders en cache
+        if (QDir(oldDir).exists() && !QDir(newDir).exists()) {
+            if (!QDir().rename(oldDir, newDir)) {
+                return oldDir; // in gebruik of geen rechten: dan de oude map blijven gebruiken
+            }
+        }
+        QDir().mkpath(newDir);
+        return newDir;
+    }();
     return dir;
 }
 
+namespace {
+
 // De app is een GUI-programma zonder console: zonder logbestand verdwijnen alle
-// foutmeldingen. Log staat in %LOCALAPPDATA%\\BigscreenHost\\bigscreen-host.log
+// foutmeldingen. Log staat in %LOCALAPPDATA%\\Kijkluister\\kijkluister.log
 QString g_logPath;
 QMutex g_logMutex;
 
@@ -152,16 +187,12 @@ int main(int argc, char *argv[])
     // Log zo vroeg mogelijk opzetten, nog voor QGuiApplication, zodat ook een
     // mislukte start van Qt zelf (platform-plugin, grafische backend) in het log komt.
     {
-        QString base = qEnvironmentVariable("LOCALAPPDATA");
-        if (base.isEmpty()) {
-            base = QDir::tempPath();
-        }
-        const QString logDir = base + QStringLiteral("/BigscreenHost");
-        QDir().mkpath(logDir);
-        g_logPath = logDir + QStringLiteral("/bigscreen-host.log");
+        const QString logDir = appDataDir();
+        g_logPath = logDir + QStringLiteral("/kijkluister.log");
         QFile::remove(g_logPath);
+        QFile::remove(logDir + QStringLiteral("/bigscreen-host.log")); // oude naam
         qInstallMessageHandler(logHandler);
-        qInfo() << "main() reached; Qt" << qVersion();
+        qInfo() << "main() reached; Qt" << qVersion() << "data" << logDir;
     }
 
     QGuiApplication::setHighDpiScaleFactorRoundingPolicy(
@@ -195,7 +226,7 @@ int main(int argc, char *argv[])
     AppModel webPodcasts(AppModel::Web, QStringLiteral("podcasts"));
     MediaLibrary library(appDataDir());
     IptvModel iptv(appDataDir());
-    ArtFrame frame;
+    ArtFrame frame(appDataDir());
 
     auto inputSystem = createInputSystem();
     Q_UNUSED(inputSystem); // in dit skeleton nog niet aan QML-signalen gekoppeld

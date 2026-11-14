@@ -237,34 +237,45 @@ FocusScope {
 
         Rectangle {
             anchors.centerIn: parent
-            width: frameScreen.width * 0.8
+            width: Math.min(frameScreen.width * 0.9, frameScreen.unit * 170)
             height: panel.implicitHeight + frameScreen.unit * 8
             radius: frameScreen.unit * 2
             color: "#202227"
             MouseArea { anchors.fill: parent }
 
             // Rij met keuzeknoppen (pijltjes links/rechts, OK kiest)
-            component OptionRow: ListView {
+            component OptionRow: FocusScope {
                 id: row
                 property var labels: []
                 property int chosen: -1
+                property int currentIndex: 0
                 signal picked(int index)
                 width: parent.width
-                height: frameScreen.unit * 6
-                orientation: ListView.Horizontal
-                spacing: frameScreen.unit * 1.2
-                interactive: false
-                model: labels
-                delegate: FocusButton {
-                    required property string modelData
-                    required property int index
-                    unit: frameScreen.unit
-                    text: modelData
-                    checked: index === row.chosen
-                    focus: ListView.isCurrentItem
-                    onClicked: {
-                        row.currentIndex = index
-                        row.picked(index)
+                height: flow.implicitHeight
+                onActiveFocusChanged: if (activeFocus) buttons.itemAt(Math.max(0, currentIndex)).forceActiveFocus()
+                Keys.onLeftPressed: currentIndex = Math.max(0, currentIndex - 1)
+                Keys.onRightPressed: currentIndex = Math.min(labels.length - 1, currentIndex + 1)
+                onCurrentIndexChanged: if (activeFocus && buttons.itemAt(currentIndex)) buttons.itemAt(currentIndex).forceActiveFocus()
+                // Lange rijen lopen door op de volgende regel
+                Flow {
+                    id: flow
+                    width: parent.width
+                    spacing: frameScreen.unit * 1.2
+                    Repeater {
+                        id: buttons
+                        model: row.labels
+                        delegate: FocusButton {
+                            required property string modelData
+                            required property int index
+                            unit: frameScreen.unit
+                            text: modelData
+                            checked: index === row.chosen
+                            onActiveFocusChanged: if (activeFocus) row.currentIndex = index
+                            onClicked: {
+                                row.currentIndex = index
+                                row.picked(index)
+                            }
+                        }
                     }
                 }
             }
