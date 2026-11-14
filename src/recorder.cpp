@@ -164,15 +164,23 @@ void Recorder::launch()
         QStringLiteral("-reconnect_delay_max"), QStringLiteral("10"),
         QStringLiteral("-rw_timeout"), QStringLiteral("20000000"),
         QStringLiteral("-i"), m_url,
+        // Eén keer ophalen, twee kanten op. 1: het bestand (MP4, niets hercoderen).
         QStringLiteral("-map"), QStringLiteral("0:v?"), QStringLiteral("-map"), QStringLiteral("0:a?"),
         QStringLiteral("-c"), QStringLiteral("copy"),
-        // Eén keer ophalen, twee kanten op: het bestand (MP4) en een lokale doorgifte (MPEG-TS
-        // over UDP) waar de speler op overschakelt. Zo blijft er één verbinding met de aanbieder,
-        // want veel abonnementen staan er maar één toe.
-        QStringLiteral("-f"), QStringLiteral("tee"), QStringLiteral("-use_fifo"), QStringLiteral("1"),
-        QStringLiteral("[f=mp4:bsfs/a=aac_adtstoasc:movflags=+frag_keyframe+empty_moov+default_base_moof]")
-            + QString(target).replace(QLatin1Char('\\'), QLatin1Char('/')).replace(QLatin1Char(':'), QStringLiteral("\\:"))
-            + QStringLiteral("|[f=mpegts:onfail=ignore]") + m_relayUrl + QStringLiteral("?pkt_size=1316"),
+        QStringLiteral("-bsf:a"), QStringLiteral("aac_adtstoasc"),
+        QStringLiteral("-movflags"), QStringLiteral("+frag_keyframe+empty_moov+default_base_moof"),
+        QStringLiteral("-f"), QStringLiteral("mp4"),
+        target,
+        // 2: een lokale doorgifte (MPEG-TS over UDP) waar de speler op overschakelt, zodat er
+        // één verbinding met de aanbieder blijft (veel abonnementen staan er maar één toe).
+        // Via de fifo-muxer, zodat een haperende doorgifte de opname nooit stopt.
+        QStringLiteral("-map"), QStringLiteral("0:v?"), QStringLiteral("-map"), QStringLiteral("0:a?"),
+        QStringLiteral("-c"), QStringLiteral("copy"),
+        QStringLiteral("-f"), QStringLiteral("fifo"), QStringLiteral("-fifo_format"), QStringLiteral("mpegts"),
+        QStringLiteral("-drop_pkts_on_overflow"), QStringLiteral("1"),
+        QStringLiteral("-attempt_recovery"), QStringLiteral("1"), QStringLiteral("-recover_any_error"), QStringLiteral("1"),
+        QStringLiteral("-recovery_wait_time"), QStringLiteral("1"),
+        m_relayUrl + QStringLiteral("?pkt_size=1316"),
     };
     m_lastStderr.clear();
     setStatus(m_part > 0 ? tr("Opname hervat (deel %1)").arg(m_part + 1) : tr("Opname loopt"));

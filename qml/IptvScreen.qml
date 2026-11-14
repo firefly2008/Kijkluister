@@ -131,7 +131,8 @@ FocusScope {
     // Wordt deze zender opgenomen, dan kijken we via de lokale doorgifte van de opname
     // (één verbinding met de aanbieder; veel abonnementen staan er maar één toe)
     function sourceFor(url) {
-        return recorder.recording && recorder.url === url && recorder.relayUrl !== "" ? recorder.relayUrl : url
+        return recorder.recording && recorder.url === url && recorder.relayUrl !== ""
+               ? recorder.relayUrl + "?overrun_nonfatal=1&fifo_size=1000000&timeout=15000000" : url
     }
 
     Connections {
@@ -142,7 +143,7 @@ FocusScope {
             }
             const wanted = tv.sourceFor(tv.channel.url)
             if (String(tv.player.source) !== wanted) {
-                console.info("IPTV switch source:", wanted === recorder.relayUrl ? "relay" : "direct")
+                console.info("IPTV switch source:", wanted.startsWith("udp://") ? "relay" : "direct")
                 tv.player.stop()
                 tv.player.source = wanted
                 tv.player.play()
