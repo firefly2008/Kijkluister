@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "mpcplayer.h"
 #include "iptvmodel.h"
 #include "appmodel.h"
 
@@ -619,8 +620,7 @@ bool IptvModel::openExternal(int row)
     if (url.isEmpty()) {
         return false;
     }
-    const QString mpc = mpcHcPath();
-    if (QFile::exists(mpc) && QProcess::startDetached(mpc, {url, QStringLiteral("/fullscreen"), QStringLiteral("/play")})) {
+    if (MpcPlayer *mpc = MpcPlayer::instance(); mpc && mpc->play({url}, false)) {
         return true;
     }
     return QDesktopServices::openUrl(QUrl(url));

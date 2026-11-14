@@ -33,6 +33,7 @@ jobs:
           # Branch release/2.0.0 bepaalt het versienummer; gewone pushes heten "dev"
           $version = if ($env:GITHUB_REF_NAME -like 'release/*') { $env:GITHUB_REF_NAME.Substring(8) } else { 'dev' }
           "BIGSCREEN_VERSION=$version" >> $env:GITHUB_ENV
+          $env:GITHUB_TOKEN = "${{ github.token }}"
           .\scripts\build-installer.ps1 -QtDir "$env:QT_ROOT_DIR" -VcpkgRoot "$env:VCPKG_INSTALLATION_ROOT" -Version $version
       - name: Rooktest (start de app op de runner)
         shell: pwsh
@@ -47,6 +48,9 @@ jobs:
                          "$series\Westworld (2016)\Season 1\Westworld.S01E02.720p.mkv", "$series\Breaking Bad\Seizoen 2\Breaking.Bad.2x03.mp4") {
             New-Item -ItemType File -Force $f | Out-Null
           }
+          # Twee echte korte afleveringen (Breaking Bad 2x03 en 2x04) om MPC-HC mee te testen
+          & dist\ffmpeg\ffmpeg.exe -v error -y -f lavfi -i "testsrc2=size=1280x720:rate=25" -f lavfi -i "sine=frequency=440" -t 20 -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest "$series\Breaking Bad\Seizoen 2\Breaking.Bad.2x03.mp4"
+          & dist\ffmpeg\ffmpeg.exe -v error -y -f lavfi -i "smptebars=size=1280x720:rate=25" -f lavfi -i "sine=frequency=660" -t 20 -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest "$series\Breaking Bad\Seizoen 2\Breaking.Bad.2x04.mp4"
           New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\BigscreenHost" | Out-Null
           $films2 = "$env:RUNNER_TEMP\media2\Meer films"; New-Item -ItemType Directory -Force $films2 | Out-Null
           New-Item -ItemType File -Force "$films2\Blade.Runner.1982.Final.Cut.mkv" | Out-Null
@@ -91,7 +95,7 @@ jobs:
           $env:BIGSCREEN_TEST_M3U = "$tv\test.m3u"
           $env:BIGSCREEN_TEST_RECORD_DIR = "$env:RUNNER_TEMP\opnames"
           Get-Content "$tv\test.m3u"
-          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel', 'librarysetup', 'iptvsources', 'iptvfreeguide'
+          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel', 'librarysetup', 'iptvsources', 'iptvfreeguide', 'mpcplay'
           $manual = '${{ github.ref }}' -like 'refs/heads/screenshots/*'
           if ($manual) {
             # Schermafbeeldingen voor de handleiding, op Full HD
@@ -145,6 +149,14 @@ jobs:
             if (Test-Path $log) { "--- log ---"; Get-Content $log } else { "NO LOG FILE" }
             if (-not (Test-Path $log) -or -not (Select-String -Path $log -Pattern "Window shown" -Quiet)) { throw "Rooktest mislukt: venster niet getoond" }
             if ($mode -like 'frame*esc' -and -not (Select-String -Path $log -Pattern "Frame closed" -Quiet)) { throw "Rooktest mislukt: Esc stopt het schilderij niet ($mode)" }
+            if ($mode -eq 'mpcplay') {
+              $m = Get-Process mpc-hc64 -ErrorAction SilentlyContinue
+              "MPC-HC processen: $(@($m).Count)"
+              $ini = "$env:LOCALAPPDATA\Kijkluister\mpc-hc\mpc-hc64.ini"
+              if (Test-Path $ini) { Get-Content $ini | Select-Object -First 12 }
+              $m | Stop-Process -Force -ErrorAction SilentlyContinue
+              if (-not (Select-String -Path $log -Pattern "MPC-HC: playing 2 file" -Quiet)) { throw "Rooktest mislukt: MPC-HC speelt de afleveringen niet" }
+            }
             if ($mode -eq 'record') {
               $rec = Get-ChildItem "$env:RUNNER_TEMP\opnames" -Filter *.mp4 -ErrorAction SilentlyContinue
               "Opnames: " + (($rec | ForEach-Object { "$($_.Name) $($_.Length) bytes" }) -join ', ')

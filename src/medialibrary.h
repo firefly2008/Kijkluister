@@ -58,6 +58,7 @@ public:
     Q_INVOKABLE void configureFolders(const QStringList &moviesFolders, const QStringList &showsFolders, const QString &apiKey);
     Q_INVOKABLE void scan(bool refreshAll = false);
     Q_INVOKABLE bool play(const QString &path);
+    Q_INVOKABLE bool playEpisodes(const QStringList &paths);
     Q_INVOKABLE QString localPath(const QUrl &url) const;
 
 Q_SIGNALS:

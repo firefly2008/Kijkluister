@@ -90,6 +90,17 @@ FocusScope {
         messageTimer.restart()
     }
 
+    // Serie: vanaf deze aflevering alles achter elkaar
+    function playFrom(index) {
+        const eps = detail && detail.episodes ? detail.episodes : []
+        const paths = []
+        for (let i = Math.max(0, index); i < eps.length; ++i) {
+            paths.push(eps[i].path)
+        }
+        message.text = paths.length > 0 && library.playEpisodes(paths) ? "Afspelen…" : "Bestand niet gevonden"
+        messageTimer.restart()
+    }
+
     function formatRuntime(minutes) {
         if (!minutes) {
             return ""
@@ -128,9 +139,13 @@ FocusScope {
         Qt.callLater(function() {
             grid.currentIndex = Math.max(0, Math.min(lib.savedIndex, lib.items.length - 1))
             lib.restoring = false
-            if (lib.autoOpen === "detail" && lib.detail === null && lib.items.length > 0 && !library.busy) {
+            if ((lib.autoOpen === "detail" || lib.autoOpen === "play") && lib.detail === null && lib.items.length > 0 && !library.busy) {
+                const playToo = lib.autoOpen === "play"
                 lib.autoOpen = ""
                 lib.showDetail(lib.items[0])
+                if (playToo) {
+                    lib.playFrom(0)
+                }
             }
         })
     }
@@ -514,7 +529,7 @@ FocusScope {
                         }
                         if (lib.detail.kind === "show") {
                             if (lib.detail.episodes.length > 0) {
-                                lib.play(lib.detail.episodes[0].path)
+                                lib.playFrom(0)
                             }
                         } else {
                             lib.play(lib.detail.path)
@@ -583,13 +598,13 @@ FocusScope {
                     onClicked: {
                         episodeList.currentIndex = episodeRow.index
                         episodeList.forceActiveFocus()
-                        lib.play(episodeRow.modelData.path)
+                        lib.playFrom(episodeRow.index)
                     }
                 }
             }
 
-            Keys.onReturnPressed: lib.play(model[currentIndex].path)
-            Keys.onEnterPressed: lib.play(model[currentIndex].path)
+            Keys.onReturnPressed: lib.playFrom(currentIndex)
+            Keys.onEnterPressed: lib.playFrom(currentIndex)
             Keys.onUpPressed: (event) => {
                 if (currentIndex === 0) {
                     playButton.forceActiveFocus()

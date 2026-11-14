@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "gamepadnavigator.h"
+#include "mpcplayer.h"
 
 #include <QCoreApplication>
 #include <QDebug>
@@ -63,6 +64,10 @@ void GamepadNavigator::poll()
 
 void GamepadNavigator::handleButton(int button, bool pressed)
 {
+    // Speelt MPC-HC (film/serie), dan bedient de controller die
+    if (MpcPlayer *mpc = MpcPlayer::instance(); mpc && mpc->handleButton(button, pressed)) {
+        return;
+    }
     switch (button) {
     case SDL_GAMEPAD_BUTTON_DPAD_UP:
         sendKey(Qt::Key_Up, pressed);

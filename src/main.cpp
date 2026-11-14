@@ -31,6 +31,7 @@
 #include "artframe.h"
 #include "paths.h"
 #include "recorder.h"
+#include "mpcplayer.h"
 #include "iptvmodel.h"
 
 #include <QNetworkAccessManager>
@@ -228,6 +229,7 @@ int main(int argc, char *argv[])
     IptvModel iptv(appDataDir());
     ArtFrame frame(appDataDir());
     Recorder recorder(appDataDir());
+    MpcPlayer mpc(appDataDir());
 
     auto inputSystem = createInputSystem();
     Q_UNUSED(inputSystem); // in dit skeleton nog niet aan QML-signalen gekoppeld
@@ -254,6 +256,12 @@ int main(int argc, char *argv[])
     view.rootContext()->setContextProperty(QStringLiteral("iptv"), &iptv);
     view.rootContext()->setContextProperty(QStringLiteral("frame"), &frame);
     view.rootContext()->setContextProperty(QStringLiteral("recorder"), &recorder);
+    view.rootContext()->setContextProperty(QStringLiteral("mpc"), &mpc);
+    // Na de film of serie terug naar Kijkluister
+    QObject::connect(&mpc, &MpcPlayer::finished, &view, [&view] {
+        view.raise();
+        view.requestActivate();
+    });
     view.engine()->setNetworkAccessManagerFactory(new CachingNetworkFactory(appDataDir() + QStringLiteral("/imagecache")));
     view.rootContext()->setContextProperty(QStringLiteral("gamepad"), &gamepad);
     // Alleen voor de geautomatiseerde test: opent bij het starten een menu

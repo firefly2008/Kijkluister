@@ -28,6 +28,30 @@ if ($LASTEXITCODE) { throw "install mislukt" }
 & "$QtDir\bin\windeployqt.exe" --release --qmldir qml --compiler-runtime dist\Kijkluister.exe
 if ($LASTEXITCODE) { throw "windeployqt mislukt" }
 
+# 3a. MPC-HC (clsid2/mpc-hc, GPL) voor films en series: nieuwste x64-uitgave, draagbaar
+$mpcDir = Join-Path $root "build\mpc-hc"
+if (-not (Test-Path "$mpcDir\mpc-hc64.exe")) {
+    New-Item -ItemType Directory -Force $mpcDir | Out-Null
+    $headers = @{ "User-Agent" = "Kijkluister-build" }
+    if ($env:GITHUB_TOKEN) { $headers["Authorization"] = "Bearer $env:GITHUB_TOKEN" }
+    $rel = Invoke-RestMethod -Headers $headers "https://api.github.com/repos/clsid2/mpc-hc/releases/latest"
+    $asset = $rel.assets | Where-Object { $_.name -match 'x64\.(zip|7z)$' -and $_.name -notmatch 'pdb|debug|installer|setup' } |
+        Sort-Object { if ($_.name -like '*.zip') { 0 } else { 1 } } | Select-Object -First 1
+    if (-not $asset) { throw "Geen MPC-HC x64-pakket gevonden in $($rel.tag_name): $(($rel.assets | ForEach-Object name) -join ', ')" }
+    "MPC-HC $($rel.tag_name): $($asset.name)"
+    $archive = Join-Path $mpcDir $asset.name
+    Invoke-WebRequest -UseBasicParsing $asset.browser_download_url -OutFile $archive
+    if ($asset.name -like '*.zip') { Expand-Archive $archive -DestinationPath "$mpcDir\unz" -Force }
+    else { & 7z x -y "-o$mpcDir\unz" $archive | Out-Null }
+    $exe = Get-ChildItem "$mpcDir\unz" -Recurse -Filter mpc-hc64.exe | Select-Object -First 1
+    if (-not $exe) { throw "mpc-hc64.exe niet gevonden in $($asset.name)" }
+    Copy-Item "$($exe.Directory.FullName)\*" $mpcDir -Recurse -Force
+    Remove-Item "$mpcDir\unz" -Recurse -Force; Remove-Item $archive
+}
+New-Item -ItemType Directory -Force dist\mpc-hc | Out-Null
+Copy-Item "$mpcDir\*" dist\mpc-hc\ -Recurse -Force
+Get-ChildItem dist\mpc-hc | Select-Object -First 12 | ForEach-Object { "  mpc-hc\$($_.Name)" }
+
 # 3b. ffmpeg (GPL-build van gyan.dev) voor het opnemen van live tv
 $ffDir = Join-Path $root "build\ffmpeg"
 if (-not (Test-Path "$ffDir\ffmpeg.exe")) {

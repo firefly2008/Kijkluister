@@ -339,6 +339,10 @@ Rectangle {
             iptvScreen.autoGuide = selfTest === "m-guide" || selfTest === "m-guide2"
             iptvScreen.guideStart = selfTest === "m-guide2" ? 3 : 0
             iptvScreen.open(mediaGrid())
+        } else if (selfTest === "mpcplay") {
+            // Test: eerste serie openen en vanaf de eerste aflevering afspelen in MPC-HC
+            libraryScreen.autoOpen = "play"
+            libraryScreen.open("shows", mediaGrid())
         } else if (selfTest === "librarysetup") {
             libraryScreen.open("movies", mediaGrid())
             libraryScreen.openSetup()

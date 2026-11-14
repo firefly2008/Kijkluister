@@ -8,7 +8,7 @@
 #include <QStandardPaths>
 #include <QUrl>
 
-#include "appmodel.h" // mpcHcPath()
+#include "mpcplayer.h"
 
 namespace {
 QString sanitize(QString name)
@@ -303,9 +303,8 @@ void Recorder::openFolder()
 
 bool Recorder::play(const QString &path)
 {
-    const QString mpc = mpcHcPath();
-    if (!mpc.isEmpty()) {
-        return QProcess::startDetached(mpc, {path, QStringLiteral("/fullscreen")});
+    if (MpcPlayer *mpc = MpcPlayer::instance(); mpc && mpc->play({path}, true)) {
+        return true;
     }
     return QDesktopServices::openUrl(QUrl::fromLocalFile(path));
 }

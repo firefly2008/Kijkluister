@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
+#include "mpcplayer.h"
 #include "medialibrary.h"
 #include "appmodel.h"
 
@@ -802,16 +803,32 @@ QString MediaLibrary::summary() const
     return text;
 }
 
+// Serie: deze aflevering en de afleveringen erna als afspeellijst in MPC-HC
+bool MediaLibrary::playEpisodes(const QStringList &paths)
+{
+    QStringList existing;
+    for (const QString &p : paths) {
+        if (QFileInfo::exists(p)) {
+            existing << p;
+        }
+    }
+    if (existing.isEmpty()) {
+        return false;
+    }
+    if (MpcPlayer *mpc = MpcPlayer::instance(); mpc && mpc->play(existing, false)) {
+        return true;
+    }
+    return play(existing.first());
+}
+
 bool MediaLibrary::play(const QString &path)
 {
     if (!QFileInfo::exists(path)) {
         qWarning() << "Play: file missing" << path;
         return false;
     }
-    // Liefst schermvullend in MPC-HC; anders het standaardprogramma van Windows
-    const QString mpc = mpcHcPath();
-    if (QFile::exists(mpc) && QProcess::startDetached(mpc, {path, QStringLiteral("/fullscreen"), QStringLiteral("/play")})) {
-        qInfo() << "Play with MPC-HC" << path;
+    // In de meegeleverde MPC-HC (schermvullend, sluit na afloop); anders het standaardprogramma
+    if (MpcPlayer *mpc = MpcPlayer::instance(); mpc && mpc->play({path}, true)) {
         return true;
     }
     qInfo() << "Play with default program" << path;
