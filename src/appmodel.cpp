@@ -38,7 +38,7 @@ void removeLocalFile(const QString &fileUrl)
 struct WebDefault {
     const char *name;
     const char *url;
-    const char *category; // video, muziek, luisterboeken, podcasts
+    const char *category; // video, muziek, podcasts
 };
 const WebDefault webDefaults[] = {
     {"Netflix", "https://www.netflix.com", "video"},
@@ -79,15 +79,8 @@ const WebDefault webDefaults[] = {
     {"Amazon Music", "https://music.amazon.com", "muziek"},
     {"Qobuz", "https://play.qobuz.com", "muziek"},
     {"SoundCloud", "https://soundcloud.com", "muziek"},
-    {"Storytel", "https://www.storytel.com/nl", "luisterboeken"},
-    // Luisterboeken en podcasts (Nederland)
+    // Podcasts (Nederland)
     {"Podimo", "https://podimo.com/nl", "podcasts"},
-    {"BookBeat", "https://www.bookbeat.com/nl", "luisterboeken"},
-    {"Nextory", "https://nextory.com/nl", "luisterboeken"},
-    {"Kobo Plus", "https://www.kobo.com/nl/nl/plus", "luisterboeken"},
-    {"Fluister", "https://www.fluister.nl", "luisterboeken"},
-    {"Luisterrijk", "https://www.luisterrijk.nl", "luisterboeken"},
-    {"Online Bibliotheek", "https://www.onlinebibliotheek.nl", "luisterboeken"},
     {"NPO Luister", "https://www.npoluister.nl", "podcasts"},
     {"Apple Podcasts", "https://podcasts.apple.com/nl", "podcasts"},
     {"Pocket Casts", "https://play.pocketcasts.com", "podcasts"},
@@ -297,7 +290,7 @@ void AppModel::refresh()
             tiles.append({QString::fromUtf8(entry.name), QString::fromUtf8(entry.url), false, QString::fromUtf8(entry.category)});
         }
         tiles.append(customTiles());
-        // Alleen de tegels van het gekozen tabblad (Video, Muziek, Luisterboeken, Podcasts)
+        // Alleen de tegels van het gekozen tabblad (Video, Muziek, Podcasts)
         tiles.erase(std::remove_if(tiles.begin(), tiles.end(), [this](const App &tile) {
             return m_hidden.contains(tile.path) || tile.category != m_category;
         }), tiles.end());

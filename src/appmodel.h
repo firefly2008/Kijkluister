@@ -35,7 +35,7 @@ public:
     // Apps: snelkoppelingen uit het Startmenu. Web: streamingdiensten en andere websites.
     enum Kind { Apps, Web };
 
-    // category: bij web-tegels de rij (video, muziek, luisterboeken, podcasts)
+    // category: bij web-tegels de rij (video, muziek, podcasts)
     explicit AppModel(Kind kind, const QString &category = QString(), QObject *parent = nullptr);
 
     int rowCount(const QModelIndex &parent = {}) const override;
@@ -97,7 +97,7 @@ private:
         QString name;
         QString path; // pad van snelkoppeling/programma, of URL bij een web-tegel
         bool custom = false; // door de gebruiker zelf toegevoegd
-        QString category;    // bij web-tegels: video, muziek, luisterboeken of podcasts
+        QString category;    // bij web-tegels: video, muziek of podcasts
     };
     QString key(const char *name) const;
     QList<App> customTiles() const;

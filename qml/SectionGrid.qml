@@ -1,4 +1,4 @@
-// Een rij op de startpagina (Video, Muziek, Luisterboeken, Podcasts, Media):
+// Een rij op de startpagina (Video, Muziek, Podcasts, Media):
 // titel met tegels eronder. De hoogte groeit mee met het aantal tegels; de
 // startpagina scrolt. Bij de rand van de rij geeft hij de focus door.
 // SPDX-License-Identifier: GPL-2.0-or-later

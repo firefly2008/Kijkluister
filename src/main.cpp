@@ -208,7 +208,7 @@ int main(int argc, char *argv[])
 
     QCommandLineParser parser;
     parser.setApplicationDescription(
-        QStringLiteral("Kijkluister: tv, films, series, muziek, luisterboeken en podcasts op een groot scherm"));
+        QStringLiteral("Kijkluister: tv, films, series, muziek en podcasts op een groot scherm"));
     parser.addHelpOption();
     QCommandLineOption screenOption(
         QStringList{QStringLiteral("screen")},
@@ -223,7 +223,6 @@ int main(int argc, char *argv[])
     AppModel appModel(AppModel::Apps);
     AppModel webVideo(AppModel::Web, QStringLiteral("video"));
     AppModel webMusic(AppModel::Web, QStringLiteral("muziek"));
-    AppModel webBooks(AppModel::Web, QStringLiteral("luisterboeken"));
     AppModel webPodcasts(AppModel::Web, QStringLiteral("podcasts"));
     MediaLibrary library(appDataDir());
     IptvModel iptv(appDataDir());
@@ -250,7 +249,6 @@ int main(int argc, char *argv[])
     view.rootContext()->setContextProperty(QStringLiteral("appModel"), &appModel);
     view.rootContext()->setContextProperty(QStringLiteral("webVideo"), &webVideo);
     view.rootContext()->setContextProperty(QStringLiteral("webMusic"), &webMusic);
-    view.rootContext()->setContextProperty(QStringLiteral("webBooks"), &webBooks);
     view.rootContext()->setContextProperty(QStringLiteral("webPodcasts"), &webPodcasts);
     view.rootContext()->setContextProperty(QStringLiteral("library"), &library);
     view.rootContext()->setContextProperty(QStringLiteral("iptv"), &iptv);

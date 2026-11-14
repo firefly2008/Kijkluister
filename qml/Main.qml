@@ -1,5 +1,5 @@
 // Startpagina van Bigscreen voor Windows: klok, snelknoppen en rijen onder elkaar
-// (Video, Muziek, Luisterboeken, Podcasts, Media) die meescrollen. Volledig te bedienen met
+// (Video, Muziek, Podcasts, Media) die meescrollen. Volledig te bedienen met
 // pijltjestoetsen, Enter en een gamepad.
 // Eigen QtQuick-versie van containments/homescreen (die aan Plasma vastzit).
 // SPDX-License-Identifier: GPL-2.0-or-later
@@ -22,11 +22,10 @@ Rectangle {
     readonly property var sectionDefs: [
         { title: "Video", model: webVideo },
         { title: "Muziek", model: webMusic },
-        { title: "Luisterboeken", model: webBooks },
         { title: "Podcasts", model: webPodcasts },
         { title: "Media", model: appModel }
     ]
-    readonly property var webModels: [webVideo, webMusic, webBooks, webPodcasts]
+    readonly property var webModels: [webVideo, webMusic, webPodcasts]
 
     // Rij en tegel die nu focus hebben
     property Item currentSection: null
@@ -263,7 +262,7 @@ Rectangle {
         if (selfTest === "addtile") {
             addOverlay.open(quickRow)
         } else if (selfTest === "podcasts") {
-            Qt.callLater(() => focusSection(3, 1, false))
+            Qt.callLater(() => focusSection(2, 1, false))
         } else if (selfTest === "moveask") {
             focusSection(0, 2, false)
             editModel = webVideo
@@ -526,7 +525,7 @@ Rectangle {
         }
     }
 
-    // --- Rijen onder elkaar: Video, Muziek, Luisterboeken, Podcasts, Media (scrollt) ---
+    // --- Rijen onder elkaar: Video, Muziek, Podcasts, Media (scrollt) ---
     Flickable {
         id: page
         anchors.top: hero.bottom
