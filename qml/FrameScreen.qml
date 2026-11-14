@@ -208,7 +208,7 @@ FocusScope {
         visible: false
         z: 10
 
-        readonly property var sourceLabels: ["Schilderijen (Chicago)", "Topstukken (The Met)", "Natuur (Wikimedia)", "Natuur (Pexels)", "Afwisselend"]
+        readonly property var sourceLabels: ["Schilderijen", "Topstukken (The Met)", "Natuurfoto's", "Natuurfoto's (Pexels)", "Afwisselend"]
         readonly property var intervals: [1, 5, 15, 30, 60]
 
         function open() {

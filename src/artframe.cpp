@@ -21,9 +21,19 @@
 #endif
 
 namespace {
-enum Source { Chicago, Met, NatureCommons, Pexels, Mix };
+enum Source { PaintingsCommons, Met, NatureCommons, Pexels, Mix };
 
 // Uitgelichte foto's van Wikimedia Commons (door de gemeenschap gekozen als de allerbeste)
+// Schilderijen: door Commons uitgelicht, vaak in hoge resolutie gefotografeerd door de musea zelf
+const char *const paintingCategories[] = {
+    "Featured pictures of paintings",
+    "Featured pictures of landscape paintings",
+    "Featured pictures of Dutch Golden Age paintings",
+    "Featured pictures of impressionist paintings",
+    "Featured pictures of paintings by Vincent van Gogh",
+    "Featured pictures of paintings by Claude Monet",
+};
+
 const char *const commonsCategories[] = {
     "Featured pictures of landscapes",
     "Featured pictures of coasts",
@@ -72,7 +82,7 @@ ArtFrame::ArtFrame(const QString &dataDir, QObject *parent)
 QStringList ArtFrame::sources() const
 {
     return {
-        tr("Schilderijen – Art Institute of Chicago"),
+        tr("Schilderijen – Wikimedia Commons"),
         tr("Topstukken – The Met, New York"),
         tr("Natuurfoto's – Wikimedia Commons"),
         tr("Natuurfoto's – Pexels (eigen sleutel)"),
@@ -294,7 +304,6 @@ void ArtFrame::get(const QUrl &url, const Callback &callback, const QByteArray &
     QNetworkRequest request(url);
     request.setHeader(QNetworkRequest::UserAgentHeader,
                       QStringLiteral("Kijkluister/3.8 (https://github.com/firefly2008/bigscreen-host-windows)"));
-    request.setRawHeader("AIC-User-Agent", "Kijkluister (https://github.com/firefly2008/bigscreen-host-windows)");
     if (!auth.isEmpty()) {
         request.setRawHeader("Authorization", auth);
     }
@@ -322,65 +331,23 @@ void ArtFrame::fetchBatch()
     setStatus(tr("Afbeeldingen zoeken…"), true);
     int source = m_source;
     if (source == Mix) {
-        const int choices[] = {Chicago, Met, NatureCommons};
+        const int choices[] = {PaintingsCommons, Met, NatureCommons};
         source = choices[randomInt(3)];
     }
     switch (source) {
-    case Chicago:
-        fetchChicago();
+    case PaintingsCommons:
+        fetchCommons(true);
         break;
     case Met:
         fetchMet();
         break;
     case NatureCommons:
-        fetchCommons();
+        fetchCommons(false);
         break;
     case Pexels:
         fetchPexels();
         break;
     }
-}
-
-// Art Institute of Chicago: vrije (public domain) schilderijen, liggend formaat
-void ArtFrame::fetchChicago()
-{
-    const char *const terms[] = {"landscape", "impressionism", "sea", "garden", "river", "still life", "city", "winter", "flowers", "portrait"};
-    QUrl url(QStringLiteral("https://api.artic.edu/api/v1/artworks/search"));
-    QUrlQuery query;
-    query.addQueryItem(QStringLiteral("q"), QString::fromLatin1(terms[randomInt(10)]));
-    query.addQueryItem(QStringLiteral("query[term][is_public_domain]"), QStringLiteral("true"));
-    query.addQueryItem(QStringLiteral("fields"), QStringLiteral("id,title,artist_display,date_display,image_id,classification_title,thumbnail"));
-    query.addQueryItem(QStringLiteral("limit"), QStringLiteral("100"));
-    query.addQueryItem(QStringLiteral("page"), QString::number(1 + randomInt(3)));
-    url.setQuery(query);
-    get(url, [this](const QByteArray &data, int) {
-        const QJsonObject root = QJsonDocument::fromJson(data).object();
-        QString iiif = root.value(QStringLiteral("config")).toObject().value(QStringLiteral("iiif_url")).toString();
-        if (iiif.isEmpty()) {
-            iiif = QStringLiteral("https://www.artic.edu/iiif/2");
-        }
-        QList<QVariantMap> items;
-        for (const QJsonValue &v : root.value(QStringLiteral("data")).toArray()) {
-            const QJsonObject o = v.toObject();
-            const QString imageId = o.value(QStringLiteral("image_id")).toString();
-            const QString kind = o.value(QStringLiteral("classification_title")).toString();
-            const QJsonObject thumb = o.value(QStringLiteral("thumbnail")).toObject();
-            const double w = thumb.value(QStringLiteral("width")).toDouble();
-            const double h = thumb.value(QStringLiteral("height")).toDouble();
-            if (imageId.isEmpty() || !kind.contains(QLatin1String("painting")) || h <= 0 || w / h < 1.05) {
-                continue; // alleen liggende schilderijen passen mooi op een tv
-            }
-            items.append({
-                {QStringLiteral("image"), QStringLiteral("%1/%2/full/1686,/0/default.jpg").arg(iiif, imageId)},
-                {QStringLiteral("title"), o.value(QStringLiteral("title")).toString()},
-                {QStringLiteral("subtitle"), o.value(QStringLiteral("artist_display")).toString().section(QLatin1Char('\n'), 0, 0)
-                                                 + QStringLiteral(", ") + o.value(QStringLiteral("date_display")).toString()},
-                {QStringLiteral("credit"), tr("Art Institute of Chicago · publiek domein")},
-            });
-        }
-        qInfo() << "Frame: Chicago gave" << items.size() << "paintings";
-        addCandidates(items);
-    });
 }
 
 // The Met: uitgelichte schilderijen met open toegang
@@ -390,16 +357,26 @@ void ArtFrame::fetchMet()
         fetchMetObject();
         return;
     }
-    QUrl url(QStringLiteral("https://collectionapi.metmuseum.org/public/collection/v1/search"));
+    // Sinds oktober 2026: /v1.1/search, in pagina's (offset/limit)
+    QUrl url(QStringLiteral("https://collectionapi.metmuseum.org/public/collection/v1.1/search"));
     QUrlQuery query;
+    query.addQueryItem(QStringLiteral("q"), QStringLiteral("painting"));
     query.addQueryItem(QStringLiteral("isHighlight"), QStringLiteral("true"));
     query.addQueryItem(QStringLiteral("hasImages"), QStringLiteral("true"));
     query.addQueryItem(QStringLiteral("medium"), QStringLiteral("Paintings"));
-    query.addQueryItem(QStringLiteral("q"), QStringLiteral("painting"));
+    query.addQueryItem(QStringLiteral("limit"), QStringLiteral("100"));
+    query.addQueryItem(QStringLiteral("offset"), QString::number(100 * randomInt(3)));
     url.setQuery(query);
     get(url, [this](const QByteArray &data, int) {
-        for (const QJsonValue &v : QJsonDocument::fromJson(data).object().value(QStringLiteral("objectIDs")).toArray()) {
-            m_metIds.append(v.toInt());
+        // Antwoordvorm ruim lezen: een lijst met nummers, of objecten met een objectID
+        const QJsonObject root = QJsonDocument::fromJson(data).object();
+        for (const char *key : {"objectIDs", "results", "data", "objects", "items"}) {
+            for (const QJsonValue &v : root.value(QLatin1String(key)).toArray()) {
+                const int id = v.isObject() ? v.toObject().value(QStringLiteral("objectID")).toInt() : v.toInt();
+                if (id > 0) {
+                    m_metIds.append(id);
+                }
+            }
         }
         qInfo() << "Frame: Met gave" << m_metIds.size() << "objects" << (m_metIds.isEmpty() ? data.left(300) : QByteArray());
         if (m_metIds.isEmpty()) {
@@ -442,9 +419,11 @@ void ArtFrame::fetchMetObject()
 }
 
 // Wikimedia Commons: uitgelichte natuurfoto's (Featured pictures), liggend formaat
-void ArtFrame::fetchCommons()
+void ArtFrame::fetchCommons(bool paintings)
 {
-    const QString category = QString::fromLatin1(commonsCategories[randomInt(int(std::size(commonsCategories)))]);
+    const QString category = paintings
+        ? QString::fromLatin1(paintingCategories[randomInt(int(std::size(paintingCategories)))])
+        : QString::fromLatin1(commonsCategories[randomInt(int(std::size(commonsCategories)))]);
     QUrl url(QStringLiteral("https://commons.wikimedia.org/w/api.php"));
     QUrlQuery query;
     query.addQueryItem(QStringLiteral("action"), QStringLiteral("query"));
@@ -453,14 +432,15 @@ void ArtFrame::fetchCommons()
     query.addQueryItem(QStringLiteral("gcmtitle"), QStringLiteral("Category:") + category);
     query.addQueryItem(QStringLiteral("gcmtype"), QStringLiteral("file"));
     query.addQueryItem(QStringLiteral("gcmlimit"), QStringLiteral("100"));
-    query.addQueryItem(QStringLiteral("gcmsort"), QStringLiteral("timestamp"));
-    query.addQueryItem(QStringLiteral("gcmdir"), randomInt(2) ? QStringLiteral("desc") : QStringLiteral("asc"));
+    // Willekeurig ergens in het alfabet beginnen, zodat het niet steeds dezelfde 100 zijn
+    query.addQueryItem(QStringLiteral("gcmsort"), QStringLiteral("sortkey"));
+    query.addQueryItem(QStringLiteral("gcmstartsortkeyprefix"), QString(QChar(u'A' + randomInt(26))));
     query.addQueryItem(QStringLiteral("prop"), QStringLiteral("imageinfo"));
-    query.addQueryItem(QStringLiteral("iiprop"), QStringLiteral("url|size|extmetadata"));
+    query.addQueryItem(QStringLiteral("iiprop"), QStringLiteral("url|size|mime|extmetadata"));
     query.addQueryItem(QStringLiteral("iiurlwidth"), QStringLiteral("1920"));
     query.addQueryItem(QStringLiteral("iiextmetadatafilter"), QStringLiteral("Artist|ObjectName|LicenseShortName"));
     url.setQuery(query);
-    get(url, [this](const QByteArray &data, int) {
+    get(url, [this, paintings](const QByteArray &data, int) {
         const QJsonObject pages = QJsonDocument::fromJson(data).object().value(QStringLiteral("query")).toObject()
                                       .value(QStringLiteral("pages")).toObject();
         QList<QVariantMap> items;
@@ -469,8 +449,10 @@ void ArtFrame::fetchCommons()
             const double w = info.value(QStringLiteral("width")).toDouble();
             const double h = info.value(QStringLiteral("height")).toDouble();
             const QString thumb = info.value(QStringLiteral("thumburl")).toString();
-            const QString mime = thumb.section(QLatin1Char('.'), -1).toLower();
-            if (thumb.isEmpty() || h <= 0 || w / h < 1.25 || (mime != QLatin1String("jpg") && mime != QLatin1String("jpeg"))) {
+            const QString mime = info.value(QStringLiteral("mime")).toString();
+            // Liggend (schilderijen mogen iets minder breed zijn), en een foto of scan
+            if (thumb.isEmpty() || h <= 0 || w / h < (paintings ? 1.1 : 1.25)
+                || (mime != QLatin1String("image/jpeg") && mime != QLatin1String("image/png") && mime != QLatin1String("image/tiff"))) {
                 continue;
             }
             const QJsonObject meta = info.value(QStringLiteral("extmetadata")).toObject();
@@ -486,9 +468,11 @@ void ArtFrame::fetchCommons()
                 {QStringLiteral("title"), title},
                 {QStringLiteral("subtitle"), field("Artist").left(80)},
                 {QStringLiteral("credit"), tr("Wikimedia Commons · %1").arg(field("LicenseShortName"))},
+                {QStringLiteral("kind"), paintings ? QStringLiteral("painting") : QStringLiteral("photo")},
             });
         }
-        qInfo() << "Frame: Commons gave" << items.size() << "photos" << (items.isEmpty() ? data.left(300) : QByteArray());
+        qInfo() << "Frame: Commons" << (paintings ? "paintings" : "nature") << "gave" << items.size()
+                << "of" << pages.size() << (items.isEmpty() && !pages.isEmpty() ? QJsonDocument(pages.begin()->toObject()).toJson(QJsonDocument::Compact).left(600) : QByteArray());
         addCandidates(items);
     });
 }

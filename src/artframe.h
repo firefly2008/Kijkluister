@@ -55,10 +55,9 @@ private:
     using Callback = std::function<void(const QByteArray &, int)>;
     void get(const QUrl &url, const Callback &callback, const QByteArray &auth = {});
     void fetchBatch();
-    void fetchChicago();
     void fetchMet();
     void fetchMetObject();
-    void fetchCommons();
+    void fetchCommons(bool paintings);
     void fetchPexels();
     void addCandidates(QList<QVariantMap> items);
     void showNextCandidate();

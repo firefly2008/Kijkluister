@@ -23,7 +23,7 @@ jobs:
         with:
           version: "6.8.3"
           arch: win64_msvc2022_64
-          modules: qtmultimedia
+          modules: qtmultimedia qtimageformats
           cache: true
       - name: Inno Setup
         run: choco install innosetup -y --no-progress
