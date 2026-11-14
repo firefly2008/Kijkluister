@@ -91,7 +91,7 @@ jobs:
           $env:BIGSCREEN_TEST_M3U = "$tv\test.m3u"
           $env:BIGSCREEN_TEST_RECORD_DIR = "$env:RUNNER_TEMP\opnames"
           Get-Content "$tv\test.m3u"
-          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel'
+          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel', 'librarysetup'
           $manual = '${{ github.ref }}' -like 'refs/heads/screenshots/*'
           if ($manual) {
             # Schermafbeeldingen voor de handleiding, op Full HD
