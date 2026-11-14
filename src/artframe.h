@@ -62,6 +62,7 @@ private:
     void fetchPexels();
     void addCandidates(QList<QVariantMap> items);
     void showNextCandidate();
+    void pruneCache();
     void setStatus(const QString &status, bool busy);
     void save();
 
@@ -80,6 +81,9 @@ private:
     int m_generation = 0;           // verandert bij een andere bron: oude antwoorden negeren
     bool m_busy = false;
     bool m_waiting = false;
+    bool m_downloading = false;
+    int m_failures = 0;
+    QString m_cacheDir;
     int m_retries = 0;
     QString m_status;
 };

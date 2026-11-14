@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "artframe.h"
 
+#include <QCryptographicHash>
+#include <QDir>
+#include <QFile>
+#include <QFileInfo>
 #include <QJsonArray>
 #include <QJsonDocument>
 #include <QJsonObject>
@@ -55,7 +59,9 @@ int randomInt(int max)
 ArtFrame::ArtFrame(const QString &dataDir, QObject *parent)
     : QObject(parent)
     , m_settings(dataDir + QStringLiteral("/settings.ini"), QSettings::IniFormat)
+    , m_cacheDir(dataDir + QStringLiteral("/frame-cache"))
 {
+    QDir().mkpath(m_cacheDir);
     m_source = qBound(0, m_settings.value(QStringLiteral("frame/source"), 0).toInt(), int(Mix));
     m_interval = qBound(1, m_settings.value(QStringLiteral("frame/interval"), 5).toInt(), 120);
     m_showInfo = m_settings.value(QStringLiteral("frame/showInfo"), true).toBool();
@@ -97,6 +103,8 @@ void ArtFrame::setSource(int source)
     m_queue.clear();
     m_busy = false;
     m_retries = 0;
+    m_failures = 0;
+    m_downloading = false;
     next();
 }
 
@@ -180,12 +188,81 @@ void ArtFrame::previous()
 
 void ArtFrame::showNextCandidate()
 {
-    m_history.append(m_queue.takeFirst());
-    while (m_history.size() > 50) {
-        m_history.removeFirst();
+    if (m_downloading || m_queue.isEmpty()) {
+        return;
     }
-    m_position = m_history.size() - 1;
-    Q_EMIT currentChanged();
+    // Eerst zelf downloaden (met nette kopregels en een duidelijke foutmelding),
+    // pas daarna tonen vanaf de schijf
+    QVariantMap item = m_queue.takeFirst();
+    const QString remote = item.value(QStringLiteral("image")).toString();
+    const QString file = m_cacheDir + QLatin1Char('/')
+        + QString::fromLatin1(QCryptographicHash::hash(remote.toUtf8(), QCryptographicHash::Sha1).toHex()) + QStringLiteral(".jpg");
+    auto show = [this, item, file]() mutable {
+        item[QStringLiteral("image")] = QUrl::fromLocalFile(file).toString();
+        m_history.append(item);
+        while (m_history.size() > 50) {
+            m_history.removeFirst();
+        }
+        m_position = m_history.size() - 1;
+        Q_EMIT currentChanged();
+    };
+    if (QFileInfo(file).size() > 0) {
+        show();
+        return;
+    }
+    m_downloading = true;
+    QNetworkRequest request{QUrl(remote)};
+    request.setRawHeader("User-Agent", "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0 Safari/537.36 Kijkluister/3.8");
+    request.setRawHeader("Accept", "image/avif,image/webp,image/jpeg,image/*;q=0.8,*/*;q=0.5");
+    if (remote.contains(QLatin1String("artic.edu"))) {
+        request.setRawHeader("Referer", "https://www.artic.edu/");
+    }
+    request.setTransferTimeout(60000);
+    request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
+    QNetworkReply *reply = m_network.get(request);
+    const int generation = m_generation;
+    connect(reply, &QNetworkReply::finished, this, [this, reply, file, show, generation]() mutable {
+        reply->deleteLater();
+        m_downloading = false;
+        if (generation != m_generation) {
+            return;
+        }
+        const int status = reply->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+        const QByteArray data = reply->readAll();
+        if (reply->error() != QNetworkReply::NoError || data.size() < 1000) {
+            qWarning().noquote() << "Frame: image download failed" << status << reply->errorString() << reply->url().toString()
+                                 << data.left(160);
+            ++m_failures;
+            if (m_failures > 6) {
+                setStatus(tr("Afbeeldingen van deze bron kunnen nu niet worden geladen."), false);
+                return;
+            }
+            showNextCandidate(); // volgende proberen
+            if (m_queue.isEmpty() && !m_busy) {
+                m_waiting = true;
+                fetchBatch();
+            }
+            return;
+        }
+        m_failures = 0;
+        QFile out(file);
+        if (out.open(QIODevice::WriteOnly)) {
+            out.write(data);
+            out.close();
+        }
+        show();
+        pruneCache();
+    });
+}
+
+// Niet meer dan ~200 afbeeldingen bewaren
+void ArtFrame::pruneCache()
+{
+    QDir dir(m_cacheDir);
+    const QFileInfoList files = dir.entryInfoList({QStringLiteral("*.jpg")}, QDir::Files, QDir::Time);
+    for (int i = 200; i < files.size(); ++i) {
+        QFile::remove(files.at(i).absoluteFilePath());
+    }
 }
 
 void ArtFrame::addCandidates(QList<QVariantMap> items)
