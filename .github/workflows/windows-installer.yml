@@ -172,6 +172,7 @@ jobs:
           $tag = "v$env:BIGSCREEN_VERSION"
           gh release delete $tag -R $env:GITHUB_REPOSITORY --yes --cleanup-tag 2>$null
           "Opgeruimd (indien aanwezig): $tag"
+          exit 0   # geen bestaande release is ook goed
       - name: Release maken
         if: startsWith(github.ref, 'refs/heads/release/')
         uses: softprops/action-gh-release@v2
