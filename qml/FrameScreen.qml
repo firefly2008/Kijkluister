@@ -1,0 +1,362 @@
+// Schilderij-modus: kunst of natuurfoto's schermvullend, als een schilderij aan de muur.
+// SPDX-License-Identifier: GPL-2.0-or-later
+import QtQuick
+
+FocusScope {
+    id: frameScreen
+
+    readonly property real unit: height / 100
+    property Item returnFocusTo: null
+    property bool front: true          // welke van de twee lagen nu zichtbaar is
+    readonly property var item: frame.current
+
+    anchors.fill: parent
+    visible: false
+    z: 60
+
+    function open(focusItem) {
+        returnFocusTo = focusItem
+        visible = true
+        frame.keepAwake(true)
+        frame.start()
+        if (item && item.image) {
+            show(item)
+        }
+        forceActiveFocus()
+        flashInfo()
+    }
+
+    function close() {
+        settings.visible = false
+        frame.keepAwake(false)
+        visible = false
+        if (returnFocusTo) {
+            returnFocusTo.forceActiveFocus()
+        }
+    }
+
+    function flashInfo() {
+        infoTimer.restart()
+    }
+
+    // Nieuwe afbeelding eerst onzichtbaar laden; pas als hij klaar is overvloeien
+    function show(it) {
+        const target = front ? layerB : layerA
+        target.pending = it
+        target.image.source = it.image
+    }
+
+    Connections {
+        target: frame
+        function onCurrentChanged() {
+            if (frameScreen.visible && frame.current.image) {
+                frameScreen.show(frame.current)
+            }
+        }
+    }
+
+    Timer {
+        id: nextTimer
+        interval: frame.interval * 60000
+        running: frameScreen.visible && !settings.visible
+        repeat: true
+        onTriggered: frame.next()
+    }
+    Timer {
+        id: infoTimer
+        interval: 8000
+    }
+
+    Rectangle {
+        anchors.fill: parent
+        color: "#141416"
+    }
+
+    // Twee lagen voor het overvloeien
+    component Layer: Item {
+        id: layer
+        property var pending: null
+        property var shown: null
+        property alias image: img
+        anchors.fill: parent
+        opacity: 0
+        Behavior on opacity { NumberAnimation { duration: 1800; easing.type: Easing.InOutQuad } }
+
+        // Passe-partout en lijst (in de stand "als schilderij")
+        Rectangle {
+            id: mat
+            visible: !frame.fill && img.status === Image.Ready
+            anchors.centerIn: parent
+            width: img.paintedWidth + frameScreen.unit * 9
+            height: img.paintedHeight + frameScreen.unit * 9
+            color: "#f4f1ea"
+            border.color: "#2b2118"
+            border.width: frameScreen.unit * 1.4
+        }
+        Image {
+            id: img
+            anchors.centerIn: parent
+            width: frame.fill ? parent.width : parent.width * 0.78
+            height: frame.fill ? parent.height : parent.height * 0.74
+            fillMode: frame.fill ? Image.PreserveAspectCrop : Image.PreserveAspectFit
+            sourceSize.width: 2560
+            asynchronous: true
+            cache: false
+            smooth: true
+            onStatusChanged: {
+                if (status === Image.Ready && layer.pending) {
+                    layer.shown = layer.pending
+                    layer.pending = null
+                    frameScreen.front = layer === layerA
+                    if (frame.showInfo) {
+                        frameScreen.flashInfo()
+                    }
+                } else if (status === Image.Error && layer.pending) {
+                    console.warn("Frame: image failed", source)
+                    layer.pending = null
+                    frame.next()   // deze overslaan
+                }
+            }
+        }
+    }
+    Layer { id: layerA; opacity: frameScreen.front && image.status === Image.Ready ? 1 : 0 }
+    Layer { id: layerB; opacity: !frameScreen.front && image.status === Image.Ready ? 1 : 0 }
+
+    readonly property var shownItem: front ? layerA.shown : layerB.shown
+
+    // Titel, maker en bron
+    Rectangle {
+        anchors.left: parent.left
+        anchors.bottom: parent.bottom
+        anchors.margins: frameScreen.unit * 4
+        width: Math.min(parent.width * 0.6, info.implicitWidth + frameScreen.unit * 5)
+        height: info.implicitHeight + frameScreen.unit * 3.5
+        radius: frameScreen.unit * 1.2
+        color: "#b0000000"
+        visible: !!frameScreen.shownItem
+        opacity: infoTimer.running || settings.visible ? 1 : 0
+        Behavior on opacity { NumberAnimation { duration: 600 } }
+        Column {
+            id: info
+            x: frameScreen.unit * 2.5
+            anchors.verticalCenter: parent.verticalCenter
+            width: frameScreen.width * 0.6 - frameScreen.unit * 5
+            spacing: frameScreen.unit * 0.5
+            Text {
+                width: Math.min(implicitWidth, parent.width)
+                elide: Text.ElideRight
+                color: "white"
+                font.pixelSize: frameScreen.unit * 3
+                font.weight: Font.DemiBold
+                text: frameScreen.shownItem ? frameScreen.shownItem.title : ""
+            }
+            Text {
+                width: Math.min(implicitWidth, parent.width)
+                elide: Text.ElideRight
+                color: "#d5d8dc"
+                font.pixelSize: frameScreen.unit * 2.2
+                visible: text !== ""
+                text: frameScreen.shownItem ? frameScreen.shownItem.subtitle : ""
+            }
+            Text {
+                color: "#9a9ea6"
+                font.pixelSize: frameScreen.unit * 1.8
+                text: (frameScreen.shownItem ? frameScreen.shownItem.credit : "")
+                      + "    ·    ← → bladeren   ·   OK / Menu instellingen   ·   Esc / B terug"
+            }
+        }
+    }
+
+    // Bezig of foutmelding
+    Text {
+        anchors.centerIn: parent
+        visible: !frameScreen.shownItem
+        color: "#b0b4bb"
+        font.pixelSize: frameScreen.unit * 3
+        text: frame.status !== "" ? frame.status : "Afbeeldingen zoeken…"
+    }
+
+    MouseArea {
+        anchors.fill: parent
+        hoverEnabled: true
+        onPositionChanged: frameScreen.flashInfo()
+        onClicked: settings.open()
+    }
+
+    Keys.onLeftPressed: { frame.previous(); flashInfo() }
+    Keys.onRightPressed: { frame.next(); flashInfo() }
+    Keys.onUpPressed: flashInfo()
+    Keys.onDownPressed: flashInfo()
+    Keys.onReturnPressed: settings.open()
+    Keys.onEnterPressed: settings.open()
+    Keys.onMenuPressed: settings.open()
+    Keys.onEscapePressed: close()
+    Keys.onBackPressed: close()
+    Keys.onPressed: (event) => {
+        if (event.key === Qt.Key_I) {
+            flashInfo()
+            event.accepted = true
+        }
+    }
+
+    // ------------------------------------------------------------------
+    // Instellingen
+    // ------------------------------------------------------------------
+    FocusScope {
+        id: settings
+        anchors.fill: parent
+        visible: false
+        z: 10
+
+        readonly property var sourceLabels: ["Schilderijen (Chicago)", "Topstukken (The Met)", "Natuur (Wikimedia)", "Natuur (Pexels)", "Afwisselend"]
+        readonly property var intervals: [1, 5, 15, 30, 60]
+
+        function open() {
+            keyField.text = frame.pexelsKey
+            visible = true
+            sourceRow.currentIndex = frame.source
+            sourceRow.forceActiveFocus()
+        }
+        function close() {
+            if (keyField.text !== frame.pexelsKey) {
+                frame.pexelsKey = keyField.text
+            }
+            visible = false
+            frameScreen.forceActiveFocus()
+        }
+
+        Keys.onEscapePressed: close()
+        Keys.onBackPressed: close()
+        Keys.onMenuPressed: close()
+
+        Rectangle {
+            anchors.fill: parent
+            color: "#cc000000"
+            MouseArea { anchors.fill: parent; onClicked: settings.close() }
+        }
+
+        Rectangle {
+            anchors.centerIn: parent
+            width: frameScreen.width * 0.8
+            height: panel.implicitHeight + frameScreen.unit * 8
+            radius: frameScreen.unit * 2
+            color: "#202227"
+            MouseArea { anchors.fill: parent }
+
+            // Rij met keuzeknoppen (pijltjes links/rechts, OK kiest)
+            component OptionRow: ListView {
+                id: row
+                property var labels: []
+                property int chosen: -1
+                signal picked(int index)
+                width: parent.width
+                height: frameScreen.unit * 6
+                orientation: ListView.Horizontal
+                spacing: frameScreen.unit * 1.2
+                interactive: false
+                model: labels
+                delegate: FocusButton {
+                    required property string modelData
+                    required property int index
+                    unit: frameScreen.unit
+                    text: modelData
+                    checked: index === row.chosen
+                    focus: ListView.isCurrentItem
+                    onClicked: {
+                        row.currentIndex = index
+                        row.picked(index)
+                    }
+                }
+            }
+            component Label: Text {
+                color: "#9fb4d0"
+                font.pixelSize: frameScreen.unit * 2.2
+            }
+
+            Column {
+                id: panel
+                x: frameScreen.unit * 4
+                y: frameScreen.unit * 4
+                width: parent.width - frameScreen.unit * 8
+                spacing: frameScreen.unit * 1.4
+
+                Text {
+                    color: "white"
+                    font.pixelSize: frameScreen.unit * 4
+                    font.weight: Font.DemiBold
+                    text: "Schilderij"
+                }
+                Label { text: "Wat wil je zien?" }
+                OptionRow {
+                    id: sourceRow
+                    labels: settings.sourceLabels
+                    chosen: frame.source
+                    onPicked: (i) => frame.source = i
+                    KeyNavigation.down: intervalRow
+                }
+                Label { text: "Wisselen elke" }
+                OptionRow {
+                    id: intervalRow
+                    labels: settings.intervals.map(m => m + " min")
+                    chosen: settings.intervals.indexOf(frame.interval)
+                    onPicked: (i) => frame.interval = settings.intervals[i]
+                    KeyNavigation.up: sourceRow
+                    KeyNavigation.down: styleRow
+                }
+                Label { text: "Weergave" }
+                OptionRow {
+                    id: styleRow
+                    labels: ["Schermvullend", "Als schilderij in een lijst"]
+                    chosen: frame.fill ? 0 : 1
+                    onPicked: (i) => frame.fill = i === 0
+                    KeyNavigation.up: intervalRow
+                    KeyNavigation.down: infoRow
+                }
+                Label { text: "Titel en maker tonen" }
+                OptionRow {
+                    id: infoRow
+                    labels: ["Bij elke nieuwe afbeelding", "Alleen als ik op een knop druk"]
+                    chosen: frame.showInfo ? 0 : 1
+                    onPicked: (i) => frame.showInfo = i === 0
+                    KeyNavigation.up: styleRow
+                    KeyNavigation.down: keyField
+                }
+                Label { text: "Pexels-sleutel (gratis aan te vragen op pexels.com/api, alleen nodig voor Natuur (Pexels))" }
+                Rectangle {
+                    width: parent.width
+                    height: frameScreen.unit * 6
+                    radius: frameScreen.unit
+                    color: "#0f1115"
+                    border.width: keyField.activeFocus ? 3 : 1
+                    border.color: keyField.activeFocus ? "#e8eaed" : "#33ffffff"
+                    TextInput {
+                        id: keyField
+                        anchors.fill: parent
+                        anchors.margins: frameScreen.unit * 1.5
+                        verticalAlignment: TextInput.AlignVCenter
+                        color: "white"
+                        font.pixelSize: frameScreen.unit * 2.3
+                        clip: true
+                        selectByMouse: true
+                        echoMode: activeFocus ? TextInput.Normal : TextInput.Password
+                        KeyNavigation.up: infoRow
+                        KeyNavigation.down: closeButton
+                        Keys.onReturnPressed: frame.pexelsKey = text
+                    }
+                }
+                FocusButton {
+                    id: closeButton
+                    unit: frameScreen.unit
+                    text: "Klaar"
+                    onClicked: settings.close()
+                    KeyNavigation.up: keyField
+                }
+            }
+        }
+    }
+
+    // Test: instellingen openen
+    function openSettings() {
+        settings.open()
+    }
+}

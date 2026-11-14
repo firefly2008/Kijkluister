@@ -28,6 +28,7 @@
 #include "appmodel.h"
 #include "gamepadnavigator.h"
 #include "medialibrary.h"
+#include "artframe.h"
 #include "iptvmodel.h"
 
 #include <QNetworkAccessManager>
@@ -194,6 +195,7 @@ int main(int argc, char *argv[])
     AppModel webPodcasts(AppModel::Web, QStringLiteral("podcasts"));
     MediaLibrary library(appDataDir());
     IptvModel iptv(appDataDir());
+    ArtFrame frame;
 
     auto inputSystem = createInputSystem();
     Q_UNUSED(inputSystem); // in dit skeleton nog niet aan QML-signalen gekoppeld
@@ -219,6 +221,7 @@ int main(int argc, char *argv[])
     view.rootContext()->setContextProperty(QStringLiteral("webPodcasts"), &webPodcasts);
     view.rootContext()->setContextProperty(QStringLiteral("library"), &library);
     view.rootContext()->setContextProperty(QStringLiteral("iptv"), &iptv);
+    view.rootContext()->setContextProperty(QStringLiteral("frame"), &frame);
     view.engine()->setNetworkAccessManagerFactory(new CachingNetworkFactory(appDataDir() + QStringLiteral("/imagecache")));
     view.rootContext()->setContextProperty(QStringLiteral("gamepad"), &gamepad);
     // Alleen voor de geautomatiseerde test: opent bij het starten een menu

@@ -290,6 +290,16 @@ Rectangle {
             iptvScreen.pinInfo = selfTest === "iptvbar"
             iptvScreen.autoGuide = selfTest === "iptvepg"
             iptvScreen.open(mediaGrid())
+        } else if (selfTest.startsWith("frame")) {
+            // Test: frame-chicago, frame-met, frame-nature, frame-mix, frame-lijst, frame-settings
+            const kinds = { "frame-chicago": 0, "frame-met": 1, "frame-nature": 2, "frame-mix": 4, "frame-lijst": 0, "frame-settings": 2 }
+            frame.source = kinds[selfTest] !== undefined ? kinds[selfTest] : 0
+            frame.fill = selfTest !== "frame-lijst"
+            frame.interval = 5
+            frameScreen.open(mediaGrid())
+            if (selfTest === "frame-settings") {
+                frameScreen.openSettings()
+            }
         } else if (selfTest === "iptvfree") {
             iptvScreen.open(mediaGrid())
         } else if (selfTest.startsWith("m-")) {
@@ -631,6 +641,11 @@ Rectangle {
         id: iptvScreen
     }
 
+    // Schilderij: kunst of natuurfoto's
+    FrameScreen {
+        id: frameScreen
+    }
+
     // Films en Series: eigen scherm met de bibliotheek
     LibraryScreen {
         id: libraryScreen
@@ -641,6 +656,8 @@ Rectangle {
         function onInternalRequested(target) {
             if (target === "bigscreen:iptv") {
                 iptvScreen.open(mediaGrid())
+            } else if (target === "bigscreen:frame") {
+                frameScreen.open(mediaGrid())
             } else {
                 libraryScreen.open(target === "bigscreen:shows" ? "shows" : "movies", mediaGrid())
             }

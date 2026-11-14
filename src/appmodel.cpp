@@ -268,6 +268,9 @@ QVariant AppModel::data(const QModelIndex &index, int role) const
         if (app.path == QLatin1String("bigscreen:iptv")) {
             return QStringLiteral("glyph:") + QChar(0xE714);
         }
+        if (app.path == QLatin1String("bigscreen:frame")) {
+            return QStringLiteral("glyph:") + QChar(0xEB9F);
+        }
         if (app.path == QLatin1String("bigscreen:shows")) {
             return QStringLiteral("glyph:") + QChar(0xE7F4);
         }
@@ -320,6 +323,7 @@ void AppModel::refresh()
         {QStringLiteral("Films"), QStringLiteral("bigscreen:movies"), false},
         {QStringLiteral("Series"), QStringLiteral("bigscreen:shows"), false},
         {QStringLiteral("Live tv"), QStringLiteral("bigscreen:iptv"), false},
+        {QStringLiteral("Schilderij"), QStringLiteral("bigscreen:frame"), false},
     };
     apps.append(customTiles());
     apps.erase(std::remove_if(apps.begin(), apps.end(), [this](const App &tile) {
