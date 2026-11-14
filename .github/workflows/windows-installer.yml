@@ -87,8 +87,9 @@ jobs:
           $fs = [IO.File]::Create("$tv\guide.xml.gz"); $gz = New-Object IO.Compression.GZipStream($fs, [IO.Compression.CompressionMode]::Compress)
           $gz.Write($bytes, 0, $bytes.Length); $gz.Close(); $fs.Close()
           $env:BIGSCREEN_TEST_M3U = "$tv\test.m3u"
+          $env:BIGSCREEN_TEST_RECORD_DIR = "$env:RUNNER_TEMP\opnames"
           Get-Content "$tv\test.m3u"
-          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc'
+          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel'
           $manual = '${{ github.ref }}' -like 'refs/heads/screenshots/*'
           if ($manual) {
             # Schermafbeeldingen voor de handleiding, op Full HD
@@ -110,7 +111,7 @@ jobs:
           foreach ($mode in $modes) {
             $env:BIGSCREEN_SELFTEST = $mode
             $p = Start-Process dist\Kijkluister.exe -PassThru
-            Start-Sleep $(if ($manual -or $mode -like 'frame*') { 20 } else { 14 })
+            Start-Sleep $(if ($manual -or $mode -like 'frame*') { 20 } elseif ($mode -eq 'record') { 40 } else { 14 })
             if ($mode -like 'frame*esc') {
               # Echte toetsaanslag Esc naar het venster sturen (zoals toetsenbord of gamepad-B)
               Add-Type -ErrorAction SilentlyContinue @"
@@ -142,6 +143,12 @@ jobs:
             if (Test-Path $log) { "--- log ---"; Get-Content $log } else { "NO LOG FILE" }
             if (-not (Test-Path $log) -or -not (Select-String -Path $log -Pattern "Window shown" -Quiet)) { throw "Rooktest mislukt: venster niet getoond" }
             if ($mode -like 'frame*esc' -and -not (Select-String -Path $log -Pattern "Frame closed" -Quiet)) { throw "Rooktest mislukt: Esc stopt het schilderij niet ($mode)" }
+            if ($mode -eq 'record') {
+              $rec = Get-ChildItem "$env:RUNNER_TEMP\opnames" -Filter *.mp4 -ErrorAction SilentlyContinue
+              "Opnames: " + (($rec | ForEach-Object { "$($_.Name) $($_.Length) bytes" }) -join ', ')
+              if (-not $rec -or ($rec | Measure-Object Length -Sum).Sum -lt 200000) { throw "Rooktest mislukt: geen opname van formaat" }
+              & dist\ffmpeg\ffmpeg.exe -v error -i $rec[0].FullName -f null - 2>&1 | Select-Object -First 5
+            }
           }
       - uses: actions/upload-artifact@v4
         if: startsWith(github.ref, 'refs/heads/screenshots/')

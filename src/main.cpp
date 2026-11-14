@@ -30,6 +30,7 @@
 #include "medialibrary.h"
 #include "artframe.h"
 #include "paths.h"
+#include "recorder.h"
 #include "iptvmodel.h"
 
 #include <QNetworkAccessManager>
@@ -227,6 +228,7 @@ int main(int argc, char *argv[])
     MediaLibrary library(appDataDir());
     IptvModel iptv(appDataDir());
     ArtFrame frame(appDataDir());
+    Recorder recorder(appDataDir());
 
     auto inputSystem = createInputSystem();
     Q_UNUSED(inputSystem); // in dit skeleton nog niet aan QML-signalen gekoppeld
@@ -253,11 +255,13 @@ int main(int argc, char *argv[])
     view.rootContext()->setContextProperty(QStringLiteral("library"), &library);
     view.rootContext()->setContextProperty(QStringLiteral("iptv"), &iptv);
     view.rootContext()->setContextProperty(QStringLiteral("frame"), &frame);
+    view.rootContext()->setContextProperty(QStringLiteral("recorder"), &recorder);
     view.engine()->setNetworkAccessManagerFactory(new CachingNetworkFactory(appDataDir() + QStringLiteral("/imagecache")));
     view.rootContext()->setContextProperty(QStringLiteral("gamepad"), &gamepad);
     // Alleen voor de geautomatiseerde test: opent bij het starten een menu
     view.rootContext()->setContextProperty(QStringLiteral("selfTest"), qEnvironmentVariable("BIGSCREEN_SELFTEST"));
     view.rootContext()->setContextProperty(QStringLiteral("selfTestM3u"), qEnvironmentVariable("BIGSCREEN_TEST_M3U"));
+    view.rootContext()->setContextProperty(QStringLiteral("selfTestRecordDir"), qEnvironmentVariable("BIGSCREEN_TEST_RECORD_DIR"));
     // Gratis zenders klaarzetten (de tests gebruiken hun eigen lijst)
     const QString selfTestMode = qEnvironmentVariable("BIGSCREEN_SELFTEST");
     if (selfTestMode.isEmpty() || selfTestMode == QLatin1String("iptvfree")) {

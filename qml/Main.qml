@@ -305,6 +305,15 @@ Rectangle {
             if (selfTest === "frame-settings") {
                 frameScreen.openSettings()
             }
+        } else if (selfTest === "record" || selfTest === "recordpanel") {
+            // Test: zender uit de testlijst 20 seconden opnemen naar een testmap
+            if (iptv.sources.length === 0) {
+                iptv.addSource("m3u-file", "Gids-test", selfTestM3u, "", "")
+            }
+            recorder.folder = selfTestRecordDir
+            iptvScreen.autoPlay = true
+            iptvScreen.autoRecord = selfTest
+            iptvScreen.open(mediaGrid())
         } else if (selfTest === "iptvfree") {
             iptvScreen.open(mediaGrid())
         } else if (selfTest.startsWith("m-")) {

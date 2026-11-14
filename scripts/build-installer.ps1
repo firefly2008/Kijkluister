@@ -28,6 +28,24 @@ if ($LASTEXITCODE) { throw "install mislukt" }
 & "$QtDir\bin\windeployqt.exe" --release --qmldir qml --compiler-runtime dist\Kijkluister.exe
 if ($LASTEXITCODE) { throw "windeployqt mislukt" }
 
+# 3b. ffmpeg (GPL-build van gyan.dev) voor het opnemen van live tv
+$ffDir = Join-Path $root "build\ffmpeg"
+if (-not (Test-Path "$ffDir\ffmpeg.exe")) {
+    New-Item -ItemType Directory -Force $ffDir | Out-Null
+    $zip = Join-Path $ffDir "ffmpeg.zip"
+    Invoke-WebRequest -UseBasicParsing "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" -OutFile $zip
+    Expand-Archive $zip -DestinationPath "$ffDir\unz" -Force
+    $exe = Get-ChildItem "$ffDir\unz" -Recurse -Filter ffmpeg.exe | Select-Object -First 1
+    Copy-Item $exe.FullName "$ffDir\ffmpeg.exe"
+    $lic = Get-ChildItem $exe.Directory.Parent.FullName -Filter LICENSE* | Select-Object -First 1
+    if ($lic) { Copy-Item $lic.FullName "$ffDir\LICENSE-ffmpeg.txt" }
+    Remove-Item "$ffDir\unz" -Recurse -Force; Remove-Item $zip
+}
+New-Item -ItemType Directory -Force dist\ffmpeg | Out-Null
+Copy-Item "$ffDir\ffmpeg.exe" dist\ffmpeg\
+if (Test-Path "$ffDir\LICENSE-ffmpeg.txt") { Copy-Item "$ffDir\LICENSE-ffmpeg.txt" dist\ffmpeg\ }
+& dist\ffmpeg\ffmpeg.exe -version | Select-Object -First 1
+
 # 4. Installer
 $iscc = (Get-Command iscc -ErrorAction SilentlyContinue).Source
 if (-not $iscc) { $iscc = "${env:ProgramFiles(x86)}\Inno Setup 6\ISCC.exe" }

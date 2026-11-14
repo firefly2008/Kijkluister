@@ -17,6 +17,7 @@ FocusScope {
     property bool pinInfo: false           // test: balk blijft staan
     property bool autoGuide: false         // test: gids openen na afspelen
     property string demo: ""               // schermafbeeldingen voor de handleiding
+    property string autoRecord: ""         // test: "record" neemt op, "recordpanel" toont het venster
     property alias guideStart: guidePanel.startIndex
     // Gids van de zender die nu speelt; ververst als er nieuwe gidsgegevens zijn
     readonly property var nowNext: (iptv.epgRevision, epgClock.tick, playingRow >= 0 ? iptv.nowNext(playingRow) : ({}))
@@ -103,8 +104,33 @@ FocusScope {
             autoGuide = false
             guideTestTimer.start()
         }
+        if (autoRecord !== "") {
+            const mode = autoRecord
+            autoRecord = ""
+            recordTestTimer.mode = mode
+            recordTestTimer.start()
+        }
     }
     Timer { id: guideTestTimer; interval: 6000; onTriggered: tv.openGuide(tv.playingRow) }
+    Timer {
+        id: recordTestTimer
+        property string mode: ""
+        interval: 4000
+        onTriggered: {
+            const ch = iptv.channelAt(tv.playingRow)
+            recorder.start(ch.name, ch.url, 0)
+            if (mode === "recordpanel") {
+                tv.openRecord(tv.playingRow)
+            } else {
+                recordStopTimer.start()
+            }
+        }
+    }
+    Timer { id: recordStopTimer; interval: 20000; onTriggered: recorder.stop() }
+
+    function openRecord(row) {
+        recordPanel.open(row >= 0 ? iptv.channelAt(row) : channel, playing ? playerView : grid)
+    }
 
     function openGuide(row) {
         iptv.requestEpg(row)
@@ -435,6 +461,9 @@ FocusScope {
                 } else if (event.key === Qt.Key_I) {
                     tv.openGuide(currentIndex)
                     event.accepted = true
+                } else if (event.key === Qt.Key_R) {
+                    tv.openRecord(currentIndex)
+                    event.accepted = true
                 }
             }
             Keys.onLeftPressed: (event) => {
@@ -628,7 +657,7 @@ FocusScope {
                     Text {
                         color: "#80848b"
                         font.pixelSize: tv.unit * 1.9
-                        text: (tv.channel.group || "") + "    ·    ↑ ↓ zender   ·   OK / I / Y gids   ·   Esc / B terug   ·   F2 / X favoriet   ·   E externe speler"
+                        text: (tv.channel.group || "") + "    ·    ↑ ↓ zender   ·   OK / I / Y gids   ·   R opnemen   ·   Esc / B terug   ·   F2 / X favoriet   ·   E externe speler"
                     }
                 }
             }
@@ -650,6 +679,9 @@ FocusScope {
                 event.accepted = true
             } else if (event.key === Qt.Key_I) {
                 tv.openGuide(tv.playingRow)
+                event.accepted = true
+            } else if (event.key === Qt.Key_R) {
+                tv.openRecord(tv.playingRow)
                 event.accepted = true
             } else if (event.key === Qt.Key_E) {
                 if (iptv.openExternal(tv.playingRow)) {
@@ -702,6 +734,43 @@ FocusScope {
     EpgPanel {
         id: guidePanel
         unit: tv.unit
+    }
+
+    RecordPanel {
+        id: recordPanel
+        unit: tv.unit
+    }
+
+    // Opname-indicator rechtsboven, zolang er opgenomen wordt
+    Rectangle {
+        visible: recorder.recording && tv.visible && !recordPanel.visible
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.margins: tv.unit * 3
+        z: 30
+        width: recText.implicitWidth + tv.unit * 5
+        height: tv.unit * 5.5
+        radius: height / 2
+        color: "#cc000000"
+        Row {
+            anchors.centerIn: parent
+            spacing: tv.unit
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: tv.unit * 1.6; height: width; radius: width / 2
+                color: "#e53935"
+                SequentialAnimation on opacity {
+                    running: recorder.recording; loops: Animation.Infinite
+                    NumberAnimation { to: 0.2; duration: 600 } NumberAnimation { to: 1; duration: 600 }
+                }
+            }
+            Text {
+                id: recText
+                color: "white"
+                font.pixelSize: tv.unit * 2.3
+                text: "REC  " + recorder.channel + "  " + recordPanel.fmtTime(recorder.elapsedSeconds)
+            }
+        }
     }
 
     IptvSources {
