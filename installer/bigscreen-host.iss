@@ -38,6 +38,9 @@ Name: "desktopicon"; Description: "Snelkoppeling op het bureaublad"; Flags: unch
 Name: "autostart"; Description: "Kijkluister automatisch starten bij aanmelden (tv-/mediacenter-pc)"; Flags: unchecked
 
 [InstallDelete]
+; Tot en met 3.8.8 zaten MPC-HC en ffmpeg in de installer; nu haalt Kijkluister ze zelf op
+Type: filesandordirs; Name: "{app}\mpc-hc"
+Type: filesandordirs; Name: "{app}\ffmpeg"
 ; Overblijfselen van de oude naam "Bigscreen Host"
 Type: files; Name: "{app}\bigscreen-host.exe"
 Type: filesandordirs; Name: "{autopf}\Bigscreen Host"

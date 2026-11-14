@@ -49,8 +49,8 @@ jobs:
             New-Item -ItemType File -Force $f | Out-Null
           }
           # Twee echte korte afleveringen (Breaking Bad 2x03 en 2x04) om MPC-HC mee te testen
-          & dist\ffmpeg\ffmpeg.exe -v error -y -f lavfi -i "testsrc2=size=1280x720:rate=25" -f lavfi -i "sine=frequency=440" -t 20 -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest "$series\Breaking Bad\Seizoen 2\Breaking.Bad.2x03.mp4"
-          & dist\ffmpeg\ffmpeg.exe -v error -y -f lavfi -i "smptebars=size=1280x720:rate=25" -f lavfi -i "sine=frequency=660" -t 20 -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest "$series\Breaking Bad\Seizoen 2\Breaking.Bad.2x04.mp4"
+          & build\ffmpeg\ffmpeg.exe -v error -y -f lavfi -i "testsrc2=size=1280x720:rate=25" -f lavfi -i "sine=frequency=440" -t 20 -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest "$series\Breaking Bad\Seizoen 2\Breaking.Bad.2x03.mp4"
+          & build\ffmpeg\ffmpeg.exe -v error -y -f lavfi -i "smptebars=size=1280x720:rate=25" -f lavfi -i "sine=frequency=660" -t 20 -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest "$series\Breaking Bad\Seizoen 2\Breaking.Bad.2x04.mp4"
           New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\BigscreenHost" | Out-Null
           $films2 = "$env:RUNNER_TEMP\media2\Meer films"; New-Item -ItemType Directory -Force $films2 | Out-Null
           New-Item -ItemType File -Force "$films2\Blade.Runner.1982.Final.Cut.mkv" | Out-Null
@@ -117,7 +117,7 @@ jobs:
           foreach ($mode in $modes) {
             $env:BIGSCREEN_SELFTEST = $mode
             $p = Start-Process dist\Kijkluister.exe -PassThru
-            Start-Sleep $(if ($manual -or $mode -like 'frame*') { 20 } elseif ($mode -eq 'record' -or $mode -eq 'iptvfreeguide') { 40 } else { 14 })
+            Start-Sleep $(if ($manual -or $mode -like 'frame*') { 20 } elseif ($mode -eq 'record') { 75 } elseif ($mode -eq 'iptvfreeguide' -or $mode -eq 'mpcplay') { 45 } else { 14 })
             if ($mode -like 'frame*esc') {
               # Echte toetsaanslag Esc naar het venster sturen (zoals toetsenbord of gamepad-B)
               Add-Type -ErrorAction SilentlyContinue @"
@@ -149,6 +149,9 @@ jobs:
             if (Test-Path $log) { "--- log ---"; Get-Content $log } else { "NO LOG FILE" }
             if (-not (Test-Path $log) -or -not (Select-String -Path $log -Pattern "Window shown" -Quiet)) { throw "Rooktest mislukt: venster niet getoond" }
             if ($mode -like 'frame*esc' -and -not (Select-String -Path $log -Pattern "Frame closed" -Quiet)) { throw "Rooktest mislukt: Esc stopt het schilderij niet ($mode)" }
+            if ($mode -eq 'record' -or $mode -eq 'mpcplay') {
+              Select-String -Path $log -Pattern "Components:" | ForEach-Object { $_.Line }
+            }
             if ($mode -eq 'mpcplay') {
               $m = Get-Process mpc-hc64 -ErrorAction SilentlyContinue
               "MPC-HC processen: $(@($m).Count)"
@@ -161,7 +164,7 @@ jobs:
               $rec = Get-ChildItem "$env:RUNNER_TEMP\opnames" -Filter *.mp4 -ErrorAction SilentlyContinue
               "Opnames: " + (($rec | ForEach-Object { "$($_.Name) $($_.Length) bytes" }) -join ', ')
               if (-not $rec -or ($rec | Measure-Object Length -Sum).Sum -lt 200000) { throw "Rooktest mislukt: geen opname van formaat" }
-              & dist\ffmpeg\ffmpeg.exe -v error -i $rec[0].FullName -f null - 2>&1 | Select-Object -First 5
+              & build\ffmpeg\ffmpeg.exe -v error -i $rec[0].FullName -f null - 2>&1 | Select-Object -First 5
               if (-not (Select-String -Path $log -Pattern "IPTV playing: .*\(relay\)" -Quiet)) { throw "Rooktest mislukt: speler speelt niet via de doorgifte tijdens opnemen" }
             }
           }

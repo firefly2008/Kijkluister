@@ -8,6 +8,7 @@
 #include <QStandardPaths>
 #include <QUrl>
 
+#include "components.h"
 #include "mpcplayer.h"
 
 namespace {
@@ -52,7 +53,13 @@ Recorder::~Recorder()
 
 QString Recorder::ffmpegPath() const
 {
-    const QString local = QCoreApplication::applicationDirPath() + QStringLiteral("/ffmpeg/ffmpeg.exe");
+    if (Components *c = Components::instance()) {
+        const QString fetched = c->executable(Components::Ffmpeg);
+        if (!fetched.isEmpty()) {
+            return fetched;
+        }
+    }
+    const QString local = QCoreApplication::applicationDirPath() + QStringLiteral("/ffmpeg/ffmpeg.exe"); // tot en met 3.8.8
     if (QFileInfo::exists(local)) {
         return local;
     }
@@ -62,7 +69,7 @@ QString Recorder::ffmpegPath() const
 
 bool Recorder::available() const
 {
-    return !ffmpegPath().isEmpty();
+    return !ffmpegPath().isEmpty() || Components::instance(); // anders wordt ffmpeg eerst opgehaald
 }
 
 QString Recorder::defaultFolder() const
@@ -102,8 +109,21 @@ bool Recorder::start(const QString &channel, const QString &url, int minutes)
         return false;
     }
     if (ffmpegPath().isEmpty()) {
-        setStatus(tr("ffmpeg niet gevonden"));
-        return false;
+        Components *c = Components::instance();
+        if (!c) {
+            setStatus(tr("ffmpeg niet gevonden"));
+            return false;
+        }
+        // Eerst ffmpeg ophalen (eenmalig), dan de opname starten
+        setStatus(tr("ffmpeg wordt opgehaald, de opname begint zo…"));
+        c->ensure(Components::Ffmpeg, [this, channel, url, minutes](bool ok) {
+            if (ok) {
+                start(channel, url, minutes);
+            } else {
+                setStatus(tr("ffmpeg kon niet worden opgehaald"));
+            }
+        });
+        return true;
     }
     if (m_folder.isEmpty()) {
         setFolder(defaultFolder());

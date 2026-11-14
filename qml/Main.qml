@@ -671,6 +671,45 @@ Rectangle {
         id: frameScreen
     }
 
+    // Melding als Kijkluister MPC-HC of ffmpeg ophaalt (op de achtergrond)
+    Rectangle {
+        z: 950
+        visible: components.status !== ""
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: root.height * 0.04
+        width: toastRow.implicitWidth + root.height * 0.05
+        height: root.height * 0.06
+        radius: height / 2
+        color: "#e6202124"
+        border.color: "#33ffffff"
+        Row {
+            id: toastRow
+            anchors.centerIn: parent
+            spacing: root.height * 0.015
+            Text {
+                anchors.verticalCenter: parent.verticalCenter
+                color: "white"
+                font.pixelSize: root.height * 0.024
+                text: components.status
+            }
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                visible: components.progress >= 0
+                width: root.height * 0.18
+                height: root.height * 0.008
+                radius: height / 2
+                color: "#40ffffff"
+                Rectangle {
+                    width: parent.width * Math.max(0, components.progress) / 100
+                    height: parent.height
+                    radius: height / 2
+                    color: "#ffb74d"
+                }
+            }
+        }
+    }
+
     // Films en Series: eigen scherm met de bibliotheek
     LibraryScreen {
         id: libraryScreen

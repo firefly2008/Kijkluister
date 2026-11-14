@@ -31,12 +31,14 @@
 #include "artframe.h"
 #include "paths.h"
 #include "recorder.h"
+#include "components.h"
 #include "mpcplayer.h"
 #include "iptvmodel.h"
 
 #include <QNetworkAccessManager>
 #include <QNetworkDiskCache>
 #include <QNetworkReply>
+#include <QTimer>
 #include <QQmlNetworkAccessManagerFactory>
 
 #ifdef Q_OS_WIN
@@ -229,6 +231,7 @@ int main(int argc, char *argv[])
     IptvModel iptv(appDataDir());
     ArtFrame frame(appDataDir());
     Recorder recorder(appDataDir());
+    Components components(appDataDir());
     MpcPlayer mpc(appDataDir());
 
     auto inputSystem = createInputSystem();
@@ -257,6 +260,11 @@ int main(int argc, char *argv[])
     view.rootContext()->setContextProperty(QStringLiteral("frame"), &frame);
     view.rootContext()->setContextProperty(QStringLiteral("recorder"), &recorder);
     view.rootContext()->setContextProperty(QStringLiteral("mpc"), &mpc);
+    view.rootContext()->setContextProperty(QStringLiteral("components"), &components);
+    // MPC-HC en ffmpeg op de achtergrond ophalen of bijwerken (niet tijdens de tests)
+    if (qEnvironmentVariable("BIGSCREEN_SELFTEST").isEmpty()) {
+        QTimer::singleShot(20000, &components, &Components::startBackground);
+    }
     // Na de film of serie terug naar Kijkluister
     QObject::connect(&mpc, &MpcPlayer::finished, &view, [&view] {
         view.raise();

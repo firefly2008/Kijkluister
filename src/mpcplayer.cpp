@@ -11,6 +11,7 @@
 #include <SDL3/SDL.h>
 
 #include "appmodel.h" // mpcHcPath(): een eventueel zelf geïnstalleerde MPC-HC
+#include "components.h"
 
 #ifdef Q_OS_WIN
 #include <windows.h>
@@ -19,30 +20,6 @@
 namespace {
 MpcPlayer *s_instance = nullptr;
 
-QString bundledDir()
-{
-    return QCoreApplication::applicationDirPath() + QStringLiteral("/mpc-hc");
-}
-
-bool copyTree(const QString &from, const QString &to)
-{
-    QDir().mkpath(to);
-    QDirIterator it(from, QDir::Files | QDir::Dirs | QDir::NoDotAndDotDot, QDirIterator::Subdirectories);
-    while (it.hasNext()) {
-        const QString src = it.next();
-        const QString dst = to + src.mid(from.size());
-        if (it.fileInfo().isDir()) {
-            QDir().mkpath(dst);
-        } else {
-            QFile::remove(dst);
-            if (!QFile::copy(src, dst)) {
-                qWarning() << "MPC-HC: copy failed" << dst;
-                return false;
-            }
-        }
-    }
-    return true;
-}
 }
 
 MpcPlayer::MpcPlayer(const QString &dataDir, QObject *parent)
@@ -67,7 +44,7 @@ MpcPlayer *MpcPlayer::instance()
 
 bool MpcPlayer::bundled() const
 {
-    return QFileInfo::exists(bundledDir() + QStringLiteral("/mpc-hc64.exe"));
+    return Components::instance() && !Components::instance()->executable(Components::MpcHc).isEmpty();
 }
 
 bool MpcPlayer::running() const
@@ -75,60 +52,34 @@ bool MpcPlayer::running() const
     return m_process && m_process->state() != QProcess::NotRunning;
 }
 
-// De meegeleverde MPC-HC staat in Program Files (alleen-lezen). MPC-HC bewaart zijn instellingen
-// (onder andere waar je gebleven was) in mpc-hc64.ini naast het programma, dus we zetten een
-// kopie in de eigen datamap. Na een update van Kijkluister wordt die kopie vernieuwd.
-bool MpcPlayer::preparePortable()
+// MPC-HC haalt Kijkluister zelf op (zie components.cpp) in %LOCALAPPDATA%\Kijkluister\mpc-hc.
+// Daar staat ook mpc-hc64.ini: zolang die er is gebruikt MPC-HC geen register maar dit bestand.
+void MpcPlayer::configure(const QString &dir)
 {
-    const QString src = bundledDir();
-    const QFileInfo srcExe(src + QStringLiteral("/mpc-hc64.exe"));
-    if (!srcExe.exists()) {
-        return false;
+    const QString ini = dir + QStringLiteral("/mpc-hc64.ini");
+    if (QFileInfo::exists(ini)) {
+        return; // eigen instellingen van de gebruiker niet overschrijven
     }
-    const QString stamp = QString::number(srcExe.size()) + QLatin1Char('-') + QString::number(srcExe.lastModified().toSecsSinceEpoch());
-    QFile stampFile(m_portableDir + QStringLiteral("/kijkluister-versie.txt"));
-    if (stampFile.open(QIODevice::ReadOnly) && QString::fromUtf8(stampFile.readAll()).trimmed() == stamp
-        && QFileInfo::exists(m_portableDir + QStringLiteral("/mpc-hc64.exe"))) {
-        return true;
+    // Nederlands, schermvullend, onthouden waar je was, geen updatevraag (Kijkluister houdt MPC-HC bij)
+    // (namen uit MPC-HC SettingsDefines.h; alles in de sectie [Settings])
+    QFile f(ini);
+    if (f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
+        f.write("[Settings]\r\n"
+                "InterfaceLanguage=1043\r\n"
+                "LaunchFullScreen=1\r\n"
+                "RememberFilePos=1\r\n"
+                "UpdaterAutoCheck=0\r\n");
     }
-    stampFile.close();
-    qInfo() << "MPC-HC: preparing portable copy in" << m_portableDir;
-    // Instellingen van de gebruiker bewaren bij een update
-    const QString ini = m_portableDir + QStringLiteral("/mpc-hc64.ini");
-    QByteArray oldIni;
-    if (QFile f(ini); f.open(QIODevice::ReadOnly)) {
-        oldIni = f.readAll();
-    }
-    if (!copyTree(src, m_portableDir)) {
-        return false;
-    }
-    if (!oldIni.isEmpty() && oldIni.contains("InterfaceLanguage")) {
-        QFile f(ini);
-        if (f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-            f.write(oldIni);
-        }
-    } else {
-        // Eerste keer: Nederlands, schermvullend, onthouden waar je was, geen updatevraag
-        // (namen uit MPC-HC SettingsDefines.h; alles in de sectie [Settings])
-        QFile f(ini);
-        if (f.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-            f.write("[Settings]\r\n"
-                    "InterfaceLanguage=1043\r\n"
-                    "LaunchFullScreen=1\r\n"
-                    "RememberFilePos=1\r\n"
-                    "UpdaterAutoCheck=0\r\n");
-        }
-    }
-    if (QFile out(m_portableDir + QStringLiteral("/kijkluister-versie.txt")); out.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
-        out.write(stamp.toUtf8());
-    }
-    return true;
 }
 
 QString MpcPlayer::executable()
 {
-    if (preparePortable()) {
-        return QDir::toNativeSeparators(m_portableDir + QStringLiteral("/mpc-hc64.exe"));
+    if (Components *c = Components::instance()) {
+        const QString exe = c->executable(Components::MpcHc);
+        if (!exe.isEmpty()) {
+            configure(QFileInfo(exe).absolutePath());
+            return exe;
+        }
     }
     const QString installed = mpcHcPath();
     return QFileInfo::exists(installed) ? installed : QString();
@@ -141,7 +92,18 @@ bool MpcPlayer::play(const QStringList &files, bool closeAtEnd)
     }
     const QString exe = executable();
     if (exe.isEmpty()) {
-        return false;
+        // Nog niet aanwezig: ophalen en daarna meteen afspelen
+        Components *c = Components::instance();
+        if (!c) {
+            return false;
+        }
+        qInfo() << "MPC-HC: not present yet, downloading first";
+        c->ensure(Components::MpcHc, [this, files, closeAtEnd](bool ok) {
+            if (ok) {
+                play(files, closeAtEnd);
+            }
+        });
+        return true;
     }
     if (running()) {
         // Nieuwe keuze: het lopende venster netjes sluiten, MPC-HC onthoudt de positie

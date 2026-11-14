@@ -24,7 +24,7 @@ public:
 
     bool running() const;
     bool bundled() const;
-    QString executable();      // meegeleverde (draagbare) MPC-HC, anders een geïnstalleerde
+    QString executable();      // door Kijkluister opgehaalde MPC-HC, anders een geïnstalleerde
     // Speel één bestand, of een reeks (eerste = nu, rest = daarna). closeAtEnd: MPC-HC sluit na afloop.
     bool play(const QStringList &files, bool closeAtEnd);
 
@@ -36,7 +36,7 @@ Q_SIGNALS:
     void finished();
 
 private:
-    bool preparePortable();
+    static void configure(const QString &dir);
     void sendVirtualKey(unsigned short vk, bool pressed, bool alt = false);
 
     QString m_dataDir;

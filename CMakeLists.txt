@@ -24,6 +24,8 @@ qt_add_executable(bigscreen-host WIN32
     src/gamepadnavigator.h
     src/medialibrary.cpp
     src/medialibrary.h
+    src/components.cpp
+    src/components.h
     src/mpcplayer.cpp
     src/mpcplayer.h
     src/recorder.cpp
