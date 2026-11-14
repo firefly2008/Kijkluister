@@ -160,6 +160,15 @@ jobs:
           name: Kijkluister-setup
           path: out/*.exe
       # Een branch release/x.y.z wordt Release vx.y.z: die blijft bewaard naast de andere versies
+      - name: Oude release van dezelfde versie opruimen (opnieuw gepushte release-branch)
+        if: startsWith(github.ref, 'refs/heads/release/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          $tag = "v$env:BIGSCREEN_VERSION"
+          gh release delete $tag -R $env:GITHUB_REPOSITORY --yes --cleanup-tag 2>$null
+          "Opgeruimd (indien aanwezig): $tag"
       - name: Release maken
         if: startsWith(github.ref, 'refs/heads/release/')
         uses: softprops/action-gh-release@v2
