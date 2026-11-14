@@ -88,7 +88,7 @@ jobs:
           $gz.Write($bytes, 0, $bytes.Length); $gz.Close(); $fs.Close()
           $env:BIGSCREEN_TEST_M3U = "$tv\test.m3u"
           Get-Content "$tv\test.m3u"
-          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-lijst', 'frame-settings'
+          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc'
           $manual = '${{ github.ref }}' -like 'refs/heads/screenshots/*'
           if ($manual) {
             # Schermafbeeldingen voor de handleiding, op Full HD
@@ -111,6 +111,24 @@ jobs:
             $env:BIGSCREEN_SELFTEST = $mode
             $p = Start-Process dist\Kijkluister.exe -PassThru
             Start-Sleep $(if ($manual -or $mode -like 'frame*') { 20 } else { 14 })
+            if ($mode -like 'frame*esc') {
+              # Echte toetsaanslag Esc naar het venster sturen (zoals toetsenbord of gamepad-B)
+              Add-Type -ErrorAction SilentlyContinue @"
+          using System; using System.Runtime.InteropServices;
+          public class Inp {
+            [DllImport("user32.dll")] public static extern bool SetForegroundWindow(IntPtr h);
+            [DllImport("user32.dll")] public static extern bool SetCursorPos(int x, int y);
+            [DllImport("user32.dll")] public static extern void keybd_event(byte k, byte s, int f, IntPtr e);
+          }
+          "@
+              $p.Refresh(); [Inp]::SetForegroundWindow($p.MainWindowHandle) | Out-Null; Start-Sleep 1
+              if ($mode -eq 'frame-mouseesc') {
+                # Muis bewegen over de tegels onder het schilderij (dit stal eerder de focus)
+                for ($k = 0; $k -lt 12; $k++) { [Inp]::SetCursorPos(200 + 60 * $k, 300 + 20 * $k) | Out-Null; Start-Sleep -Milliseconds 120 }
+              }
+              [Inp]::keybd_event(0x1B, 0, 0, [IntPtr]::Zero); Start-Sleep -Milliseconds 80; [Inp]::keybd_event(0x1B, 0, 2, [IntPtr]::Zero)
+              Start-Sleep 3
+            }
             # Schermafdruk als base64 in het log, zodat het resultaat te bekijken is
             $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
             $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
@@ -123,6 +141,7 @@ jobs:
             if ($p.HasExited) { "RESULT: EXITED code {0} (0x{0:X8})" -f $p.ExitCode } else { "RESULT: RUNNING"; Stop-Process -Id $p.Id -Force }
             if (Test-Path $log) { "--- log ---"; Get-Content $log } else { "NO LOG FILE" }
             if (-not (Test-Path $log) -or -not (Select-String -Path $log -Pattern "Window shown" -Quiet)) { throw "Rooktest mislukt: venster niet getoond" }
+            if ($mode -like 'frame*esc' -and -not (Select-String -Path $log -Pattern "Frame closed" -Quiet)) { throw "Rooktest mislukt: Esc stopt het schilderij niet ($mode)" }
           }
       - uses: actions/upload-artifact@v4
         if: startsWith(github.ref, 'refs/heads/screenshots/')

@@ -38,6 +38,11 @@ Rectangle {
     // cursor doorschuiven tijdens het scrollen met pijltjes of controller
     property double lastMouseMove: 0
     function mouseActive() {
+        // Muis boven een volledig scherm (schilderij, live tv, bibliotheek): de tegels
+        // eronder mogen dan geen focus pakken, anders werken Esc/B niet meer
+        if (frameScreen.visible || iptvScreen.visible || libraryScreen.visible) {
+            return false
+        }
         return Date.now() - lastMouseMove < 400
     }
 
@@ -292,7 +297,7 @@ Rectangle {
             iptvScreen.open(mediaGrid())
         } else if (selfTest.startsWith("frame")) {
             // Test: frame-chicago, frame-met, frame-nature, frame-mix, frame-lijst, frame-settings
-            const kinds = { "frame-chicago": 0, "frame-met": 1, "frame-nature": 2, "frame-mix": 4, "frame-lijst": 0, "frame-settings": 2 }
+            const kinds = { "frame-chicago": 0, "frame-met": 1, "frame-nature": 2, "frame-mix": 4, "frame-lijst": 0, "frame-settings": 2, "frame-esc": 2, "frame-mouseesc": 0 }
             frame.source = kinds[selfTest] !== undefined ? kinds[selfTest] : 0
             frame.fill = selfTest !== "frame-lijst"
             frame.interval = 5

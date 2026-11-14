@@ -14,6 +14,13 @@ FocusScope {
     visible: false
     z: 60
 
+    // Zolang het schilderij openstaat de toetsen vasthouden (ook als iets anders focus probeerde te pakken)
+    onActiveFocusChanged: {
+        if (visible && !activeFocus) {
+            Qt.callLater(() => { if (frameScreen.visible && !frameScreen.activeFocus) frameScreen.forceActiveFocus() })
+        }
+    }
+
     function open(focusItem) {
         returnFocusTo = focusItem
         visible = true
@@ -27,6 +34,7 @@ FocusScope {
     }
 
     function close() {
+        console.info("Frame closed")
         settings.visible = false
         frame.keepAwake(false)
         visible = false
@@ -162,7 +170,7 @@ FocusScope {
                 color: "#9a9ea6"
                 font.pixelSize: frameScreen.unit * 1.8
                 text: (frameScreen.shownItem ? frameScreen.shownItem.credit : "")
-                      + "    ·    ← → bladeren   ·   OK / Menu instellingen   ·   Esc / B terug"
+                      + "    ·    ← → bladeren   ·   OK / Menu instellingen   ·   Esc / B / rechtermuisknop stoppen"
             }
         }
     }
@@ -179,8 +187,10 @@ FocusScope {
     MouseArea {
         anchors.fill: parent
         hoverEnabled: true
+        acceptedButtons: Qt.LeftButton | Qt.RightButton
         onPositionChanged: frameScreen.flashInfo()
-        onClicked: settings.open()
+        // Links: instellingen, rechts: stoppen
+        onClicked: (mouse) => mouse.button === Qt.RightButton ? frameScreen.close() : settings.open()
     }
 
     Keys.onLeftPressed: { frame.previous(); flashInfo() }
@@ -355,12 +365,24 @@ FocusScope {
                         Keys.onReturnPressed: frame.pexelsKey = text
                     }
                 }
-                FocusButton {
-                    id: closeButton
-                    unit: frameScreen.unit
-                    text: "Klaar"
-                    onClicked: settings.close()
-                    KeyNavigation.up: keyField
+                Row {
+                    spacing: frameScreen.unit * 1.2
+                    FocusButton {
+                        id: closeButton
+                        unit: frameScreen.unit
+                        text: "Klaar"
+                        onClicked: settings.close()
+                        KeyNavigation.up: keyField
+                        KeyNavigation.right: stopButton
+                    }
+                    FocusButton {
+                        id: stopButton
+                        unit: frameScreen.unit
+                        text: "Schilderij stoppen"
+                        onClicked: frameScreen.close()
+                        KeyNavigation.up: keyField
+                        KeyNavigation.left: closeButton
+                    }
                 }
             }
         }
