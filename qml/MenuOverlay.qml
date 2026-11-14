@@ -6,6 +6,7 @@ FocusScope {
     id: overlay
 
     property string title
+    property string message           // optionele uitleg onder de titel
     property var entries: []          // [{ label: "...", action: "..." }]
     property Item returnFocusTo: null
     signal chosen(string action)
@@ -14,8 +15,9 @@ FocusScope {
     visible: false
     z: 100
 
-    function open(menuTitle, menuEntries, focusItem) {
+    function open(menuTitle, menuEntries, focusItem, menuMessage) {
         title = menuTitle
+        message = menuMessage || ""
         entries = menuEntries
         returnFocusTo = focusItem
         list.currentIndex = 0
@@ -47,7 +49,7 @@ FocusScope {
         readonly property real unit: overlay.height / 100
         anchors.centerIn: parent
         width: Math.min(overlay.width * 0.8, unit * 70)
-        height: titleLabel.height + list.height + unit * 9
+        height: titleLabel.height + (messageLabel.visible ? messageLabel.height + unit * 1.5 : 0) + list.height + unit * 9
         radius: unit * 2
         color: "#1d2a40"
         border.color: "#44ffffff"
@@ -61,9 +63,23 @@ FocusScope {
             anchors.right: parent.right
             anchors.margins: panel.unit * 3
             color: "white"
-            font.pixelSize: panel.unit * 3.4
+            font.pixelSize: (panel.unit * 3.4) * appModel.fontScale
             elide: Text.ElideRight
             text: overlay.title
+        }
+        Text {
+            id: messageLabel
+            visible: overlay.message !== ""
+            anchors.top: messageLabel.visible ? messageLabel.bottom : titleLabel.bottom
+            anchors.topMargin: panel.unit * 1.5
+            anchors.left: parent.left
+            anchors.right: parent.right
+            anchors.leftMargin: panel.unit * 3
+            anchors.rightMargin: panel.unit * 3
+            color: "#d5d8dc"
+            font.pixelSize: panel.unit * 2.5 * appModel.fontScale
+            wrapMode: Text.Wrap
+            text: overlay.message
         }
 
         ListView {
@@ -92,7 +108,7 @@ FocusScope {
                     anchors.left: parent.left
                     anchors.leftMargin: panel.unit * 2.5
                     color: "white"
-                    font.pixelSize: panel.unit * 2.8
+                    font.pixelSize: (panel.unit * 2.8) * appModel.fontScale
                     text: row.modelData.label
                 }
                 MouseArea {

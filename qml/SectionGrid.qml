@@ -42,7 +42,7 @@ Item {
         anchors.left: parent.left
         anchors.leftMargin: section.unit * 1.5
         color: "white"
-        font.pixelSize: section.unit * 2.6
+        font.pixelSize: (section.unit * 2.6) * appModel.fontScale
         font.weight: Font.DemiBold
         text: section.title
     }
@@ -76,6 +76,8 @@ Item {
             backdrop: section.model && section.model.backdropAt ? section.model.backdropAt(index) : ""
             subtitle: section.model && section.model.subtitleAt ? section.model.subtitleAt(index) : ""
             progress: section.model && section.model.progressAt ? section.model.progressAt(index) : -1
+            badge: section.model === appModel && appModel.pathAt(index) === "bigscreen:iptv"
+                   && (recorder.recording || recorder.schedule.length > 0)
             onActivated: {
                 grid.currentIndex = index
                 grid.forceActiveFocus()
@@ -105,8 +107,28 @@ Item {
         move: Transition { NumberAnimation { properties: "x,y"; duration: 160; easing.type: Easing.OutCubic } }
         displaced: Transition { NumberAnimation { properties: "x,y"; duration: 160; easing.type: Easing.OutCubic } }
 
-        Keys.onReturnPressed: section.launchRequested(currentIndex)
-        Keys.onEnterPressed: section.launchRequested(currentIndex)
+        // Kort Enter = openen; Enter ingedrukt houden = opties (net als A ingedrukt houden)
+        property bool holdHandled: false
+        property bool enterDown: false     // alleen loslaten telt als het indrukken ook hier was
+        Keys.onReturnPressed: (event) => grid.enterPressed(event)
+        Keys.onEnterPressed: (event) => grid.enterPressed(event)
+        Keys.onReleased: (event) => {
+            if ((event.key === Qt.Key_Return || event.key === Qt.Key_Enter) && !event.isAutoRepeat) {
+                if (enterDown && !holdHandled) section.launchRequested(currentIndex)
+                holdHandled = false
+                enterDown = false
+                event.accepted = true
+            }
+        }
+        function enterPressed(event) {
+            event.accepted = true
+            if (!event.isAutoRepeat) {
+                enterDown = true
+            } else if (enterDown && !holdHandled) {
+                holdHandled = true
+                section.menuRequested(currentIndex)
+            }
+        }
         Keys.onMenuPressed: section.menuRequested(currentIndex)
         Keys.onPressed: (event) => {
             if (event.key === Qt.Key_F2) {

@@ -60,7 +60,7 @@ public:
 
     // type: "m3u-url", "m3u-file" of "xtream"
     // Gratis, openbaar beschikbare zenders (iptv-org) toevoegen als ze er nog niet zijn
-    Q_INVOKABLE int addFreeSources();
+    Q_INVOKABLE int addFreeSources(bool includeNews = false);
     QStringList extraEpgUrls() const { return m_extraEpgUrls; }
     void setExtraEpgUrls(const QStringList &urls);
     // Gids voor de gratis zenders, elke nacht gemaakt door de workflow "Tv-gids" in de Kijkluister-repo
@@ -152,6 +152,7 @@ private:
 
     QStringList m_epgUrls;
     QStringList m_extraEpgUrls;
+    bool m_groupChosen = false;
     int m_epgFailures = 0;
     QHash<QString, QString> m_epgBase;   // gids-id zonder "@SD"/"@HD" (klein) -> gids-id
     void rebuildEpgIndex();

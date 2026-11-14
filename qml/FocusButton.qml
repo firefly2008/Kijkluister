@@ -21,7 +21,7 @@ Rectangle {
         id: label
         anchors.centerIn: parent
         color: button.activeFocus ? "#111318" : "white"
-        font.pixelSize: button.unit * 2.4
+        font.pixelSize: (button.unit * 2.4) * appModel.fontScale
         font.weight: Font.DemiBold
         text: button.text
     }

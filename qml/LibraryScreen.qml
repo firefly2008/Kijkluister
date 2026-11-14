@@ -209,7 +209,7 @@ FocusScope {
                 anchors.left: parent.left
                 anchors.margins: lib.unit * 4
                 color: "white"
-                font.pixelSize: lib.unit * 3.6
+                font.pixelSize: (lib.unit * 3.6) * appModel.fontScale
                 font.weight: Font.DemiBold
                 text: "Bibliotheek"
             }
@@ -229,7 +229,7 @@ FocusScope {
                     { label: "Films", glyph: "", action: "movies" },
                     { label: "Series", glyph: "", action: "shows" },
                     { label: "Bijwerken", glyph: "", action: "scan" },
-                    { label: "Mappen en sleutel", glyph: "", action: "setup" },
+                    { label: "Mappen kiezen", glyph: "", action: "setup" },
                     { label: "Terug", glyph: "", action: "back" }
                 ]
 
@@ -273,7 +273,7 @@ FocusScope {
                         Text {
                             anchors.verticalCenter: parent.verticalCenter
                             color: entry.focused ? "#111318" : "white"
-                            font.pixelSize: lib.unit * 2.5
+                            font.pixelSize: (lib.unit * 2.5) * appModel.fontScale
                             font.weight: entry.activeSection ? Font.DemiBold : Font.Normal
                             text: entry.modelData.label
                         }
@@ -300,7 +300,7 @@ FocusScope {
                 anchors.margins: lib.unit * 3
                 wrapMode: Text.Wrap
                 color: "#6f737a"
-                font.pixelSize: lib.unit * 1.6
+                font.pixelSize: (lib.unit * 1.6) * appModel.fontScale
                 text: "Gegevens: TMDB en TVmaze. Dit product gebruikt de TMDB API, maar is niet door TMDB goedgekeurd of gecertificeerd."
             }
         }
@@ -319,7 +319,7 @@ FocusScope {
             Text {
                 width: parent.width
                 color: "white"
-                font.pixelSize: lib.unit * 6.5
+                font.pixelSize: (lib.unit * 6.5) * appModel.fontScale
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
                 text: lib.current ? lib.current.title : ""
@@ -327,7 +327,7 @@ FocusScope {
             Text {
                 width: parent.width
                 color: "#d0d3d8"
-                font.pixelSize: lib.unit * 2.3
+                font.pixelSize: (lib.unit * 2.3) * appModel.fontScale
                 elide: Text.ElideRight
                 text: lib.metaLine(lib.current)
             }
@@ -337,7 +337,7 @@ FocusScope {
                 maximumLineCount: 4
                 elide: Text.ElideRight
                 color: "#e8eaed"
-                font.pixelSize: lib.unit * 2.3
+                font.pixelSize: (lib.unit * 2.3) * appModel.fontScale
                 lineHeight: 1.15
                 text: lib.current ? (lib.current.overview || "") : ""
             }
@@ -349,7 +349,7 @@ FocusScope {
             anchors.right: parent.right
             anchors.margins: lib.unit * 3
             color: "#9fb4d0"
-            font.pixelSize: lib.unit * 2
+            font.pixelSize: (lib.unit * 2) * appModel.fontScale
             text: library.status
         }
 
@@ -359,7 +359,7 @@ FocusScope {
             anchors.left: grid.left
             anchors.leftMargin: lib.unit * 1.5
             color: "white"
-            font.pixelSize: lib.unit * 2.8
+            font.pixelSize: (lib.unit * 2.8) * appModel.fontScale
             font.weight: Font.DemiBold
             text: lib.section === "movies" ? "Films" : "Series"
         }
@@ -427,11 +427,11 @@ FocusScope {
                 wrapMode: Text.Wrap
                 visible: lib.items.length === 0
                 color: "#9fb4d0"
-                font.pixelSize: lib.unit * 2.6
+                font.pixelSize: (lib.unit * 2.6) * appModel.fontScale
                 text: library.busy ? "Bezig met zoeken…"
                       : lib.section === "movies"
-                        ? (library.moviesFolder !== "" ? "Geen films gevonden in " + library.moviesFolders.join(", ") : "Nog geen map met films gekozen: kies Mappen en sleutel")
-                        : (library.showsFolder !== "" ? "Geen series gevonden in " + library.showsFolders.join(", ") : "Nog geen map met series gekozen: kies Mappen en sleutel")
+                        ? (library.moviesFolder !== "" ? "Geen films gevonden in " + library.moviesFolders.join(", ") : "Nog geen map met films gekozen: kies \"Mappen kiezen\"")
+                        : (library.showsFolder !== "" ? "Geen series gevonden in " + library.showsFolders.join(", ") : "Nog geen map met series gekozen: kies \"Mappen kiezen\"")
             }
         }
     }
@@ -459,7 +459,7 @@ FocusScope {
                 wrapMode: Text.Wrap
                 visible: detailPosterImage.status !== Image.Ready
                 color: "white"
-                font.pixelSize: lib.unit * 3
+                font.pixelSize: (lib.unit * 3) * appModel.fontScale
                 text: lib.detail ? lib.detail.title : ""
             }
             Image {
@@ -487,7 +487,7 @@ FocusScope {
                 maximumLineCount: 2
                 elide: Text.ElideRight
                 color: "white"
-                font.pixelSize: lib.unit * 5.5
+                font.pixelSize: (lib.unit * 5.5) * appModel.fontScale
                 font.weight: Font.DemiBold
                 text: lib.detail ? lib.detail.title + (lib.detail.year ? "  (" + lib.detail.year + ")" : "") : ""
             }
@@ -495,7 +495,7 @@ FocusScope {
                 width: parent.width
                 elide: Text.ElideRight
                 color: "#d0d3d8"
-                font.pixelSize: lib.unit * 2.3
+                font.pixelSize: (lib.unit * 2.3) * appModel.fontScale
                 text: lib.metaLine(lib.detail)
             }
             Text {
@@ -503,7 +503,7 @@ FocusScope {
                 visible: text !== ""
                 elide: Text.ElideRight
                 color: "#b0b4bb"
-                font.pixelSize: lib.unit * 2.2
+                font.pixelSize: (lib.unit * 2.2) * appModel.fontScale
                 text: lib.detail && lib.detail.maker ? lib.detail.makerLabel + ": " + lib.detail.maker : ""
             }
             Text {
@@ -512,7 +512,7 @@ FocusScope {
                 maximumLineCount: lib.detail && lib.detail.kind === "show" ? 4 : 6
                 elide: Text.ElideRight
                 color: "#e8eaed"
-                font.pixelSize: lib.unit * 2.3
+                font.pixelSize: (lib.unit * 2.3) * appModel.fontScale
                 lineHeight: 1.15
                 text: lib.detail ? (lib.detail.overview || "Geen beschrijving gevonden.") : ""
             }
@@ -581,7 +581,7 @@ FocusScope {
                     spacing: lib.unit * 2
                     Text {
                         color: episodeRow.focused ? "#111318" : "#9fb4d0"
-                        font.pixelSize: lib.unit * 2.2
+                        font.pixelSize: (lib.unit * 2.2) * appModel.fontScale
                         font.weight: Font.DemiBold
                         text: episodeRow.modelData.code
                     }
@@ -589,7 +589,7 @@ FocusScope {
                         width: episodeList.width - lib.unit * 16
                         elide: Text.ElideRight
                         color: episodeRow.focused ? "#111318" : "white"
-                        font.pixelSize: lib.unit * 2.2
+                        font.pixelSize: (lib.unit * 2.2) * appModel.fontScale
                         text: episodeRow.modelData.title || "Aflevering " + episodeRow.modelData.episode
                     }
                 }
@@ -622,7 +622,7 @@ FocusScope {
             anchors.bottomMargin: lib.unit
             visible: castList.count > 0
             color: "white"
-            font.pixelSize: lib.unit * 2.6
+            font.pixelSize: (lib.unit * 2.6) * appModel.fontScale
             font.weight: Font.DemiBold
             text: "Cast"
         }
@@ -653,7 +653,7 @@ FocusScope {
                     Text {
                         anchors.centerIn: parent
                         visible: photo.status !== Image.Ready
-                        color: "#7d8188"
+                        color: "#a8acb3"
                         font.family: "Segoe MDL2 Assets"
                         font.pixelSize: parent.width * 0.4
                         text: ""
@@ -671,14 +671,14 @@ FocusScope {
                     width: parent.width
                     elide: Text.ElideRight
                     color: "white"
-                    font.pixelSize: lib.unit * 1.8
+                    font.pixelSize: (lib.unit * 1.8) * appModel.fontScale
                     text: person.modelData.name
                 }
                 Text {
                     width: parent.width
                     elide: Text.ElideRight
                     color: "#9a9ea6"
-                    font.pixelSize: lib.unit * 1.6
+                    font.pixelSize: (lib.unit * 1.6) * appModel.fontScale
                     text: person.modelData.role || ""
                 }
             }
@@ -702,7 +702,7 @@ FocusScope {
             id: message
             anchors.centerIn: parent
             color: "white"
-            font.pixelSize: lib.unit * 2.6
+            font.pixelSize: (lib.unit * 2.6) * appModel.fontScale
         }
     }
     Timer { id: messageTimer; interval: 2500 }

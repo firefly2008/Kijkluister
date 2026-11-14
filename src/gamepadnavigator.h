@@ -33,6 +33,8 @@ private:
     void handleStick();
 
     QTimer m_timer;
+    QTimer m_holdTimer;            // A ingedrukt houden = opties (zoals op een telefoon)
+    bool m_holdFired = false;
     QList<SDL_Gamepad *> m_pads;
     int m_stickKey = 0;
     bool m_stickRepeating = false;

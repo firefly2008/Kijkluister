@@ -194,6 +194,7 @@ QHash<int, QByteArray> IptvModel::roleNames() const
 
 void IptvModel::setGroup(const QString &group)
 {
+    m_groupChosen = true;
     if (group == m_group) {
         return;
     }
@@ -249,6 +250,10 @@ void IptvModel::rebuildGroups()
         }
     }
     m_groups = groups;
+    // Zolang je zelf nog niets kiest: begin bij de Nederlandse zenders (niet bij ruim 1.000 zenders)
+    if (!m_groupChosen && m_group == allGroup && m_groups.contains(QStringLiteral("Nederland"))) {
+        m_group = QStringLiteral("Nederland");
+    }
     if (!m_groups.contains(m_group)) {
         m_group = allGroup;
     }
@@ -258,16 +263,17 @@ namespace {
 struct FreeList {
     const char *name;
     const char *url;
+    bool news;   // internationaal nieuws: alleen op verzoek (ruim 1.000 zenders)
 };
 // iptv-org verzamelt alleen vrij en openbaar beschikbare streams van de zenders zelf
 const FreeList freeLists[] = {
-    {"Nederland", "https://iptv-org.github.io/iptv/countries/nl.m3u"},
-    {"België", "https://iptv-org.github.io/iptv/countries/be.m3u"},
-    {"Nieuws (internationaal)", "https://iptv-org.github.io/iptv/categories/news.m3u"},
+    {"Nederland", "https://iptv-org.github.io/iptv/countries/nl.m3u", false},
+    {"België", "https://iptv-org.github.io/iptv/countries/be.m3u", false},
+    {"Nieuws (internationaal)", "https://iptv-org.github.io/iptv/categories/news.m3u", true},
 };
 }
 
-int IptvModel::addFreeSources()
+int IptvModel::addFreeSources(bool includeNews)
 {
     QStringList present;
     for (const QVariant &v : std::as_const(m_sources)) {
@@ -276,7 +282,7 @@ int IptvModel::addFreeSources()
     int added = 0;
     for (const FreeList &list : freeLists) {
         const QString url = QString::fromLatin1(list.url);
-        if (present.contains(url)) {
+        if (present.contains(url) || (list.news && !includeNews)) {
             continue;
         }
         const QString name = QString::fromUtf8(list.name);

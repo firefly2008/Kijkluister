@@ -40,8 +40,8 @@ FocusScope {
             close()
         } else {
             warning.text = addType === "xtream" ? "Vul server, gebruikersnaam en wachtwoord in."
-                         : addType === "m3u-file" ? "Kies een bestaand M3U-bestand."
-                         : "Vul het adres van de afspeellijst in."
+                         : addType === "m3u-file" ? "Kies het bestand met de zenderlijst (eindigt meestal op .m3u)."
+                         : "Vul de link in die je van je tv-aanbieder kreeg (begint met http)."
         }
     }
 
@@ -81,7 +81,7 @@ FocusScope {
             focus: true
             verticalAlignment: TextInput.AlignVCenter
             color: "white"
-            font.pixelSize: field.unit * 2.3
+            font.pixelSize: (field.unit * 2.3) * appModel.fontScale
             clip: true
             selectByMouse: true
             echoMode: field.secret ? TextInput.Password : TextInput.Normal
@@ -92,8 +92,8 @@ FocusScope {
             anchors.fill: input
             verticalAlignment: Text.AlignVCenter
             visible: input.text === "" && !input.activeFocus
-            color: "#7d8188"
-            font.pixelSize: field.unit * 2.3
+            color: "#a8acb3"
+            font.pixelSize: (field.unit * 2.3) * appModel.fontScale
             text: field.placeholder
         }
     }
@@ -130,7 +130,7 @@ FocusScope {
 
             Text {
                 color: "white"
-                font.pixelSize: sources.unit * 4
+                font.pixelSize: (sources.unit * 4) * appModel.fontScale
                 font.weight: Font.DemiBold
                 text: "Bronnen voor live tv"
             }
@@ -139,7 +139,7 @@ FocusScope {
             Text {
                 visible: sourceList.count > 0
                 color: "#9fb4d0"
-                font.pixelSize: sources.unit * 2.2
+                font.pixelSize: (sources.unit * 2.2) * appModel.fontScale
                 text: "Huidige bronnen (Enter om te verwijderen)"
             }
             ListView {
@@ -160,7 +160,7 @@ FocusScope {
                     focus: ListView.isCurrentItem
                     text: sources.confirmRemove === index
                           ? "Nogmaals Enter om " + modelData.name + " te verwijderen"
-                          : "✕   " + modelData.name + "   (" + (modelData.type === "xtream" ? "Xtream" : modelData.type === "m3u-file" ? "bestand" : "M3U-link") + ")"
+                          : "✕   " + modelData.name + "   (" + (modelData.type === "xtream" ? "abonnement" : modelData.type === "m3u-file" ? "bestand" : "link") + ")"
                     onClicked: {
                         if (sources.confirmRemove === index) {
                             sources.confirmRemove = -1
@@ -175,15 +175,15 @@ FocusScope {
             // --- Nieuwe bron ---
             Text {
                 color: "#9fb4d0"
-                font.pixelSize: sources.unit * 2.2
-                text: "Bron toevoegen"
+                font.pixelSize: (sources.unit * 2.2) * appModel.fontScale
+                text: "Zenders toevoegen van je eigen tv-abonnement"
             }
             Row {
                 spacing: sources.unit * 1.2
                 FocusButton {
                     id: urlTab
                     unit: sources.unit
-                    text: "M3U-link"
+                    text: "Link van je aanbieder"
                     checked: sources.addType === "m3u-url"
                     onClicked: sources.addType = "m3u-url"
                     KeyNavigation.right: fileTab
@@ -193,7 +193,7 @@ FocusScope {
                 FocusButton {
                     id: fileTab
                     unit: sources.unit
-                    text: "M3U-bestand"
+                    text: "Bestand op deze computer"
                     checked: sources.addType === "m3u-file"
                     onClicked: sources.addType = "m3u-file"
                     KeyNavigation.left: urlTab
@@ -204,7 +204,7 @@ FocusScope {
                 FocusButton {
                     id: xtreamTab
                     unit: sources.unit
-                    text: "Xtream Codes"
+                    text: "Inloggegevens van je abonnement"
                     checked: sources.addType === "xtream"
                     onClicked: sources.addType = "xtream"
                     KeyNavigation.left: fileTab
@@ -227,9 +227,9 @@ FocusScope {
                     id: urlField
                     width: content.width - (fileButton.visible ? fileButton.width + parent.spacing : 0)
                     unit: sources.unit
-                    placeholder: sources.addType === "xtream" ? "Server, bijvoorbeeld http://voorbeeld.tv:8080"
-                               : sources.addType === "m3u-file" ? "Pad naar het .m3u-bestand"
-                               : "Adres van de afspeellijst (http://… .m3u)"
+                    placeholder: sources.addType === "xtream" ? "Serveradres uit de mail van je aanbieder, bijvoorbeeld http://voorbeeld.tv:8080"
+                               : sources.addType === "m3u-file" ? "Kies het bestand met de zenderlijst"
+                               : "Link van je aanbieder, bijvoorbeeld http://…  (M3U)"
                     upItem: nameField
                     downItem: fileButton.visible ? fileButton : sources.addType === "xtream" ? userField : addButton
                 }
@@ -268,7 +268,7 @@ FocusScope {
                 width: parent.width
                 wrapMode: Text.Wrap
                 color: "#9a9ea6"
-                font.pixelSize: sources.unit * 1.9
+                font.pixelSize: (sources.unit * 1.9) * appModel.fontScale
                 text: "Gebruik alleen afspeellijsten waarvoor je een abonnement of toestemming hebt. "
                       + "Gegevens worden alleen op deze pc bewaard."
             }
@@ -276,7 +276,7 @@ FocusScope {
                 id: warning
                 visible: text !== ""
                 color: "#ff8a80"
-                font.pixelSize: sources.unit * 2.2
+                font.pixelSize: (sources.unit * 2.2) * appModel.fontScale
             }
 
             Row {
@@ -295,10 +295,23 @@ FocusScope {
                     unit: sources.unit
                     text: "Gratis zenders"
                     onClicked: {
-                        const n = iptv.addFreeSources()
-                        warning.text = n > 0 ? n + " gratis lijst(en) toegevoegd." : "De gratis lijsten staan er al."
+                        const n = iptv.addFreeSources(false)
+                        warning.text = n > 0 ? "Gratis Nederlandse en Belgische zenders toegevoegd." : "De gratis zenders staan er al."
                     }
                     KeyNavigation.left: addButton
+                    KeyNavigation.right: newsButton
+                    KeyNavigation.up: addButton.KeyNavigation.up
+                    KeyNavigation.down: epgField
+                }
+                FocusButton {
+                    id: newsButton
+                    unit: sources.unit
+                    text: "+ Internationaal nieuws"
+                    onClicked: {
+                        const n = iptv.addFreeSources(true)
+                        warning.text = n > 0 ? "Ruim 1.000 nieuwszenders uit de hele wereld toegevoegd (groep Nieuws)." : "Het internationale nieuws staat er al."
+                    }
+                    KeyNavigation.left: freeButton
                     KeyNavigation.right: closeButton
                     KeyNavigation.up: addButton.KeyNavigation.up
                     KeyNavigation.down: epgField
@@ -308,7 +321,7 @@ FocusScope {
                     unit: sources.unit
                     text: "Sluiten"
                     onClicked: sources.close()
-                    KeyNavigation.left: freeButton
+                    KeyNavigation.left: newsButton
                     KeyNavigation.up: addButton.KeyNavigation.up
                     KeyNavigation.down: epgField
                 }
@@ -317,8 +330,8 @@ FocusScope {
             // --- Tv-gids ---
             Text {
                 color: "#9fb4d0"
-                font.pixelSize: sources.unit * 2.2
-                text: "Eigen gidsadressen (XMLTV, .xml of .xml.gz; meerdere scheiden met een komma)"
+                font.pixelSize: (sources.unit * 2.2) * appModel.fontScale
+                text: "Tv-gids van je aanbieder (optioneel): link naar het gidsbestand (XMLTV); meerdere met een komma ertussen"
             }
             Row {
                 spacing: sources.unit * 1.2
@@ -344,8 +357,8 @@ FocusScope {
                 }
             }
             Text {
-                color: "#80848b"
-                font.pixelSize: sources.unit * 1.9
+                color: "#a8acb3"
+                font.pixelSize: (sources.unit * 1.9) * appModel.fontScale
                 text: (iptv.epgStatus !== "" ? iptv.epgStatus + "   ·   " : "")
                       + "De gratis Nederlandse en Belgische zenders krijgen elke nacht een nieuwe gids (tvgids.nl, Delta, VRT, VTM, Proximus Pickx)."
                 width: content.width

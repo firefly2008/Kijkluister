@@ -17,6 +17,7 @@ class ResumeModel : public QAbstractListModel
 {
     Q_OBJECT
     Q_PROPERTY(int count READ count NOTIFY countChanged)
+    Q_PROPERTY(int revision READ revision NOTIFY revisionChanged)
 
 public:
     enum Roles { NameRole = Qt::UserRole + 1, IconRole, AccentRole, PathRole };
@@ -32,6 +33,10 @@ public:
     Q_INVOKABLE QString nameAt(int row) const;
     Q_INVOKABLE bool launch(int row);
     Q_INVOKABLE bool hasCustomIcon(int) const { return false; }
+    // Voor het grote tekstvlak bovenaan het startscherm
+    int revision() const { return m_revision; }
+    Q_INVOKABLE QString iconAt(int row) const { return row >= 0 && row < m_items.size() ? m_items.at(row).value(QStringLiteral("poster")).toString() : QString(); }
+    Q_INVOKABLE QString accentAt(int) const { return QStringLiteral("#3a2a30"); }
     Q_INVOKABLE void move(int, int) {}
     // Extra voor de tegel
     Q_INVOKABLE QString backdropAt(int row) const;
@@ -42,6 +47,7 @@ public:
 
 Q_SIGNALS:
     void countChanged();
+    void revisionChanged();
 
 private:
     struct Entry {
@@ -60,4 +66,5 @@ private:
     QHash<QString, qint64> m_durations;   // bestand -> lengte in ms (uit de bibliotheek of ffmpeg)
     QSet<QString> m_probing;
     QTimer m_refreshTimer;
+    int m_revision = 0;
 };

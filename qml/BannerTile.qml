@@ -16,6 +16,7 @@ Item {
     property string backdrop: ""
     property string subtitle: ""
     property real progress: -1
+    property bool badge: false        // rood bolletje: er wordt opgenomen of er staat iets gepland
     readonly property bool wide: backdrop !== "" || progress >= 0
     // "glyph:<teken>": pictogram uit het Windows-lettertype in plaats van een afbeelding
     readonly property bool isGlyph: iconSource.startsWith("glyph:")
@@ -82,7 +83,7 @@ Item {
             Text {
                 width: parent.width
                 color: "white"
-                font.pixelSize: card.height * 0.15
+                font.pixelSize: (card.height * 0.15) * appModel.fontScale
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
                 text: tile.name
@@ -91,7 +92,7 @@ Item {
                 width: parent.width
                 visible: text !== ""
                 color: "#d5d8dc"
-                font.pixelSize: card.height * 0.11
+                font.pixelSize: (card.height * 0.11) * appModel.fontScale
                 elide: Text.ElideRight
                 text: tile.subtitle
             }
@@ -153,7 +154,7 @@ Item {
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.min(implicitWidth, card.width - card.height * 0.56 - card.height * 0.34)
                 color: "white"
-                font.pixelSize: card.height * 0.2
+                font.pixelSize: (card.height * 0.2) * appModel.fontScale
                 font.weight: Font.DemiBold
                 wrapMode: Text.Wrap
                 maximumLineCount: 2
@@ -161,6 +162,21 @@ Item {
                 text: tile.name
             }
         }
+    }
+
+    Rectangle {
+        visible: tile.badge
+        z: 4
+        anchors.top: card.top
+        anchors.right: card.right
+        anchors.margins: card.height * 0.08
+        width: card.height * 0.16
+        height: width
+        radius: width / 2
+        color: "#e53935"
+        border.color: "white"
+        border.width: Math.max(1, width * 0.12)
+        scale: card.scale
     }
 
     MouseArea {

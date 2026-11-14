@@ -248,6 +248,8 @@ void ResumeModel::refresh()
     beginResetModel();
     m_items = items;
     endResetModel();
+    ++m_revision;
+    Q_EMIT revisionChanged();
     if (before != m_items.size()) {
         Q_EMIT countChanged();
     }

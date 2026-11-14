@@ -54,8 +54,8 @@ Rectangle {
     // Naam en soort van de tegel die nu focus heeft (voor het grote tekstvlak bovenaan)
     readonly property string focusName: focusModel ? focusModel.nameAt(focusRow)
                                        : quickRow.activeFocus ? quickModel.get(quickRow.currentIndex).label : ""
-    readonly property string focusKind: focusModel ? currentSection.title + "  ·  Enter om te openen"
-                                       : quickRow.activeFocus ? "Instellingen" : ""
+    readonly property string focusKind: focusModel ? currentSection.title
+                                       : quickRow.activeFocus ? quickModel.get(quickRow.currentIndex).about : ""
     // (revision in de binding: opnieuw opvragen zodra een logo binnen is of wijzigt)
     readonly property string focusIconRaw: focusModel ? (focusModel.revision, focusModel.iconAt(focusRow)) : ""
     // Pictogrammen uit het lettertype (Films, Series) niet als afbeelding laden
@@ -136,12 +136,38 @@ Rectangle {
             return
         }
         const name = model.nameAt(row)
-        showToast(model.launch(row) ? name + " openen…" : name + " kon niet geopend worden")
+        if (model.launch(row)) {
+            // Blijft staan tot het venster echt open is (Kijkluister gaat dan naar de achtergrond)
+            showToast(name + " wordt geopend…", 12000)
+            launchSlowTimer.name = name
+            launchSlowTimer.restart()
+        } else {
+            showToast(name + " kon niet worden geopend. Probeer het opnieuw.", 5000)
+        }
     }
 
-    function showToast(message) {
+    function showToast(message, ms) {
         toast.text = message
+        toastTimer.interval = ms || 3500
         toastTimer.restart()
+    }
+
+    // Duurt het openen lang en staat Kijkluister nog steeds voorop: een uitweg bieden
+    Timer {
+        id: launchSlowTimer
+        property string name
+        interval: 10000
+        onTriggered: if (Qt.application.state === Qt.ApplicationActive)
+                         root.showToast(name + " opent nog niet. Duurt het lang? Kies de tegel nog een keer.", 6000)
+    }
+    Connections {
+        target: Qt.application
+        function onStateChanged() {
+            if (Qt.application.state !== Qt.ApplicationActive) {
+                launchSlowTimer.stop()
+                toastTimer.stop()
+            }
+        }
     }
 
     function openTileMenu(model, row, focusItem) {
@@ -201,7 +227,9 @@ Rectangle {
         const entries = [
             { label: "Tegel toevoegen…", action: "add" },
             { label: "Achtergrond kiezen…", action: "background" },
-            { label: appModel.showHero ? "Grote naam en logo linksboven verbergen" : "Grote naam en logo linksboven tonen", action: "toggle-hero" }
+            { label: appModel.showHero ? "Grote naam en logo linksboven verbergen" : "Grote naam en logo linksboven tonen", action: "toggle-hero" },
+            { label: appModel.fontScale > 1 ? "Tekst normaal" : "Tekst groter (kijken op afstand)", action: "font-scale" },
+            { label: "Diensten kiezen…", action: "welcome" }
         ]
         if (appModel.background !== "") {
             entries.push({ label: "Standaardachtergrond herstellen", action: "background-reset" })
@@ -218,7 +246,9 @@ Rectangle {
     }
 
     function handleMenuAction(action) {
-        if (action === "resume-play") {
+        if (action === "quit") {
+            Qt.quit()
+        } else if (action === "resume-play") {
             launch(resume, editRow)
         } else if (action === "resume-remove") {
             resume.remove(editRow)
@@ -238,6 +268,11 @@ Rectangle {
             placesPicker.model = editModel
             placesPicker.row = editRow
             placesPicker.direction = dir
+        } else if (action === "font-scale") {
+            appModel.fontScale = appModel.fontScale > 1 ? 1.0 : 1.25
+            showToast(appModel.fontScale > 1 ? "Tekst is nu groter" : "Tekst is weer normaal")
+        } else if (action === "welcome") {
+            welcomeOverlay.open(quickRow)
         } else if (action === "toggle-hero") {
             appModel.showHero = !appModel.showHero
         } else if (action === "hide") {
@@ -277,6 +312,10 @@ Rectangle {
 
     Component.onCompleted: {
         focusSection(0, 0, false)
+        // Eerste keer: welkomststap (diensten kiezen)
+        if ((selfTest === "" && !appModel.welcomeDone) || selfTest === "welcome") {
+            Qt.callLater(() => welcomeOverlay.open(mediaGrid()))
+        }
         if (selfTest === "addtile") {
             addOverlay.open(quickRow)
         } else if (selfTest === "podcasts") {
@@ -410,13 +449,13 @@ Rectangle {
 
     ListModel {
         id: quickModel
-        ListElement { label: "Instellingen"; code: 0xE713; uri: "ms-settings:" }
-        ListElement { label: "Wifi"; code: 0xE701; uri: "ms-settings:network-wifi" }
-        ListElement { label: "Bluetooth"; code: 0xE702; uri: "ms-settings:bluetooth" }
-        ListElement { label: "Beeldscherm"; code: 0xE7F4; uri: "ms-settings:display" }
-        ListElement { label: "Geluid"; code: 0xE767; uri: "ms-settings:sound" }
-        ListElement { label: "Aanpassen"; code: 0xE771; uri: "personalize" }
-        ListElement { label: "Afsluiten"; code: 0xE7E8; uri: "" }
+        ListElement { label: "Instellingen"; code: 0xE713; uri: "ms-settings:"; about: "Windows-instellingen openen" }
+        ListElement { label: "Wifi"; code: 0xE701; uri: "ms-settings:network-wifi"; about: "Verbinding met internet kiezen" }
+        ListElement { label: "Bluetooth"; code: 0xE702; uri: "ms-settings:bluetooth"; about: "Koptelefoon of controller koppelen" }
+        ListElement { label: "Beeldscherm"; code: 0xE7F4; uri: "ms-settings:display"; about: "Schermgrootte en helderheid" }
+        ListElement { label: "Geluid"; code: 0xE767; uri: "ms-settings:sound"; about: "Luidsprekers en volume" }
+        ListElement { label: "Aanpassen"; code: 0xE771; uri: "personalize"; about: "Tegels, achtergrond en tekstgrootte" }
+        ListElement { label: "Sluiten"; code: 0xE711; uri: ""; about: "Kijkluister sluiten (de computer blijft aan)" }
     }
 
     // --- Bovenbalk: naam links, snelknoppen in het midden, klok rechts ---
@@ -444,7 +483,7 @@ Rectangle {
             anchors.leftMargin: root.unit * 1.2
             anchors.verticalCenter: parent.verticalCenter
             color: "white"
-            font.pixelSize: root.unit * 3.2
+            font.pixelSize: (root.unit * 3.2) * appModel.fontScale
             font.weight: Font.DemiBold
             text: "Kijkluister"
         }
@@ -454,15 +493,15 @@ Rectangle {
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
             color: "white"
-            font.pixelSize: root.unit * 3.2
+            font.pixelSize: (root.unit * 3.2) * appModel.fontScale
         }
         Text {
             id: dateLabel
             anchors.right: clock.left
             anchors.rightMargin: root.unit * 2
             anchors.baseline: clock.baseline
-            color: "#b0b4bb"
-            font.pixelSize: root.unit * 2
+            color: "#c4c7cc"
+            font.pixelSize: (root.unit * 2.4) * appModel.fontScale
         }
     }
 
@@ -471,13 +510,14 @@ Rectangle {
         onTriggered: {
             const now = new Date()
             clock.text = Qt.formatTime(now, "HH:mm")
-            dateLabel.text = now.toLocaleDateString(Qt.locale(), "dddd d MMMM")
+            dateLabel.text = now.toLocaleDateString(Qt.locale("nl_NL"), "dddd d MMMM")
         }
     }
 
     // --- Snelknoppen in de bovenbalk ---
     ListView {
         id: quickRow
+        z: 5   // labeltje onder een knop valt over het tekstvlak eronder
         anchors.verticalCenter: header.verticalCenter
         anchors.left: header.left
         anchors.leftMargin: brand.x + brand.width + root.unit * 3
@@ -492,7 +532,13 @@ Rectangle {
         function trigger(index) {
             const item = quickModel.get(index)
             if (item.uri === "") {
-                Qt.quit()
+                // Eerst vragen: de computer blijft aan, geplande opnames gaan niet door
+                menu.open("Kijkluister sluiten?", [
+                    { label: "Sluiten", action: "quit" },
+                    { label: "Annuleren", action: "" }
+                ], quickRow, recorder.schedule.length > 0
+                    ? "Je computer blijft aan. Geplande opnames gaan niet door zolang Kijkluister dicht is."
+                    : "Je computer blijft aan.")
             } else if (item.uri === "personalize") {
                 root.openPersonalizeMenu()
             } else {
@@ -525,8 +571,10 @@ Rectangle {
         anchors.right: parent.right
         anchors.leftMargin: root.unit * 4
         anchors.rightMargin: root.unit * 4
-        height: root.heroShown ? root.unit * 21 : 0
-        opacity: root.heroShown ? 1 : 0
+        // Ingeklapt als er (nog) niets te tonen is, zodat er geen leeg vlak boven de rijen staat
+        readonly property bool filled: root.heroShown && root.focusName !== ""
+        height: filled ? root.unit * 21 : root.unit * 1
+        opacity: filled ? 1 : 0
         clip: true
         Behavior on height { NumberAnimation { duration: 220; easing.type: Easing.OutCubic } }
         Behavior on opacity { NumberAnimation { duration: 180 } }
@@ -555,14 +603,14 @@ Rectangle {
             Text {
                 width: parent.width
                 color: "white"
-                font.pixelSize: root.unit * 7.5
+                font.pixelSize: (root.unit * 7.5) * appModel.fontScale
                 font.weight: Font.DemiBold
                 elide: Text.ElideRight
                 text: root.focusName
             }
             Text {
                 color: "#c4c7cc"
-                font.pixelSize: root.unit * 2.4
+                font.pixelSize: (root.unit * 2.4) * appModel.fontScale
                 text: root.focusKind
             }
         }
@@ -618,15 +666,18 @@ Rectangle {
         }
     }
 
-    Text {
+    HintBar {
         id: hint
         anchors.bottom: parent.bottom
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottomMargin: root.unit * 1.5
-        color: "#7d8188"
-        font.pixelSize: root.unit * 2
-        text: (gamepad.connectedCount > 0 ? "Controller verbonden  ·  " : "")
-              + "Pijltjes / D-pad: navigeren  ·  Enter / A: openen  ·  F2, rechtermuisknop of X: aanpassen  ·  Ingedrukt houden en slepen: verplaatsen"
+        unit: root.unit
+        items: [
+            { pad: "✛", key: "Pijltjes", label: "Kiezen" },
+            { pad: "A", key: "Enter", label: "Openen" },
+            { pad: "X", key: "Menu", label: "Opties" },
+            { pad: "", key: "Rechtermuisknop", label: "Opties" }
+        ]
     }
 
     // --- Korte melding ---
@@ -647,10 +698,21 @@ Rectangle {
             id: toast
             anchors.centerIn: parent
             color: "white"
-            font.pixelSize: root.unit * 2.6
+            font.pixelSize: (root.unit * 2.6) * appModel.fontScale
         }
     }
-    Timer { id: toastTimer; interval: 3000 }
+    Timer { id: toastTimer; interval: 3500 }
+
+    // Eenmalige tip, de eerste keer op het startscherm
+    Timer {
+        id: tipTimer
+        interval: 2500
+        running: selfTest === "" && appModel.welcomeDone && !appModel.tipShown("hold")
+        onTriggered: {
+            appModel.markTipShown("hold")
+            root.showToast("Tip: houd " + (gamepad.connectedCount > 0 ? "Ⓐ" : "Enter") + " ingedrukt om een tegel te verplaatsen of te verwijderen", 7000)
+        }
+    }
 
     // --- Dialogen ---
     FileDialog {
@@ -702,6 +764,12 @@ Rectangle {
         id: frameScreen
     }
 
+    // Welkomststap: welke diensten gebruik je
+    WelcomeOverlay {
+        id: welcomeOverlay
+        onDone: root.showToast("Klaar! Kies een tegel en druk op " + (gamepad.connectedCount > 0 ? "Ⓐ" : "Enter") + " om te beginnen")
+    }
+
     // Melding als Kijkluister MPC-HC of ffmpeg ophaalt (op de achtergrond)
     Rectangle {
         z: 950
@@ -721,7 +789,7 @@ Rectangle {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 color: "white"
-                font.pixelSize: root.height * 0.024
+                font.pixelSize: (root.height * 0.024) * appModel.fontScale
                 text: components.status
             }
             Rectangle {

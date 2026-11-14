@@ -38,7 +38,7 @@ Item {
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
                 color: "white"
-                font.pixelSize: tile.fontSize * 1.3
+                font.pixelSize: (tile.fontSize * 1.3) * appModel.fontScale
                 font.weight: Font.DemiBold
                 text: tile.modelData.title || ""
             }
@@ -60,7 +60,7 @@ Item {
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight
             color: tile.selected ? "white" : "#b0b4bb"
-            font.pixelSize: tile.fontSize
+            font.pixelSize: (tile.fontSize) * appModel.fontScale
             text: tile.modelData.title + (tile.modelData.year ? " (" + tile.modelData.year + ")" : "")
         }
     }

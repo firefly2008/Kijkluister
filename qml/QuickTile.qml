@@ -36,10 +36,31 @@ Item {
             Text {
                 anchors.verticalCenter: parent.verticalCenter
                 color: tile.selected ? "#111318" : "white"
-                font.pixelSize: tile.height * 0.34
+                font.pixelSize: (tile.height * 0.34) * appModel.fontScale
                 visible: !tile.compact
                 text: tile.label
             }
+        }
+    }
+
+    // Weinig ruimte: het woord verschijnt als label onder de gekozen knop
+    Rectangle {
+        visible: tile.compact && tile.selected
+        z: 10
+        anchors.top: parent.bottom
+        anchors.topMargin: 4
+        anchors.horizontalCenter: parent.horizontalCenter
+        width: bubbleText.implicitWidth + tile.height * 0.5
+        height: tile.height * 0.62
+        radius: height / 2
+        color: "#e8eaed"
+        Text {
+            id: bubbleText
+            anchors.centerIn: parent
+            color: "#111318"
+            font.pixelSize: tile.height * 0.32 * appModel.fontScale
+            font.weight: Font.DemiBold
+            text: tile.label
         }
     }
 

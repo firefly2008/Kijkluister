@@ -11,6 +11,13 @@
 GamepadNavigator::GamepadNavigator(QObject *parent)
     : QObject(parent)
 {
+    m_holdTimer.setSingleShot(true);
+    m_holdTimer.setInterval(700);
+    connect(&m_holdTimer, &QTimer::timeout, this, [this] {
+        m_holdFired = true;
+        sendKey(Qt::Key_Menu, true);
+        sendKey(Qt::Key_Menu, false);
+    });
     // Geen SDL-venster: controller-events ook ontvangen zonder SDL-focus.
     SDL_SetHint(SDL_HINT_JOYSTICK_ALLOW_BACKGROUND_EVENTS, "1");
     if (!SDL_Init(SDL_INIT_GAMEPAD)) {
@@ -81,8 +88,15 @@ void GamepadNavigator::handleButton(int button, bool pressed)
     case SDL_GAMEPAD_BUTTON_DPAD_RIGHT:
         sendKey(Qt::Key_Right, pressed);
         break;
-    case SDL_GAMEPAD_BUTTON_SOUTH: // A / kruisje
-        sendKey(Qt::Key_Return, pressed);
+    case SDL_GAMEPAD_BUTTON_SOUTH: // A / kruisje: kort = openen, lang (0,7 s) = opties
+        if (pressed) {
+            m_holdFired = false;
+            m_holdTimer.start();
+        } else if (m_holdTimer.isActive() || !m_holdFired) {
+            m_holdTimer.stop();
+            sendKey(Qt::Key_Return, true);
+            sendKey(Qt::Key_Return, false);
+        }
         break;
     case SDL_GAMEPAD_BUTTON_EAST: // B / rondje
         sendKey(Qt::Key_Escape, pressed);

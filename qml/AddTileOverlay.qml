@@ -69,13 +69,13 @@ FocusScope {
 
             Text {
                 color: "white"
-                font.pixelSize: panel.unit * 3.4
+                font.pixelSize: (panel.unit * 3.4) * appModel.fontScale
                 text: "Tegel toevoegen"
             }
 
             Text {
                 color: "#9fb4d0"
-                font.pixelSize: panel.unit * 2.2
+                font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
                 text: "Naam"
             }
             Rectangle {
@@ -91,7 +91,7 @@ FocusScope {
                     anchors.margins: panel.unit * 1.5
                     verticalAlignment: TextInput.AlignVCenter
                     color: "white"
-                    font.pixelSize: panel.unit * 2.6
+                    font.pixelSize: (panel.unit * 2.6) * appModel.fontScale
                     clip: true
                     selectByMouse: true
                     KeyNavigation.tab: targetField
@@ -102,7 +102,7 @@ FocusScope {
 
             Text {
                 color: "#9fb4d0"
-                font.pixelSize: panel.unit * 2.2
+                font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
                 text: "Webadres (bijv. netflix.com) of pad naar een programma"
             }
             Rectangle {
@@ -118,7 +118,7 @@ FocusScope {
                     anchors.margins: panel.unit * 1.5
                     verticalAlignment: TextInput.AlignVCenter
                     color: "white"
-                    font.pixelSize: panel.unit * 2.6
+                    font.pixelSize: (panel.unit * 2.6) * appModel.fontScale
                     clip: true
                     selectByMouse: true
                     KeyNavigation.tab: buttons
@@ -164,7 +164,7 @@ FocusScope {
                     Text {
                         anchors.centerIn: parent
                         color: "white"
-                        font.pixelSize: panel.unit * 2.5
+                        font.pixelSize: (panel.unit * 2.5) * appModel.fontScale
                         text: button.modelData
                     }
                     MouseArea {

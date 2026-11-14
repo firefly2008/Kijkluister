@@ -27,6 +27,12 @@ class AppModel : public QAbstractListModel
     Q_PROPERTY(int revision READ revision NOTIFY revisionChanged)
     // Grote naam en logo linksboven op de startpagina
     Q_PROPERTY(bool showHero READ showHero WRITE setShowHero NOTIFY showHeroChanged)
+    // Tekst groter (1.0 normaal, 1.25 groter) voor kijken op afstand
+    Q_PROPERTY(double fontScale READ fontScale WRITE setFontScale NOTIFY showHeroChanged)
+    // Welkomststap al gedaan? En is dit een nieuwe installatie (voor de voorkeuze van diensten)
+    Q_PROPERTY(bool welcomeDone READ welcomeDone WRITE setWelcomeDone NOTIFY showHeroChanged)
+    Q_PROPERTY(bool freshInstall READ freshInstall CONSTANT)
+
     // Web-tegels: welk tabblad zichtbaar is
     Q_PROPERTY(QString category READ category WRITE setCategory NOTIFY categoryChanged)
 
@@ -55,6 +61,22 @@ public:
         }
     }
     bool showHero() const { return m_settings.value(QStringLiteral("showHero"), true).toBool(); }
+    double fontScale() const { return m_settings.value(QStringLiteral("fontScale"), 1.0).toDouble(); }
+    void setFontScale(double scale)
+    {
+        m_settings.setValue(QStringLiteral("fontScale"), scale);
+        Q_EMIT showHeroChanged();
+    }
+    // Bestaande gebruikers krijgen de welkomststap niet (die is via Aanpassen terug te halen)
+    bool welcomeDone() const { return m_settings.value(QStringLiteral("welcomeDone"), !m_freshInstall).toBool(); }
+    void setWelcomeDone(bool done)
+    {
+        m_settings.setValue(QStringLiteral("welcomeDone"), done);
+        Q_EMIT showHeroChanged();
+    }
+    bool freshInstall() const { return m_freshInstall; }
+    Q_INVOKABLE bool tipShown(const QString &tip) const { return m_settings.value(QStringLiteral("tips/") + tip).toBool(); }
+    Q_INVOKABLE void markTipShown(const QString &tip) { m_settings.setValue(QStringLiteral("tips/") + tip, true); }
     void setShowHero(bool show)
     {
         if (show != showHero()) {
@@ -69,6 +91,7 @@ public:
     Q_INVOKABLE QString nameAt(int row) const;
     Q_INVOKABLE bool hasCustomIcon(int row) const;
     Q_INVOKABLE QString iconAt(int row) const;
+    Q_INVOKABLE QString pathAt(int row) const { return data(index(row, 0), PathRole).toString(); }
     Q_INVOKABLE QColor accentAt(int row) const;
 
     // Tegels aanpassen
@@ -122,4 +145,5 @@ private:
     int m_revision = 0;
     QString m_category = QStringLiteral("video");
     QSettings m_settings;
+    bool m_freshInstall = false;
 };

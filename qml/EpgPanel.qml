@@ -76,9 +76,10 @@ FocusScope {
         }
         const was = isPlanned(p)
         recorder.toggleSchedule(channel.name, channel.url, p.title, p.startSecs, p.stopSecs)
-        recordMessage.text = was ? "Opname geannuleerd"
-                                 : (p.isNow ? "Opname gestart: " + p.title : "Opname gepland: " + p.day.toLowerCase() + " " + p.start + "  " + p.title)
-        recordMessageTimer.restart()
+        recordToastTitle.text = was ? "Opname geannuleerd: " + p.title : "Wordt opgenomen: " + p.title
+        recordToastText.text = was ? "" : p.day.toLowerCase() + " " + p.start + " – " + p.stop + " · " + channel.name
+                                         + "\nLaat Kijkluister aan staan. Je vindt de opname straks bij Live tv → Opnemen."
+        recordToastTimer.restart()
     }
 
     Rectangle {
@@ -110,14 +111,17 @@ FocusScope {
             anchors.verticalCenter: parent.verticalCenter
             Text {
                 color: "white"
-                font.pixelSize: panel.unit * 4
+                font.pixelSize: (panel.unit * 4) * appModel.fontScale
                 font.weight: Font.DemiBold
                 text: "Tv-gids  ·  " + (panel.channel.name || "")
             }
-            Text {
-                color: "#80848b"
-                font.pixelSize: panel.unit * 2
-                text: "↑ ↓ programma kiezen   ·   R / RB opnemen   ·   Esc / B / I sluiten"
+            HintBar {
+                unit: panel.unit * 0.9
+                items: [
+                    { pad: "✛", key: "↑ ↓", label: "Programma kiezen" },
+                    { pad: "RB", key: "R", label: "Opnemen" },
+                    { pad: "B", key: "Esc", label: "Sluiten" }
+                ]
             }
         }
     }
@@ -126,7 +130,7 @@ FocusScope {
         anchors.centerIn: parent
         visible: panel.programmes.length === 0
         color: "#b0b4bb"
-        font.pixelSize: panel.unit * 3
+        font.pixelSize: (panel.unit * 3) * appModel.fontScale
         text: iptv.epgStatus === "Gids laden…" ? "Gids laden…" : "Geen gidsinformatie voor deze zender"
     }
 
@@ -163,7 +167,7 @@ FocusScope {
                 x: panel.unit * 1.5
                 y: panel.unit * 0.6
                 color: item.current ? "#c0392b" : "#ffb74d"
-                font.pixelSize: panel.unit * 2
+                font.pixelSize: (panel.unit * 2) * appModel.fontScale
                 font.weight: Font.DemiBold
                 text: item.modelData.day
             }
@@ -174,14 +178,14 @@ FocusScope {
                 spacing: panel.unit * 2
                 Text {
                     color: item.current ? "#202124" : "#b0b4bb"
-                    font.pixelSize: panel.unit * 2.6
+                    font.pixelSize: (panel.unit * 2.6) * appModel.fontScale
                     text: item.modelData.start
                 }
                 Text {
                     width: list.width - panel.unit * 17
                     elide: Text.ElideRight
                     color: item.current ? "#202124" : "white"
-                    font.pixelSize: panel.unit * 2.6
+                    font.pixelSize: (panel.unit * 2.6) * appModel.fontScale
                     font.weight: item.modelData.isNow ? Font.DemiBold : Font.Normal
                     text: (item.modelData.isNow ? "▶ " : "") + item.modelData.title
                 }
@@ -216,13 +220,13 @@ FocusScope {
                 width: parent.width
                 wrapMode: Text.Wrap
                 color: "white"
-                font.pixelSize: panel.unit * 4.5
+                font.pixelSize: (panel.unit * 4.5) * appModel.fontScale
                 font.weight: Font.DemiBold
                 text: details.p ? details.p.title : ""
             }
             Text {
                 color: "#ffb74d"
-                font.pixelSize: panel.unit * 2.4
+                font.pixelSize: (panel.unit * 2.4) * appModel.fontScale
                 text: details.p ? details.p.day + "   " + details.p.start + " – " + details.p.stop
                                   + "   ·   " + details.p.duration + " min"
                                   + (details.p.category ? "   ·   " + details.p.category : "") : ""
@@ -247,26 +251,63 @@ FocusScope {
                     unit: panel.unit
                     text: details.p && panel.isPlanned(details.p)
                           ? (details.p.isNow ? "■  Opname stoppen" : "Opname annuleren")
-                          : (details.p && details.p.isNow ? "●  Nu opnemen" : "●  Opnemen")
+                          : "●  Dit programma opnemen"
                     onClicked: panel.toggleRecord(list.currentIndex)
                 }
-                Text {
-                    id: recordMessage
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: "#ffb74d"
-                    font.pixelSize: panel.unit * 2.2
-                    visible: recordMessageTimer.running
-                }
-                Timer { id: recordMessageTimer; interval: 4000 }
+
             }
             Text {
                 width: parent.width
                 wrapMode: Text.Wrap
                 lineHeight: 1.25
                 color: "#d5d8dc"
-                font.pixelSize: panel.unit * 2.7
+                font.pixelSize: (panel.unit * 2.7) * appModel.fontScale
                 text: details.p ? (details.p.description || "Geen beschrijving beschikbaar.") : ""
             }
         }
     }
+
+    // Duidelijke bevestiging onderin na opnemen of annuleren
+    Rectangle {
+        z: 20
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.bottom: parent.bottom
+        anchors.bottomMargin: panel.unit * 4
+        width: Math.min(parent.width * 0.8, Math.max(recordToastTitle.implicitWidth, recordToastText.implicitWidth) + panel.unit * 8)
+        height: recordToastColumn.implicitHeight + panel.unit * 4
+        radius: panel.unit * 1.5
+        color: "#f0202124"
+        border.color: "#e53935"
+        border.width: 2
+        opacity: recordToastTimer.running ? 1 : 0
+        visible: opacity > 0
+        Behavior on opacity { NumberAnimation { duration: 200 } }
+        Row {
+            anchors.centerIn: parent
+            spacing: panel.unit * 2
+            Rectangle {
+                anchors.verticalCenter: parent.verticalCenter
+                width: panel.unit * 2.2; height: width; radius: width / 2
+                color: "#e53935"
+            }
+            Column {
+                id: recordToastColumn
+                spacing: panel.unit * 0.6
+                Text {
+                    id: recordToastTitle
+                    color: "white"
+                    font.pixelSize: (panel.unit * 3) * appModel.fontScale
+                    font.weight: Font.DemiBold
+                }
+                Text {
+                    id: recordToastText
+                    visible: text !== ""
+                    color: "#d5d8dc"
+                    font.pixelSize: (panel.unit * 2.3) * appModel.fontScale
+                    lineHeight: 1.2
+                }
+            }
+        }
+    }
+    Timer { id: recordToastTimer; interval: 7000 }
 }

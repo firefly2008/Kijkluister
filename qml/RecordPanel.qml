@@ -94,18 +94,18 @@ FocusScope {
 
         Text {
             color: "white"
-            font.pixelSize: panel.unit * 4
+            font.pixelSize: (panel.unit * 4) * appModel.fontScale
             font.weight: Font.DemiBold
             text: "Opnemen  ·  " + (panel.channel.name || "")
         }
         Text {
-            color: "#80848b"
-            font.pixelSize: panel.unit * 2
-            text: "Esc / B / R sluiten    ·    de opname loopt door op de achtergrond, ook als je een andere zender kijkt"
+            color: "#a8acb3"
+            font.pixelSize: (panel.unit * 2) * appModel.fontScale
+            text: "De opname loopt door op de achtergrond, ook als je een andere zender kijkt." + (gamepad.connectedCount > 0 ? "   Ⓑ sluiten" : "   Esc: sluiten")
         }
 
         // Map
-        Text { color: "#9fb4d0"; font.pixelSize: panel.unit * 2.2; text: "Opslaan in" }
+        Text { color: "#9fb4d0"; font.pixelSize: (panel.unit * 2.2) * appModel.fontScale; text: "Opslaan in"}
         Row {
             spacing: panel.unit * 1.5
             Rectangle {
@@ -121,7 +121,7 @@ FocusScope {
                     verticalAlignment: Text.AlignVCenter
                     elide: Text.ElideMiddle
                     color: "white"
-                    font.pixelSize: panel.unit * 2.3
+                    font.pixelSize: (panel.unit * 2.3) * appModel.fontScale
                     text: recorder.folder
                 }
             }
@@ -145,7 +145,7 @@ FocusScope {
         }
 
         // Duur
-        Text { color: "#9fb4d0"; font.pixelSize: panel.unit * 2.2; text: "Duur" }
+        Text { color: "#9fb4d0"; font.pixelSize: (panel.unit * 2.2) * appModel.fontScale; text: "Duur"}
         FocusScope {
             id: durationRow
             width: content.width
@@ -214,7 +214,7 @@ FocusScope {
                     }
                     Text {
                         color: "white"
-                        font.pixelSize: panel.unit * 2.6
+                        font.pixelSize: (panel.unit * 2.6) * appModel.fontScale
                         text: recorder.recording
                               ? recorder.channel + "   " + panel.fmtTime(recorder.elapsedSeconds)
                                 + (recorder.remainingSeconds >= 0 ? "   (nog " + panel.fmtTime(recorder.remainingSeconds) + ")" : "")
@@ -225,7 +225,7 @@ FocusScope {
                 Text {
                     visible: recorder.recording
                     color: "#b0b4bb"
-                    font.pixelSize: panel.unit * 2
+                    font.pixelSize: (panel.unit * 2) * appModel.fontScale
                     elide: Text.ElideMiddle
                     width: content.width - stopButton.width - panel.unit * 4
                     text: recorder.status + "   ·   " + recorder.file
@@ -235,7 +235,7 @@ FocusScope {
         Text {
             id: message
             color: "#ffb74d"
-            font.pixelSize: panel.unit * 2.2
+            font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
             visible: text !== ""
         }
 
@@ -243,8 +243,9 @@ FocusScope {
         Text {
             visible: recorder.schedule.length > 0
             color: "#9fb4d0"
-            font.pixelSize: panel.unit * 2.2
-            text: "Gepland" + "   ·   F2 / X annuleren   ·   Kijkluister moet aan staan; de pc gaat tijdens een opname niet slapen"
+            font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
+            text: "Gepland" + (gamepad.connectedCount > 0 ? "   ·   Ⓧ annuleren" : "   ·   F2 of rechtermuisknop: annuleren")
+                  + "   ·   Laat Kijkluister aan staan; de computer gaat tijdens een opname niet slapen"
         }
         ListView {
             id: planned
@@ -298,19 +299,19 @@ FocusScope {
                     Text {
                         width: planned.width * 0.28
                         color: prow.current ? "#202124" : "#d5d8dc"
-                        font.pixelSize: panel.unit * 2.2
+                        font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
                         text: planned.when(prow.modelData)
                     }
                     Text {
                         width: planned.width * 0.45
                         elide: Text.ElideRight
                         color: prow.current ? "#202124" : "white"
-                        font.pixelSize: panel.unit * 2.3
+                        font.pixelSize: (panel.unit * 2.3) * appModel.fontScale
                         text: prow.modelData.title + "  ·  " + prow.modelData.channel
                     }
                     Text {
                         color: prow.current ? "#5f6368" : "#b0b4bb"
-                        font.pixelSize: panel.unit * 2.1
+                        font.pixelSize: (panel.unit * 2.1) * appModel.fontScale
                         text: prow.modelData.state === "bezig" ? "wordt opgenomen"
                               : prow.modelData.state === "overlap" ? "overgeslagen: er liep al een opname"
                               : prow.modelData.state === "mislukt" ? "mislukt" : "gepland"
@@ -322,8 +323,9 @@ FocusScope {
         // Eerdere opnames
         Text {
             color: "#9fb4d0"
-            font.pixelSize: panel.unit * 2.2
-            text: "Opnames in deze map" + (recorder.recordings.length > 0 ? "   ·   OK afspelen   ·   F2 / X verwijderen" : "")
+            font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
+            text: "Opnames in deze map" + (recorder.recordings.length > 0
+                  ? (gamepad.connectedCount > 0 ? "   ·   Ⓐ afspelen   ·   Ⓧ verwijderen" : "   ·   Enter: afspelen   ·   F2: verwijderen") : "")
         }
         ListView {
             id: list
@@ -348,8 +350,8 @@ FocusScope {
             }
             Text {
                 visible: list.count === 0
-                color: "#60646b"
-                font.pixelSize: panel.unit * 2.4
+                color: "#a8acb3"
+                font.pixelSize: (panel.unit * 2.4) * appModel.fontScale
                 text: "Nog geen opnames"
             }
             delegate: Rectangle {
@@ -374,19 +376,19 @@ FocusScope {
                         width: list.width * 0.55
                         elide: Text.ElideRight
                         color: row.current ? "#202124" : "white"
-                        font.pixelSize: panel.unit * 2.5
+                        font.pixelSize: (panel.unit * 2.5) * appModel.fontScale
                         text: (row.modelData.busy ? "●  " : "") + row.modelData.name
                     }
                     Text {
                         width: list.width * 0.18
                         color: row.current ? "#5f6368" : "#b0b4bb"
-                        font.pixelSize: panel.unit * 2.2
+                        font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
                         text: row.modelData.date
                     }
                     Text {
                         color: row.current ? "#5f6368" : "#b0b4bb"
-                        font.pixelSize: panel.unit * 2.2
-                        text: panel.confirmDelete === row.index ? "Nog eens F2 / X om te verwijderen" : panel.fmtSize(row.modelData.size)
+                        font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
+                        text: panel.confirmDelete === row.index ? (gamepad.connectedCount > 0 ? "Nog eens Ⓧ om te verwijderen" : "Nog eens F2 om te verwijderen") : panel.fmtSize(row.modelData.size)
                     }
                 }
             }

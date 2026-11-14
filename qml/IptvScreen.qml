@@ -256,7 +256,7 @@ FocusScope {
                 anchors.left: parent.left
                 anchors.margins: tv.unit * 4
                 color: "white"
-                font.pixelSize: tv.unit * 3.6
+                font.pixelSize: (tv.unit * 3.6) * appModel.fontScale
                 font.weight: Font.DemiBold
                 text: "Live tv"
             }
@@ -293,7 +293,7 @@ FocusScope {
                     anchors.leftMargin: tv.unit * 1.5
                     anchors.rightMargin: tv.unit * 2
                     color: "white"
-                    font.pixelSize: tv.unit * 2.3
+                    font.pixelSize: (tv.unit * 2.3) * appModel.fontScale
                     clip: true
                     selectByMouse: true
                     onTextChanged: searchTimer.restart()
@@ -311,8 +311,8 @@ FocusScope {
                         anchors.fill: parent
                         verticalAlignment: Text.AlignVCenter
                         visible: searchField.text === "" && !searchField.activeFocus
-                        color: "#7d8188"
-                        font.pixelSize: tv.unit * 2.3
+                        color: "#a8acb3"
+                        font.pixelSize: (tv.unit * 2.3) * appModel.fontScale
                         text: "Zender zoeken"
                     }
                 }
@@ -357,7 +357,7 @@ FocusScope {
                         anchors.rightMargin: tv.unit * 1.5
                         elide: Text.ElideRight
                         color: groupRow.focused ? "#111318" : "white"
-                        font.pixelSize: tv.unit * 2.3
+                        font.pixelSize: (tv.unit * 2.3) * appModel.fontScale
                         font.weight: groupRow.chosen ? Font.DemiBold : Font.Normal
                         text: (groupRow.index === 0 ? "★  " : "") + groupRow.modelData
                     }
@@ -433,7 +433,7 @@ FocusScope {
             width: buttons.x - x - tv.unit * 2
             elide: Text.ElideRight
             color: "white"
-            font.pixelSize: tv.unit * 3.4
+            font.pixelSize: (tv.unit * 3.4) * appModel.fontScale
             font.weight: Font.DemiBold
             text: iptv.search !== "" ? "Zoeken: " + iptv.search : iptv.group
         }
@@ -445,9 +445,9 @@ FocusScope {
             width: parent.width - x - tv.unit * 3
             elide: Text.ElideRight
             color: "#9fb4d0"
-            font.pixelSize: tv.unit * 2
-            text: iptv.status + (iptv.count > 0 ? "  ·  " + iptv.count + " in deze lijst" : "")
-                  + "  ·  F2, rechtermuisknop of X: favoriet"
+            font.pixelSize: (tv.unit * 2) * appModel.fontScale
+            text: iptv.status + (iptv.count > 0 ? "  ·  " + iptv.count + " zenders" : "")
+                  + (gamepad.connectedCount > 0 ? "  ·  Ⓧ favoriet  ·  Ⓨ tv-gids  ·  RB opnemen" : "  ·  F2 of rechtermuisknop: favoriet  ·  I: tv-gids  ·  R: opnemen")
         }
 
         GridView {
@@ -530,7 +530,7 @@ FocusScope {
                 wrapMode: Text.Wrap
                 visible: iptv.count === 0
                 color: "#9fb4d0"
-                font.pixelSize: tv.unit * 2.6
+                font.pixelSize: (tv.unit * 2.6) * appModel.fontScale
                 text: iptv.busy ? "Zenders laden…"
                       : iptv.sources.length === 0 ? "Nog geen bron: kies Bronnen om een M3U-lijst of Xtream-account toe te voegen"
                       : iptv.search !== "" ? "Geen zender gevonden"
@@ -566,6 +566,8 @@ FocusScope {
                     onErrorOccurred: (error, errorString) => {
                         tv.errorText = errorString !== "" ? errorString : "Deze zender kan niet worden afgespeeld"
                         console.warn("IPTV play error:", errorString, tv.channel.url)
+                        // Meteen een uitweg aanbieden: knop "Volgende zender" krijgt focus
+                        if (tv.playing) errorNext.forceActiveFocus()
                     }
                     onMediaStatusChanged: {
                         if (mediaStatus === MediaPlayer.BufferedMedia) {
@@ -591,8 +593,9 @@ FocusScope {
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 color: "white"
-                font.pixelSize: tv.unit * 3
-                text: tv.errorText !== "" ? "Afspelen lukt niet" : "Laden…"
+                font.pixelSize: (tv.unit * 3.4) * appModel.fontScale
+                font.weight: Font.DemiBold
+                text: tv.errorText !== "" ? "Deze zender is nu niet te zien" : "Laden…"
             }
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -600,9 +603,35 @@ FocusScope {
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.Wrap
                 visible: tv.errorText !== ""
-                color: "#b0b4bb"
-                font.pixelSize: tv.unit * 2.2
-                text: tv.errorText + "\nDruk E om de zender in een externe speler te openen."
+                color: "#d5d8dc"
+                font.pixelSize: (tv.unit * 2.4) * appModel.fontScale
+                text: "Soms zendt een zender even niet uit, of is hij alleen in een ander land te zien."
+            }
+            Row {
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible: tv.errorText !== ""
+                spacing: tv.unit * 1.5
+                FocusButton {
+                    id: errorNext
+                    unit: tv.unit
+                    text: "Volgende zender"
+                    onClicked: tv.zap(1)
+                    KeyNavigation.right: errorExternal
+                }
+                FocusButton {
+                    id: errorExternal
+                    unit: tv.unit
+                    text: "Probeer in andere speler"
+                    onClicked: if (iptv.openExternal(tv.playingRow)) tv.stop()
+                    KeyNavigation.left: errorNext
+                }
+            }
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                visible: tv.errorText !== ""
+                color: "#a8acb3"
+                font.pixelSize: (tv.unit * 1.7) * appModel.fontScale
+                text: "Technische melding: " + tv.errorText
             }
         }
 
@@ -647,7 +676,7 @@ FocusScope {
                     width: tv.width - tv.unit * 25
                     Text {
                         color: "white"
-                        font.pixelSize: tv.unit * 4
+                        font.pixelSize: (tv.unit * 4) * appModel.fontScale
                         font.weight: Font.DemiBold
                         text: (tv.channel.number || "") + "   " + (tv.channel.name || "")
                     }
@@ -657,13 +686,13 @@ FocusScope {
                         visible: !!tv.nowNext.nowTitle
                         Text {
                             color: "#ffb74d"
-                            font.pixelSize: tv.unit * 2.4
+                            font.pixelSize: (tv.unit * 2.4) * appModel.fontScale
                             font.weight: Font.DemiBold
                             text: "NU"
                         }
                         Text {
                             color: "white"
-                            font.pixelSize: tv.unit * 2.6
+                            font.pixelSize: (tv.unit * 2.6) * appModel.fontScale
                             text: (tv.nowNext.nowTime || "") + "   " + (tv.nowNext.nowTitle || "")
                             elide: Text.ElideRight
                             width: Math.min(implicitWidth, tv.width * 0.6)
@@ -685,21 +714,26 @@ FocusScope {
                     Text {
                         visible: !!tv.nowNext.nextTitle
                         color: "#b0b4bb"
-                        font.pixelSize: tv.unit * 2.2
+                        font.pixelSize: (tv.unit * 2.2) * appModel.fontScale
                         elide: Text.ElideRight
                         width: Math.min(implicitWidth, tv.width * 0.6)
                         text: "Straks  " + (tv.nowNext.nextTime || "") + "   " + (tv.nowNext.nextTitle || "")
                     }
                     Text {
                         visible: !tv.nowNext.nowTitle && !tv.nowNext.nextTitle
-                        color: "#80848b"
-                        font.pixelSize: tv.unit * 2.2
+                        color: "#a8acb3"
+                        font.pixelSize: (tv.unit * 2.2) * appModel.fontScale
                         text: iptv.epgStatus === "Gids laden…" ? "Gids laden…" : "Geen gidsinformatie voor deze zender"
                     }
-                    Text {
-                        color: "#80848b"
-                        font.pixelSize: tv.unit * 1.9
-                        text: (tv.channel.group || "") + "    ·    ↑ ↓ zender   ·   OK / I / Y gids   ·   R opnemen   ·   Esc / B terug   ·   F2 / X favoriet   ·   E externe speler"
+                    HintBar {
+                        unit: tv.unit * 0.85
+                        items: [
+                            { pad: "✛", key: "↑ ↓", label: "Andere zender" },
+                            { pad: "A", key: "Enter", label: "Tv-gids" },
+                            { pad: "RB", key: "R", label: "Opnemen" },
+                            { pad: "X", key: "F2", label: "Favoriet" },
+                            { pad: "B", key: "Esc", label: "Terug" }
+                        ]
                     }
                 }
             }
@@ -758,7 +792,7 @@ FocusScope {
             id: message
             anchors.centerIn: parent
             color: "white"
-            font.pixelSize: tv.unit * 2.6
+            font.pixelSize: (tv.unit * 2.6) * appModel.fontScale
         }
     }
     Timer { id: messageTimer; interval: 2500 }
@@ -809,7 +843,7 @@ FocusScope {
             Text {
                 id: recText
                 color: "white"
-                font.pixelSize: tv.unit * 2.3
+                font.pixelSize: (tv.unit * 2.3) * appModel.fontScale
                 text: "REC  " + recorder.channel + "  " + recordPanel.fmtTime(recorder.elapsedSeconds)
             }
         }

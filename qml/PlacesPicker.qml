@@ -99,12 +99,12 @@ FocusScope {
                 width: parent.width
                 elide: Text.ElideRight
                 color: "white"
-                font.pixelSize: picker.unit * 3.2
+                font.pixelSize: (picker.unit * 3.2) * appModel.fontScale
                 text: picker.title
             }
             Text {
                 color: "#9fb4d0"
-                font.pixelSize: picker.unit * 2.3
+                font.pixelSize: (picker.unit * 2.3) * appModel.fontScale
                 text: "Hoeveel " + picker.unitName + "? (1 tot " + picker.maximum + ")"
             }
 
@@ -116,7 +116,7 @@ FocusScope {
                     anchors.verticalCenter: parent.verticalCenter
                     width: picker.unit * 8; height: width; radius: width / 2
                     color: picker.value > 1 ? "#33ffffff" : "#15ffffff"
-                    Text { anchors.centerIn: parent; color: "white"; font.pixelSize: picker.unit * 4.5; text: "−" }
+                    Text { anchors.centerIn: parent; color: "white"; font.pixelSize: (picker.unit * 4.5) * appModel.fontScale; text: "−"}
                     MouseArea { anchors.fill: parent; onClicked: picker.change(-1) }
                 }
                 Text {
@@ -124,7 +124,7 @@ FocusScope {
                     width: picker.unit * 14
                     horizontalAlignment: Text.AlignHCenter
                     color: "white"
-                    font.pixelSize: picker.unit * 9
+                    font.pixelSize: (picker.unit * 9) * appModel.fontScale
                     font.weight: Font.DemiBold
                     text: picker.value
                 }
@@ -132,7 +132,7 @@ FocusScope {
                     anchors.verticalCenter: parent.verticalCenter
                     width: picker.unit * 8; height: width; radius: width / 2
                     color: picker.value < picker.maximum ? "#33ffffff" : "#15ffffff"
-                    Text { anchors.centerIn: parent; color: "white"; font.pixelSize: picker.unit * 4.5; text: "+" }
+                    Text { anchors.centerIn: parent; color: "white"; font.pixelSize: (picker.unit * 4.5) * appModel.fontScale; text: "+"}
                     MouseArea { anchors.fill: parent; onClicked: picker.change(1) }
                 }
             }
@@ -155,9 +155,10 @@ FocusScope {
 
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
-                color: "#7d8188"
-                font.pixelSize: picker.unit * 1.9
-                text: "Pijltjes of D-pad: aantal kiezen  ·  Enter / A: verplaatsen  ·  Esc / B: annuleren"
+                color: "#a8acb3"
+                font.pixelSize: (picker.unit * 1.9) * appModel.fontScale
+                text: gamepad.connectedCount > 0 ? "◀ ▶ aantal kiezen   ·   Ⓐ verplaatsen   ·   Ⓑ annuleren"
+                                                 : "← → aantal kiezen   ·   Enter: verplaatsen   ·   Esc: annuleren"
             }
         }
     }

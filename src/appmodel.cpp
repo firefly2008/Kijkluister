@@ -113,6 +113,14 @@ AppModel::AppModel(Kind kind, const QString &category, QObject *parent)
     , m_category(category.isEmpty() ? QStringLiteral("video") : category)
     , m_settings(dataDir() + QStringLiteral("/settings.ini"), QSettings::IniFormat)
 {
+    // Nieuwe installatie: nog niets ingesteld (hooguit de bibliotheekmappen)
+    m_freshInstall = true;
+    for (const QString &k : m_settings.allKeys()) {
+        if (!k.startsWith(QLatin1String("library/")) && !k.startsWith(QLatin1String("components/"))) {
+            m_freshInstall = false;
+            break;
+        }
+    }
     m_hidden = m_settings.value(key("hiddenApps")).toStringList();
     m_customIcons = m_settings.value(key("customIcons")).toMap();
     m_background = m_settings.value(QStringLiteral("background")).toString();

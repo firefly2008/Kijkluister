@@ -154,7 +154,7 @@ FocusScope {
                 width: Math.min(implicitWidth, parent.width)
                 elide: Text.ElideRight
                 color: "white"
-                font.pixelSize: frameScreen.unit * 3
+                font.pixelSize: (frameScreen.unit * 3) * appModel.fontScale
                 font.weight: Font.DemiBold
                 text: frameScreen.shownItem ? frameScreen.shownItem.title : ""
             }
@@ -162,15 +162,16 @@ FocusScope {
                 width: Math.min(implicitWidth, parent.width)
                 elide: Text.ElideRight
                 color: "#d5d8dc"
-                font.pixelSize: frameScreen.unit * 2.2
+                font.pixelSize: (frameScreen.unit * 2.2) * appModel.fontScale
                 visible: text !== ""
                 text: frameScreen.shownItem ? frameScreen.shownItem.subtitle : ""
             }
             Text {
                 color: "#9a9ea6"
-                font.pixelSize: frameScreen.unit * 1.8
+                font.pixelSize: (frameScreen.unit * 1.8) * appModel.fontScale
                 text: (frameScreen.shownItem ? frameScreen.shownItem.credit : "")
-                      + "    ·    ← → bladeren   ·   OK / Menu instellingen   ·   Esc / B / rechtermuisknop stoppen"
+                      + (gamepad.connectedCount > 0 ? "    ·    ◀ ▶ bladeren   ·   Ⓐ instellingen   ·   Ⓑ stoppen"
+                                                    : "    ·    ← → bladeren   ·   Enter: instellingen   ·   Esc of rechtermuisknop: stoppen")
             }
         }
     }
@@ -180,7 +181,7 @@ FocusScope {
         anchors.centerIn: parent
         visible: !frameScreen.shownItem
         color: "#b0b4bb"
-        font.pixelSize: frameScreen.unit * 3
+        font.pixelSize: (frameScreen.unit * 3) * appModel.fontScale
         text: frame.status !== "" ? frame.status : "Afbeeldingen zoeken…"
     }
 
@@ -291,7 +292,7 @@ FocusScope {
             }
             component Label: Text {
                 color: "#9fb4d0"
-                font.pixelSize: frameScreen.unit * 2.2
+                font.pixelSize: (frameScreen.unit * 2.2) * appModel.fontScale
             }
 
             Column {
@@ -303,7 +304,7 @@ FocusScope {
 
                 Text {
                     color: "white"
-                    font.pixelSize: frameScreen.unit * 4
+                    font.pixelSize: (frameScreen.unit * 4) * appModel.fontScale
                     font.weight: Font.DemiBold
                     text: "Schilderij"
                 }
@@ -356,7 +357,7 @@ FocusScope {
                         anchors.margins: frameScreen.unit * 1.5
                         verticalAlignment: TextInput.AlignVCenter
                         color: "white"
-                        font.pixelSize: frameScreen.unit * 2.3
+                        font.pixelSize: (frameScreen.unit * 2.3) * appModel.fontScale
                         clip: true
                         selectByMouse: true
                         echoMode: activeFocus ? TextInput.Normal : TextInput.Password

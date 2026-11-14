@@ -18,11 +18,14 @@ FocusScope {
     visible: false
     z: 100
 
+    property bool showKey: false
+
     function open(isFirstRun) {
         firstRun = isFirstRun
         moviesPaths = library.moviesFolders.slice()
         showsPaths = library.showsFolders.slice()
         keyField.text = library.apiKey
+        showKey = library.apiKey !== ""
         warning.text = ""
         visible = true
         moviesButton.forceActiveFocus()
@@ -54,8 +57,8 @@ FocusScope {
         spacing: setup.unit * 0.6
         Text {
             visible: fl.paths.length === 0
-            color: "#7d8188"
-            font.pixelSize: setup.unit * 2.3
+            color: "#a8acb3"
+            font.pixelSize: (setup.unit * 2.3) * appModel.fontScale
             text: "Nog geen map gekozen (mag leeg blijven)"
         }
         Repeater {
@@ -75,7 +78,7 @@ FocusScope {
                         verticalAlignment: Text.AlignVCenter
                         elide: Text.ElideMiddle
                         color: "white"
-                        font.pixelSize: setup.unit * 2.3
+                        font.pixelSize: (setup.unit * 2.3) * appModel.fontScale
                         text: modelData
                     }
                 }
@@ -142,25 +145,23 @@ FocusScope {
 
             Text {
                 color: "white"
-                font.pixelSize: setup.unit * 4
+                font.pixelSize: (setup.unit * 4) * appModel.fontScale
                 font.weight: Font.DemiBold
-                text: setup.firstRun ? "Bibliotheek instellen" : "Mappen en sleutel"
+                text: setup.firstRun ? "Waar staan je films en series?" : "Mappen kiezen"
             }
             Text {
                 width: parent.width
                 wrapMode: Text.Wrap
                 color: "#c4c7cc"
-                font.pixelSize: setup.unit * 2.2
-                text: "Kies de mappen met je films en series; per soort kunnen dat er meer zijn, ook op een NAS of "
-                      + "externe schijf. Kijkluister zoekt daarin de video's en haalt titel, "
-                      + "beschrijving, poster, achtergrond en cast op, zoals Kodi dat doet. Zet elke serie in een eigen "
-                      + "map (bijvoorbeeld Series\\Westworld (2016)) en noem afleveringen S01E01, S01E02 enzovoort."
+                font.pixelSize: (setup.unit * 2.2) * appModel.fontScale
+                text: "Kies de map met je films en de map met je series. Meer mappen mag ook, bijvoorbeeld op een "
+                      + "externe schijf. Kijkluister zoekt er zelf de titels, plaatjes en beschrijvingen bij."
             }
 
             // Films: een of meer mappen/locaties
             Row {
                 spacing: setup.unit * 2
-                Text { anchors.verticalCenter: parent.verticalCenter; color: "#9fb4d0"; font.pixelSize: setup.unit * 2.2; text: "Mappen met films" }
+                Text { anchors.verticalCenter: parent.verticalCenter; color: "#9fb4d0"; font.pixelSize: (setup.unit * 2.2) * appModel.fontScale; text: "Mappen met films"}
                 FocusButton {
                     id: moviesButton
                     unit: setup.unit
@@ -174,21 +175,38 @@ FocusScope {
             // Series: een of meer mappen/locaties
             Row {
                 spacing: setup.unit * 2
-                Text { anchors.verticalCenter: parent.verticalCenter; color: "#9fb4d0"; font.pixelSize: setup.unit * 2.2; text: "Mappen met series" }
+                Text { anchors.verticalCenter: parent.verticalCenter; color: "#9fb4d0"; font.pixelSize: (setup.unit * 2.2) * appModel.fontScale; text: "Mappen met series"}
                 FocusButton {
                     id: showsButton
                     unit: setup.unit
                     text: "+ Map toevoegen…"
                     onClicked: showsDialog.open()
                     KeyNavigation.up: moviesButton
-                    KeyNavigation.down: keyField
+                    KeyNavigation.down: setup.showKey ? keyField : moreButton
                 }
             }
             FolderList { kind: "shows"; paths: setup.showsPaths }
 
-            // TMDB-sleutel
-            Text { color: "#9fb4d0"; font.pixelSize: setup.unit * 2.2; text: "TMDB API-sleutel (gratis, nodig voor films)" }
+            // Sleutel van TMDB: niet nodig om te beginnen, dus ingeklapt
+            FocusButton {
+                id: moreButton
+                unit: setup.unit
+                visible: !setup.showKey
+                text: "Meer gegevens bij films (optioneel)…"
+                onClicked: { setup.showKey = true; keyField.forceActiveFocus() }
+                KeyNavigation.up: showsButton
+                KeyNavigation.down: saveButton
+            }
+            Text {
+                visible: setup.showKey
+                width: parent.width
+                wrapMode: Text.Wrap
+                color: "#9fb4d0"
+                font.pixelSize: (setup.unit * 2.2) * appModel.fontScale
+                text: "Sleutel van TMDB (optioneel): daarmee krijgen ook films een poster, beschrijving en cast"
+            }
             Rectangle {
+                visible: setup.showKey
                 width: parent.width
                 height: setup.unit * 6
                 radius: setup.unit
@@ -201,7 +219,7 @@ FocusScope {
                     anchors.margins: setup.unit * 1.5
                     verticalAlignment: TextInput.AlignVCenter
                     color: "white"
-                    font.pixelSize: setup.unit * 2.3
+                    font.pixelSize: (setup.unit * 2.3) * appModel.fontScale
                     clip: true
                     selectByMouse: true
                     KeyNavigation.up: showsButton
@@ -212,16 +230,17 @@ FocusScope {
                     anchors.fill: keyField
                     verticalAlignment: Text.AlignVCenter
                     visible: keyField.text === "" && !keyField.activeFocus
-                    color: "#7d8188"
-                    font.pixelSize: setup.unit * 2.3
+                    color: "#a8acb3"
+                    font.pixelSize: (setup.unit * 2.3) * appModel.fontScale
                     text: "Plak hier je sleutel of token"
                 }
             }
             Text {
+                visible: setup.showKey
                 width: parent.width
                 wrapMode: Text.Wrap
-                color: "#9a9ea6"
-                font.pixelSize: setup.unit * 1.9
+                color: "#b0b4bb"
+                font.pixelSize: (setup.unit * 1.9) * appModel.fontScale
                 text: "Sleutel aanvragen: maak een gratis account op themoviedb.org en ga naar Instellingen → API. "
                       + "Zonder sleutel komen series van TVmaze en tonen films alleen hun titel. "
                       + "Dit product gebruikt de TMDB API, maar is niet door TMDB goedgekeurd of gecertificeerd."
@@ -231,7 +250,7 @@ FocusScope {
                 id: warning
                 visible: text !== ""
                 color: "#ff8a80"
-                font.pixelSize: setup.unit * 2.2
+                font.pixelSize: (setup.unit * 2.2) * appModel.fontScale
             }
 
             Row {
@@ -241,7 +260,7 @@ FocusScope {
                     unit: setup.unit
                     text: "Opslaan en zoeken"
                     onClicked: setup.save()
-                    KeyNavigation.up: keyField
+                    KeyNavigation.up: setup.showKey ? keyField : moreButton
                     KeyNavigation.right: cancelButton
                 }
                 FocusButton {
@@ -252,7 +271,7 @@ FocusScope {
                         setup.close()
                         setup.cancelled()
                     }
-                    KeyNavigation.up: keyField
+                    KeyNavigation.up: setup.showKey ? keyField : moreButton
                     KeyNavigation.left: saveButton
                 }
             }
