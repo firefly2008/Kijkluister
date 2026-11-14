@@ -30,6 +30,8 @@ class IptvModel : public QAbstractListModel
     Q_PROPERTY(QString group READ group WRITE setGroup NOTIFY filterChanged)
     Q_PROPERTY(QString search READ search WRITE setSearch NOTIFY filterChanged)
     Q_PROPERTY(QVariantList sources READ sources NOTIFY sourcesChanged)
+    // Eigen gidsadressen (XMLTV-links, .xml of .xml.gz), voor alle zenders
+    Q_PROPERTY(QStringList extraEpgUrls READ extraEpgUrls WRITE setExtraEpgUrls NOTIFY sourcesChanged)
     Q_PROPERTY(bool busy READ busy NOTIFY statusChanged)
     Q_PROPERTY(QString status READ status NOTIFY statusChanged)
     // Gids (EPG): telt op bij nieuwe gegevens, zodat QML opnieuw opvraagt
@@ -59,6 +61,10 @@ public:
     // type: "m3u-url", "m3u-file" of "xtream"
     // Gratis, openbaar beschikbare zenders (iptv-org) toevoegen als ze er nog niet zijn
     Q_INVOKABLE int addFreeSources();
+    QStringList extraEpgUrls() const { return m_extraEpgUrls; }
+    void setExtraEpgUrls(const QStringList &urls);
+    // Gids voor de gratis zenders, elke nacht gemaakt door de workflow "Tv-gids" in de Kijkluister-repo
+    static QString freeGuideUrl();
     void addFreeSourcesOnce();
     Q_INVOKABLE bool addSource(const QString &type, const QString &name, const QString &url,
                                const QString &user, const QString &password);
@@ -145,6 +151,9 @@ private:
     QString m_status;
 
     QStringList m_epgUrls;
+    QStringList m_extraEpgUrls;
+    QHash<QString, QString> m_epgBase;   // gids-id zonder "@SD"/"@HD" (klein) -> gids-id
+    void rebuildEpgIndex();
     QStringList m_loadingEpgUrls;
     QList<QByteArray> m_epgFiles;
     int m_epgIndex = -1;

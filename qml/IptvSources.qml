@@ -23,6 +23,7 @@ FocusScope {
         userField.text = ""
         passwordField.text = ""
         warning.text = ""
+        epgField.text = iptv.extraEpgUrls.join(", ")
         confirmRemove = -1
         visible = true
         const first = sourceList.count > 0 ? sourceList : urlTab
@@ -287,6 +288,7 @@ FocusScope {
                     onClicked: sources.add()
                     KeyNavigation.right: freeButton
                     KeyNavigation.up: sources.addType === "xtream" ? passwordField : sources.addType === "m3u-file" ? fileButton : urlField
+                    KeyNavigation.down: epgField
                 }
                 FocusButton {
                     id: freeButton
@@ -299,6 +301,7 @@ FocusScope {
                     KeyNavigation.left: addButton
                     KeyNavigation.right: closeButton
                     KeyNavigation.up: addButton.KeyNavigation.up
+                    KeyNavigation.down: epgField
                 }
                 FocusButton {
                     id: closeButton
@@ -307,7 +310,46 @@ FocusScope {
                     onClicked: sources.close()
                     KeyNavigation.left: freeButton
                     KeyNavigation.up: addButton.KeyNavigation.up
+                    KeyNavigation.down: epgField
                 }
+            }
+
+            // --- Tv-gids ---
+            Text {
+                color: "#9fb4d0"
+                font.pixelSize: sources.unit * 2.2
+                text: "Eigen gidsadressen (XMLTV, .xml of .xml.gz; meerdere scheiden met een komma)"
+            }
+            Row {
+                spacing: sources.unit * 1.2
+                Field {
+                    id: epgField
+                    width: content.width - epgSave.width - parent.spacing
+                    unit: sources.unit
+                    placeholder: "Leeg laten: de gratis zenders krijgen de gids vanzelf"
+                    upItem: addButton
+                    downItem: null
+                    Keys.onReturnPressed: epgSave.clicked()
+                }
+                FocusButton {
+                    id: epgSave
+                    unit: sources.unit
+                    text: "Gids opslaan"
+                    onClicked: {
+                        iptv.extraEpgUrls = epgField.text.split(/[,\n]/).map(s => s.trim()).filter(s => s !== "")
+                        warning.text = "Gids wordt opnieuw opgehaald."
+                    }
+                    KeyNavigation.left: epgField
+                    KeyNavigation.up: addButton
+                }
+            }
+            Text {
+                color: "#80848b"
+                font.pixelSize: sources.unit * 1.9
+                text: (iptv.epgStatus !== "" ? iptv.epgStatus + "   ·   " : "")
+                      + "De gratis Nederlandse en Belgische zenders krijgen elke nacht een nieuwe gids (tvgids.nl, Delta, VRT, VTM, Proximus Pickx)."
+                width: content.width
+                wrapMode: Text.Wrap
             }
         }
     }

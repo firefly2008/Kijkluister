@@ -14,7 +14,7 @@ import xml.etree.ElementTree as ET
 from pathlib import Path
 
 # Voorkeursvolgorde: Nederlandse bronnen eerst, dan Belgische
-SITES = ["tvgids.nl", "webtv.delta.nl", "vrt.be", "vtm.be", "pickx.be"]
+SITES = ["tvgids.nl", "webtv.delta.nl", "vrt.be", "vtm.be", "mon-programme-tv.be", "pickx.be"]
 
 
 def base(tvg_id: str) -> str:

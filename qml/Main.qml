@@ -313,6 +313,14 @@ Rectangle {
             iptvScreen.autoPlay = true
             iptvScreen.autoRecord = selfTest
             iptvScreen.open(mediaGrid())
+        } else if (selfTest === "iptvfreeguide") {
+            // Test: gratis zenders met de echte nachtelijke gids; NPO 1 met de balk vast in beeld
+            iptv.addFreeSources()
+            iptv.group = "Alle zenders"
+            iptv.search = "NPO 1"
+            iptvScreen.autoPlay = true
+            iptvScreen.pinInfo = true
+            iptvScreen.open(mediaGrid())
         } else if (selfTest === "iptvfree") {
             iptvScreen.open(mediaGrid())
         } else if (selfTest.startsWith("m-")) {

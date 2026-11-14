@@ -125,8 +125,21 @@ IptvModel::IptvModel(const QString &dataDir, QObject *parent)
     rebuildGroups();
     applyFilter();
     m_epgUrls = m_settings.value(QStringLiteral("iptv/epgUrls")).toStringList();
+    m_extraEpgUrls = m_settings.value(QStringLiteral("iptv/extraEpg")).toStringList();
+    // Bestaande installaties met gratis zenders: gratis gids er meteen bij
+    for (const QVariant &v : std::as_const(m_sources)) {
+        if (v.toMap().value(QStringLiteral("free")).toBool() && !m_epgUrls.contains(freeGuideUrl())) {
+            m_epgUrls << freeGuideUrl();
+        }
+    }
+    for (const QString &u : std::as_const(m_extraEpgUrls)) {
+        if (!m_epgUrls.contains(u)) {
+            m_epgUrls << u;
+        }
+    }
     connect(&m_epgWatcher, &QFutureWatcher<EpgData>::finished, this, [this] {
         m_epg = m_epgWatcher.result();
+        rebuildEpgIndex();
         m_epgBusy = false;
         saveEpgCache();
         ++m_epgRevision;
@@ -359,6 +372,7 @@ void IptvModel::reload()
     m_loading.clear();
     m_errors.clear();
     m_loadingEpgUrls.clear();
+    m_loadingEpgUrls << m_extraEpgUrls;
     m_loadIndex = -1;
     if (m_sources.isEmpty()) {
         finishLoading();
@@ -396,6 +410,9 @@ void IptvModel::loadNext()
     }
     QNetworkReply *reply = m_network.get(request(QUrl(source.value(QStringLiteral("url")).toString())));
     const QString fixedGroup = source.value(QStringLiteral("group")).toString();
+    if (source.value(QStringLiteral("free")).toBool()) {
+        m_loadingEpgUrls << freeGuideUrl();
+    }
     connect(reply, &QNetworkReply::finished, this, [this, reply, name, fixedGroup] {
         reply->deleteLater();
         if (reply->error() != QNetworkReply::NoError) {
@@ -659,6 +676,7 @@ void IptvModel::reloadEpg()
     m_shortEpgRequested.clear();
     if (m_epgUrls.isEmpty()) {
         m_epg = {};
+        m_epgBase.clear();
         ++m_epgRevision;
         m_epgStatus.clear();
         Q_EMIT epgChanged();
@@ -702,6 +720,7 @@ void IptvModel::finishEpgDownload()
     for (const Channel &c : std::as_const(m_all)) {
         if (!c.epgId.isEmpty()) {
             wanted.insert(c.epgId);
+            wanted.insert(QStringLiteral("base:") + c.epgId.section(QLatin1Char('@'), 0, 0).toLower());
         }
         wanted.insert(QStringLiteral("name:") + c.name.toLower());
     }
@@ -741,7 +760,9 @@ IptvModel::EpgData IptvModel::parseXmltv(const QList<QByteArray> &files, const Q
                 Programme p;
                 p.start = xmltvTime(attrs.value(QLatin1String("start")).toString());
                 p.stop = xmltvTime(attrs.value(QLatin1String("stop")).toString());
-                const bool keep = (wanted.contains(channel) || matched.contains(channel)) && p.stop > from && p.start < until;
+                const bool keep = (wanted.contains(channel) || matched.contains(channel)
+                                   || wanted.contains(QStringLiteral("base:") + channel.section(QLatin1Char('@'), 0, 0).toLower()))
+                                  && p.stop > from && p.start < until;
                 while (!(reader.isEndElement() && reader.name() == QLatin1String("programme")) && !reader.atEnd()) {
                     reader.readNext();
                     if (!keep || !reader.isStartElement()) {
@@ -763,6 +784,11 @@ IptvModel::EpgData IptvModel::parseXmltv(const QList<QByteArray> &files, const Q
     }
     // Zenders die alleen via hun naam gekoppeld zijn, en verder ongebruikte gids-id's weg
     QSet<QString> used = wanted;
+    for (auto it = data.programmes.constBegin(); it != data.programmes.constEnd(); ++it) {
+        if (wanted.contains(QStringLiteral("base:") + it.key().section(QLatin1Char('@'), 0, 0).toLower())) {
+            used.insert(it.key());
+        }
+    }
     for (auto it = data.names.constBegin(); it != data.names.constEnd(); ++it) {
         used.insert(it.value());
     }
@@ -788,7 +814,56 @@ QString IptvModel::epgKey(const Channel &c) const
     if (c.xtreamSource >= 0 && m_epg.programmes.contains(QStringLiteral("xtream:") + c.streamId)) {
         return QStringLiteral("xtream:") + c.streamId;
     }
+    if (!c.epgId.isEmpty()) {
+        // Zelfde zender, andere uitvoering in de id (NPO1.nl@SD tegenover NPO1.nl@HD of NPO1.nl)
+        const QString viaBase = m_epgBase.value(c.epgId.section(QLatin1Char('@'), 0, 0).toLower());
+        if (!viaBase.isEmpty()) {
+            return viaBase;
+        }
+    }
     return m_epg.names.value(c.name.toLower());
+}
+
+void IptvModel::rebuildEpgIndex()
+{
+    m_epgBase.clear();
+    for (auto it = m_epg.programmes.constBegin(); it != m_epg.programmes.constEnd(); ++it) {
+        if (!it.key().startsWith(QLatin1String("xtream:"))) {
+            m_epgBase.insert(it.key().section(QLatin1Char('@'), 0, 0).toLower(), it.key());
+        }
+    }
+}
+
+QString IptvModel::freeGuideUrl()
+{
+    return QStringLiteral("https://github.com/firefly2008/bigscreen-host-windows/releases/download/epg/guide.xml.gz");
+}
+
+void IptvModel::setExtraEpgUrls(const QStringList &urls)
+{
+    QStringList clean;
+    for (const QString &u : urls) {
+        if (!u.trimmed().isEmpty() && !clean.contains(u.trimmed())) {
+            clean << u.trimmed();
+        }
+    }
+    if (clean == m_extraEpgUrls) {
+        return;
+    }
+    m_extraEpgUrls = clean;
+    m_settings.setValue(QStringLiteral("iptv/extraEpg"), m_extraEpgUrls);
+    m_settings.sync();
+    Q_EMIT sourcesChanged();
+    // Gidsadressen opnieuw verzamelen en de gids ophalen
+    QStringList urls = m_epgUrls;
+    for (const QString &u : std::as_const(m_extraEpgUrls)) {
+        if (!urls.contains(u)) {
+            urls << u;
+        }
+    }
+    m_epgUrls = urls;
+    m_settings.setValue(QStringLiteral("iptv/epgUrls"), m_epgUrls);
+    reloadEpg();
 }
 
 const QList<IptvModel::Programme> *IptvModel::programmesFor(const Channel &c) const
@@ -940,6 +1015,7 @@ void IptvModel::saveEpgCache() const
     QFile file(m_dataDir + QStringLiteral("/iptv-epg.json"));
     if (file.open(QIODevice::WriteOnly | QIODevice::Truncate)) {
         file.write(QJsonDocument(QJsonObject{{QStringLiteral("saved"), double(QDateTime::currentSecsSinceEpoch())},
+                                             {QStringLiteral("urls"), QJsonArray::fromStringList(m_epgUrls)},
                                              {QStringLiteral("programmes"), programmes},
                                              {QStringLiteral("names"), names}}).toJson(QJsonDocument::Compact));
     }
@@ -966,7 +1042,15 @@ bool IptvModel::loadEpgCache()
     for (auto it = names.constBegin(); it != names.constEnd(); ++it) {
         m_epg.names.insert(it.key(), it.value().toString());
     }
+    rebuildEpgIndex();
     ++m_epgRevision;
     m_epgStatus = tr("Gids: %1 zenders").arg(m_epg.programmes.size());
+    // Ouder dan 6 uur, of er is sindsdien een gidsadres bijgekomen: opnieuw ophalen
+    const QStringList cachedUrls = root.value(QStringLiteral("urls")).toVariant().toStringList();
+    for (const QString &u : std::as_const(m_epgUrls)) {
+        if (!cachedUrls.contains(u)) {
+            return false;
+        }
+    }
     return QDateTime::currentSecsSinceEpoch() - saved < 6 * 3600;
 }
