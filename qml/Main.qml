@@ -340,7 +340,8 @@ Rectangle {
             { label: appModel.showHero ? "Grote naam en logo linksboven verbergen" : "Grote naam en logo linksboven tonen", action: "toggle-hero" },
             { label: appModel.fontScale > 1 ? "Tekst normaal" : "Tekst groter (kijken op afstand)", action: "font-scale" },
             { label: "Diensten kiezen…", action: "welcome" },
-            { label: "Meer instellingen…", action: "more" }
+            { label: "Meer instellingen…", action: "more" },
+            { label: "Release-info (versie " + updater.current + ")", action: "release-info" }
         ]
         if (appModel.background !== "") {
             entries.push({ label: "Standaardachtergrond herstellen", action: "background-reset" })
@@ -466,7 +467,9 @@ Rectangle {
     }
 
     function handleMenuAction(action) {
-        if (action === "section-up" || action === "section-down") {
+        if (action === "release-info") {
+            releaseInfo.open(root.menuFocus())
+        } else if (action === "section-up" || action === "section-down") {
             moveSection(editModel, action === "section-up" ? -1 : 1)
         } else if (action === "sleep-menu") {
             openSleepMenu(currentSection ? currentSection.grid : quickRow)
@@ -845,6 +848,8 @@ Rectangle {
         } else if (selfTest === "homekey") {
             homeBridge.externalLaunched()
             testStep.run(1500, () => homeBridge.goHome())
+        } else if (selfTest === "releaseinfo") {
+            Qt.callLater(() => releaseInfo.open(quickRow))
         } else if (selfTest === "radiohome") {
             Qt.callLater(() => focusSection(sectionDefs.findIndex(d => d.model === radio), 0, false))
         } else if (selfTest === "resume") {
@@ -1524,6 +1529,10 @@ Rectangle {
 
     PinPad {
         id: pinPad
+    }
+
+    ReleaseInfo {
+        id: releaseInfo
     }
 
     // Stil bijwerken: klein bericht rechtsonder; installeren zodra er niets speelt

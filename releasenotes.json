@@ -1,0 +1,53 @@
+[
+  {
+    "version": "4.1.0",
+    "date": "15 november 2026",
+    "notes": [
+      "Diensten kiezen: alle Nederlandse radiozenders (NPO, commercieel, themazenders en de regionale omroepen) zijn aan of uit te zetten",
+      "Diensten kiezen: meer op Nederland gerichte diensten, zoals NOS, NPO Zapp, Schooltv, Ziggo Sport, DAZN, BVN en Human",
+      "Radiozender toevoegen gaat nu via Aanpassen (de losse tegel is weg)",
+      "Het kader op de gekozen tegel is altijd zichtbaar, ook direct na het opstarten",
+      "Aanpassen → Release-info: wat er nieuw is en welke versie je hebt",
+      "Kijkluister werkt zichzelf stil bij: de nieuwe versie wordt op de achtergrond opgehaald en geïnstalleerd zodra er niets speelt"
+    ]
+  },
+  {
+    "version": "4.0.0",
+    "date": "15 november 2026",
+    "notes": [
+      "Home-knop linksboven boven websites en apps; de Home-toets van een (Bluetooth-)afstandsbediening en Esc een seconde vasthouden brengen je terug naar de tegels",
+      "Nieuwe tegel Regionale tv met alle regionale omroepen van Nederland",
+      "Tegel Films & Series vervangt de losse tegels Films en Series",
+      "Rijen zijn te verplaatsen (Menu op een tegel: Rij omhoog/omlaag); Verder kijken staat standaard onder Media",
+      "Speelt de radio op de achtergrond, dan staat 'Nu op de radio' vooraan in de rij Media",
+      "De bovenbalk is rustiger: Zoeken, Aanpassen en Sluiten; Windows-instellingen staan onder Meer instellingen"
+    ]
+  },
+  {
+    "version": "3.9.7",
+    "date": "15 november 2026",
+    "notes": [
+      "Radio speelt door op de achtergrond; slaaptimer voor radio, tv en films",
+      "Zoeken in apps, zenders, tv-gids, films en radio, met schermtoetsenbord",
+      "Kinderslot met eigen pincode",
+      "Opnames opruimen (bewaartermijn en vrije ruimte), altijd eerst gevraagd",
+      "Bediening met de tv-afstandsbediening via HDMI-CEC",
+      "Weer naast de klok"
+    ]
+  },
+  {
+    "version": "3.9.6",
+    "date": "14 november 2026",
+    "notes": [
+      "Rij Radio met de zeven populairste Nederlandse zenders, in Kijkluister zelf te beluisteren"
+    ]
+  },
+  {
+    "version": "3.9.5",
+    "date": "14 november 2026",
+    "notes": [
+      "Rij Verder kijken, opnemen vanuit de tv-gids, grotere tekst en welkomststap",
+      "Gegevens bij films en series met een ingebouwde, vergrendelde sleutel"
+    ]
+  }
+]

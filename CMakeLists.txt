@@ -56,6 +56,8 @@ target_compile_definitions(bigscreen-host PRIVATE KIJKLUISTER_VERSION="${KIJKLUI
 
 # Pictogram (getekend door assets/make_icon.py)
 qt_add_resources(bigscreen-host "icons" PREFIX "/" FILES assets/kijkluister-256.png)
+# Release-info (Aanpassen → Release-info); bij elke nieuwe versie bovenaan aanvullen
+qt_add_resources(bigscreen-host "releasenotes" PREFIX "/" FILES releasenotes.json)
 
 if(WIN32)
     target_sources(bigscreen-host PRIVATE
@@ -74,7 +76,7 @@ else()
 endif()
 
 # Zonder alias komt het bestand in de resources onder .../host/qml/Main.qml terecht
-set(BIGSCREEN_QML_FILES qml/Main.qml qml/BannerTile.qml qml/QuickTile.qml qml/MenuOverlay.qml qml/PlacesPicker.qml qml/SectionGrid.qml qml/AddTileOverlay.qml qml/LibraryScreen.qml qml/LibrarySetup.qml qml/FocusButton.qml qml/PosterTile.qml qml/IptvScreen.qml qml/IptvSources.qml qml/EpgPanel.qml qml/FrameScreen.qml qml/RecordPanel.qml qml/HintBar.qml qml/WelcomeOverlay.qml qml/RadioPlayer.qml qml/PinPad.qml qml/OnScreenKeyboard.qml qml/SearchPicker.qml qml/HomeButton.qml)
+set(BIGSCREEN_QML_FILES qml/Main.qml qml/BannerTile.qml qml/QuickTile.qml qml/MenuOverlay.qml qml/PlacesPicker.qml qml/SectionGrid.qml qml/AddTileOverlay.qml qml/LibraryScreen.qml qml/LibrarySetup.qml qml/FocusButton.qml qml/PosterTile.qml qml/IptvScreen.qml qml/IptvSources.qml qml/EpgPanel.qml qml/FrameScreen.qml qml/RecordPanel.qml qml/HintBar.qml qml/WelcomeOverlay.qml qml/RadioPlayer.qml qml/PinPad.qml qml/OnScreenKeyboard.qml qml/SearchPicker.qml qml/HomeButton.qml qml/ReleaseInfo.qml)
 foreach(qml_file IN LISTS BIGSCREEN_QML_FILES)
     get_filename_component(qml_name ${qml_file} NAME)
     set_source_files_properties(${qml_file} PROPERTIES QT_RESOURCE_ALIAS ${qml_name})
