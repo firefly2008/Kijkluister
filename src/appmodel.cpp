@@ -259,6 +259,9 @@ bool AppModel::launchWeb(const QString &url)
         const QStringList args = {
             QStringLiteral("--app=") + url,
             QStringLiteral("--start-fullscreen"),
+            // Geen schuifbalk rechts (scrollen met muiswiel, pijltjes of afstandsbediening blijft werken)
+            QStringLiteral("--hide-scrollbars"),
+            QStringLiteral("--enable-features=OverlayScrollbar,msOverlayScrollbarWinStyle,msOverlayScrollbarWinStyleAnimation"),
             QStringLiteral("--no-first-run"),
             QStringLiteral("--no-default-browser-check"),
             QStringLiteral("--user-data-dir=") + QDir::toNativeSeparators(dataDir() + QStringLiteral("/browser")),
