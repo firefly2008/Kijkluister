@@ -7,3 +7,7 @@ Gemeld 15-11-2026 met schermafbeelding:
 - Tegel is te groot voor één film; tekst (titel, "nog … min") te groot.
 - Rest van het scherm leeg: tegels in een raster met dezelfde maten en marges als het startscherm, poster/achtergrond met donkere verloop onderaan, voortgangsbalk binnen de kaart.
 - Hints onderaan zijn goed.
+
+## Films & Series: Esc werkt niet
+Gemeld 15-11-2026: in Films & Series (LibraryScreen.qml) brengt Esc je niet terug naar het startscherm.
+Esc moet overal één stap terug gaan (detail → lijst → startscherm), ook als de focus in het zoekveld, de filterrij of een submenu staat. Rooktest toevoegen: library + Esc → "Home screen".
