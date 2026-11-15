@@ -412,10 +412,19 @@ FocusScope {
             anchors.margins: tv.unit * 3
             spacing: tv.unit * 1.2
             FocusButton {
+                id: recordingsButton
+                unit: tv.unit
+                text: recorder.recording ? "●  Opnames" : "Opnames"
+                onClicked: recordPanel.open(iptv.channelAt(Math.max(0, grid.currentIndex)), recordingsButton)
+                KeyNavigation.right: sourcesButton
+                KeyNavigation.down: grid
+            }
+            FocusButton {
                 id: sourcesButton
                 unit: tv.unit
                 text: "Bronnen"
                 onClicked: sources.open()
+                KeyNavigation.left: recordingsButton
                 KeyNavigation.right: reloadButton
                 KeyNavigation.down: grid
             }
@@ -830,18 +839,20 @@ FocusScope {
         unit: tv.unit
     }
 
-    // Opname-indicator rechtsboven, zolang er opgenomen wordt
+    // Opname-indicator linksboven, zolang er opgenomen wordt, met stopknop (vierkantje)
     Rectangle {
+        id: recIndicator
         visible: recorder.recording && tv.visible && !recordPanel.visible
         anchors.top: parent.top
-        anchors.right: parent.right
+        anchors.left: parent.left
         anchors.margins: tv.unit * 3
         z: 30
-        width: recText.implicitWidth + tv.unit * 5
+        width: recRow.implicitWidth + tv.unit * 3
         height: tv.unit * 5.5
         radius: height / 2
         color: "#cc000000"
         Row {
+            id: recRow
             anchors.centerIn: parent
             spacing: tv.unit
             Rectangle {
@@ -858,6 +869,43 @@ FocusScope {
                 color: "white"
                 font.pixelSize: (tv.unit * 2.3) * appModel.fontScale
                 text: "REC  " + recorder.channel + "  " + recordPanel.fmtTime(recorder.elapsedSeconds)
+            }
+            // Stopknop: wit vierkantje; muis erop = "Opname stoppen"
+            Rectangle {
+                id: stopButton
+                anchors.verticalCenter: parent.verticalCenter
+                width: tv.unit * 3.6; height: width; radius: tv.unit * 0.6
+                color: stopMouse.containsMouse ? "#e53935" : "#33ffffff"
+                Rectangle {
+                    anchors.centerIn: parent
+                    width: parent.width * 0.42; height: width; radius: tv.unit * 0.2
+                    color: "white"
+                }
+                MouseArea {
+                    id: stopMouse
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    cursorShape: Qt.PointingHandCursor
+                    onClicked: { recorder.stop(); console.info("Recording stopped via stop button") }
+                }
+            }
+        }
+        // Uitleg bij de muis
+        Rectangle {
+            visible: stopMouse.containsMouse
+            anchors.top: parent.bottom
+            anchors.topMargin: tv.unit * 0.8
+            anchors.right: parent.right
+            width: tipText.implicitWidth + tv.unit * 2
+            height: tv.unit * 4
+            radius: tv.unit * 0.8
+            color: "#ee16181d"
+            Text {
+                id: tipText
+                anchors.centerIn: parent
+                text: "Opname stoppen"
+                color: "white"
+                font.pixelSize: (tv.unit * 2) * appModel.fontScale
             }
         }
     }
