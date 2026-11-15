@@ -147,7 +147,7 @@ void RadioModel::rebuild()
             rows.append(i);
         }
     }
-    rows.append(-1);   // tegel "Radiozender toevoegen"
+    // (Tegel "Radiozender toevoegen" vervallen in 4.1: toevoegen gaat via Aanpassen)
     auto keyOf = [this](int i) { return i < 0 ? QStringLiteral("+add") : m_stations.at(i).name; };
     // Opgeslagen volgorde; nieuwe zenders vóór de toevoegtegel als die achteraan stond
     const int addPos = order.indexOf(QStringLiteral("+add"));

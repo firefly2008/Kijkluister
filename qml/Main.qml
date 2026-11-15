@@ -254,8 +254,7 @@ Rectangle {
         editModel = model
         editRow = row
         if (model === radio) {
-            const entries = radio.isAddTile(row) ? [{ label: "Radiozender toevoegen…", action: "radio-add" }]
-                                                 : [{ label: "Luisteren", action: "radio-play" }, { label: "Radiozender toevoegen…", action: "radio-add" }]
+            const entries = [{ label: "Luisteren", action: "radio-play" }, { label: "Radiozender toevoegen…", action: "radio-add" }]
             for (const dir of ["left", "right", "up", "down"]) {
                 if (root.moveLimit(model, row, dir) > 0) entries.push({ label: root.moveLabels[dir] + " verplaatsen…", action: "move-" + dir })
             }
@@ -336,6 +335,7 @@ Rectangle {
     function openPersonalizeMenu() {
         const entries = [
             { label: "Tegel toevoegen…", action: "add" },
+            { label: "Radiozender toevoegen…", action: "radio-add" },
             { label: "Achtergrond kiezen…", action: "background" },
             { label: appModel.showHero ? "Grote naam en logo linksboven verbergen" : "Grote naam en logo linksboven tonen", action: "toggle-hero" },
             { label: appModel.fontScale > 1 ? "Tekst normaal" : "Tekst groter (kijken op afstand)", action: "font-scale" },
@@ -840,7 +840,7 @@ Rectangle {
             moveSection(radio, -1)
             console.info("Section order moved:", sectionDefs.map(d => d.title).join(","))
             radio.move(radio.count - 1, 0)
-            console.info("Radio first tile:", radio.nameAt(0))
+            console.info("Radio first tile:", radio.nameAt(0), radio.count)
             Qt.callLater(() => focusSection(sectionDefs.findIndex(d => d.model === radio), 0, false))
         } else if (selfTest === "homekey") {
             homeBridge.externalLaunched()

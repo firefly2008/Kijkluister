@@ -11,7 +11,7 @@
 class RadioModel : public QAbstractListModel
 {
     Q_OBJECT
-    Q_PROPERTY(int count READ count NOTIFY countChanged)            // tegels, inclusief "Radiozender toevoegen"
+    Q_PROPERTY(int count READ count NOTIFY countChanged)            // zichtbare zenders
     Q_PROPERTY(int stationCount READ stationCount NOTIFY countChanged)
     Q_PROPERTY(int revision READ revision NOTIFY revisionChanged)
     Q_PROPERTY(QVariantList results READ results NOTIFY resultsChanged)
@@ -27,7 +27,7 @@ public:
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
     int count() const { return int(m_visible.size()); }
-    int stationCount() const { return int(m_visible.size()) - 1; }
+    int stationCount() const { return int(m_visible.size()); }
     QVariantList results() const { return m_results; }
     bool searching() const { return m_searching; }
     int hiddenCount() const;

@@ -183,7 +183,7 @@ jobs:
               'search' = 'Search results'; 'radioadd' = 'Radio added'; 'sleep' = 'Sleep timer fired'; 'weather' = 'Weather:';
               'update' = 'Update check'; 'cec' = 'CEC key'; 'radiobg' = 'Radio in background'; 'cleanup' = 'Cleanup suggested';
               'parental' = 'Parental: unlocked'; 'regional' = 'IPTV playing:'; 'nowplaying' = 'Media first tile: Nu op de radio';
-              'sections' = 'Radio first tile: Radiozender toevoegen'; 'homekey' = 'Home screen'
+              'sections' = 'Section order moved:'; 'homekey' = 'Home screen'
             }
             if ($checks.ContainsKey($mode)) {
               Select-String -Path $log -Pattern "Search|Radio|Sleep|Weather|Update|CEC|Cleanup|Parental|Regional|IPTV play|Media first|Section order|Home|TypeError|ReferenceError" | ForEach-Object { $_.Line }
