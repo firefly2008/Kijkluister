@@ -1,12 +1,12 @@
-// Pexels-sleutel voor "Achtergrond wijzigen → Gratis foto". Wordt bij het bouwen ingevuld vanuit het
-// GitHub-geheim PEXELS_KEY (scripts/build-installer.ps1), versluierd; leeg = Openverse gebruiken.
+// Unsplash-sleutel (Access Key) voor "Achtergrond wijzigen → Gratis foto". Wordt bij het bouwen ingevuld vanuit het
+// GitHub-geheim UNSPLASH_KEY (scripts/build-installer.ps1), versluierd; leeg = Openverse gebruiken.
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
 #include <QByteArray>
 #include <QString>
 
-namespace PexelsKey {
+namespace UnsplashKey {
 inline QString key()
 {
     static const int length = 0;

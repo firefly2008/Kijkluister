@@ -11,7 +11,7 @@ $root = Split-Path $PSScriptRoot -Parent
 Set-Location $root
 
 # 1. Configureren + bouwen (uitvoeren vanuit een "x64 Native Tools" prompt of na vcvars64.bat)
-# Geheimen (GitHub: PEXELS_KEY, TMDB_TOKEN) versluierd in de headers zetten; niets leesbaar in de code
+# Geheimen (GitHub: UNSPLASH_KEY, TMDB_TOKEN) versluierd in de headers zetten; niets leesbaar in de code
 function Set-HiddenKey([string]$file, [string]$value, [string]$label) {
     if (-not $value) { "Geen $label"; return }
     $bytes = [Text.Encoding]::ASCII.GetBytes($value.Trim())
@@ -26,7 +26,7 @@ function Set-HiddenKey([string]$file, [string]$value, [string]$label) {
     Set-Content $file $h -NoNewline
     "$label ingebouwd ($($bytes.Length) tekens)"
 }
-Set-HiddenKey src/pexelskey.h $env:PEXELS_KEY "Pexels-sleutel"
+Set-HiddenKey src/photokey.h $env:UNSPLASH_KEY "Unsplash-sleutel"
 Set-HiddenKey src/builtinkey.h $env:TMDB_TOKEN "TMDB-sleutel"
 cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=Release `
     "-DCMAKE_PREFIX_PATH=$QtDir" `

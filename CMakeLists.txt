@@ -55,7 +55,7 @@ qt_add_executable(bigscreen-host WIN32
     src/usagemodel.cpp
     src/usagemodel.h
     src/photosearch.h
-    src/pexelskey.h
+    src/photokey.h
 )
 
 set(KIJKLUISTER_VERSION "0.0.0" CACHE STRING "Versie van Kijkluister (voor bijwerken)")

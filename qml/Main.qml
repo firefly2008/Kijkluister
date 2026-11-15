@@ -583,7 +583,7 @@ Rectangle {
             if (appModel.background !== "") bg.push({ label: "Standaardachtergrond herstellen", action: "background-reset" })
             bg.push({ label: "Annuleren", action: "" })
             menu.open("Achtergrond wijzigen", bg, root.menuFocus(),
-                      photos.source === "Pexels" ? "Gratis foto's van Pexels." : "Gratis foto's met een vrije licentie (Openverse).")
+                      photos.source === "Unsplash" ? "Gratis foto's van Unsplash." : "Gratis foto's met een vrije licentie (Openverse).")
         } else if (action === "background-photo") {
             openPicker("photo", "Gratis foto als achtergrond", root.menuFocus(), "landschap")
         } else if (action === "release-info") {
@@ -885,7 +885,7 @@ Rectangle {
             iptvScreen.open(mediaGrid())
         } else if (selfTest.startsWith("frame")) {
             // Test: frame-chicago, frame-met, frame-nature, frame-mix, frame-lijst, frame-settings
-            const kinds = { "frame-chicago": 0, "frame-met": 1, "frame-nature": 2, "frame-mix": 4, "frame-lijst": 0, "frame-settings": 2, "frame-esc": 2, "frame-mouseesc": 0 }
+            const kinds = { "frame-chicago": 0, "frame-met": 1, "frame-nature": 2, "frame-unsplash": 3, "frame-mix": 4, "frame-lijst": 0, "frame-settings": 2, "frame-esc": 2, "frame-mouseesc": 0 }
             frame.source = kinds[selfTest] !== undefined ? kinds[selfTest] : 0
             frame.fill = selfTest !== "frame-lijst"
             frame.interval = 5

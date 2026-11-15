@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "artframe.h"
+#include "photokey.h"
 
 #include <QCryptographicHash>
 #include <QDir>
@@ -85,7 +86,7 @@ QStringList ArtFrame::sources() const
         tr("Schilderijen – Wikimedia Commons"),
         tr("Topstukken – The Met, New York"),
         tr("Natuurfoto's – Wikimedia Commons"),
-        tr("Natuurfoto's – Pexels (eigen sleutel)"),
+        tr("Natuurfoto's – Unsplash"),
         tr("Afwisselend kunst en natuur"),
     };
 }
@@ -477,41 +478,41 @@ void ArtFrame::fetchCommons(bool paintings)
     });
 }
 
-// Pexels: gratis foto's, met een eigen (gratis) API-sleutel van pexels.com/api
+// Unsplash: gratis natuurfoto's met de ingebouwde sleutel (vroeger Pexels met eigen sleutel)
 void ArtFrame::fetchPexels()
 {
-    if (m_pexelsKey.isEmpty()) {
-        setStatus(tr("Vul in Instellingen een gratis Pexels-sleutel in (pexels.com/api)"), false);
+    const QString key = UnsplashKey::key();
+    if (key.isEmpty()) {
+        setStatus(tr("Unsplash is in deze versie niet beschikbaar"), false);
         return;
     }
-    QUrl url(QStringLiteral("https://api.pexels.com/v1/search"));
+    QUrl url(QStringLiteral("https://api.unsplash.com/search/photos"));
     QUrlQuery query;
     query.addQueryItem(QStringLiteral("query"), QString::fromLatin1(pexelsQueries[randomInt(int(std::size(pexelsQueries)))]));
     query.addQueryItem(QStringLiteral("orientation"), QStringLiteral("landscape"));
-    query.addQueryItem(QStringLiteral("size"), QStringLiteral("large"));
-    query.addQueryItem(QStringLiteral("per_page"), QStringLiteral("40"));
+    query.addQueryItem(QStringLiteral("per_page"), QStringLiteral("30"));
     query.addQueryItem(QStringLiteral("page"), QString::number(1 + randomInt(5)));
     url.setQuery(query);
     get(url, [this](const QByteArray &data, int status) {
         if (status == 401 || status == 403) {
-            setStatus(tr("Pexels-sleutel klopt niet"), false);
+            setStatus(tr("Unsplash weigert de sleutel"), false);
             return;
         }
         QList<QVariantMap> items;
-        for (const QJsonValue &v : QJsonDocument::fromJson(data).object().value(QStringLiteral("photos")).toArray()) {
+        for (const QJsonValue &v : QJsonDocument::fromJson(data).object().value(QStringLiteral("results")).toArray()) {
             const QJsonObject o = v.toObject();
-            const QString original = o.value(QStringLiteral("src")).toObject().value(QStringLiteral("original")).toString();
-            if (original.isEmpty()) {
+            const QString raw = o.value(QStringLiteral("urls")).toObject().value(QStringLiteral("raw")).toString();
+            if (raw.isEmpty()) {
                 continue;
             }
             items.append({
-                {QStringLiteral("image"), original + QStringLiteral("?auto=compress&cs=tinysrgb&w=1920")},
-                {QStringLiteral("title"), o.value(QStringLiteral("alt")).toString()},
-                {QStringLiteral("subtitle"), tr("Foto: %1").arg(o.value(QStringLiteral("photographer")).toString())},
-                {QStringLiteral("credit"), tr("Foto's van Pexels")},
+                {QStringLiteral("image"), raw + QStringLiteral("&w=1920&fm=jpg&q=85")},
+                {QStringLiteral("title"), o.value(QStringLiteral("alt_description")).toString()},
+                {QStringLiteral("subtitle"), tr("Foto: %1").arg(o.value(QStringLiteral("user")).toObject().value(QStringLiteral("name")).toString())},
+                {QStringLiteral("credit"), tr("Foto's van Unsplash")},
             });
         }
-        qInfo() << "Frame: Pexels gave" << items.size() << "photos";
+        qInfo() << "Frame: Unsplash gave" << items.size() << "photos";
         addCandidates(items);
-    }, m_pexelsKey.toUtf8());
+    }, "Client-ID " + key.toLatin1());
 }

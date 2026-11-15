@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "photosearch.h"
-#include "pexelskey.h"
+#include "photokey.h"
 
 #include <QCryptographicHash>
 #include <QDir>
@@ -21,15 +21,15 @@ PhotoSearch::PhotoSearch(const QString &dataDir, QObject *parent)
 
 QString PhotoSearch::source() const
 {
-    return PexelsKey::key().isEmpty() ? QStringLiteral("Openverse") : QStringLiteral("Pexels");
+    return UnsplashKey::key().isEmpty() ? QStringLiteral("Openverse") : QStringLiteral("Unsplash");
 }
 
 void PhotoSearch::search(const QString &query)
 {
-    searchWith(query, !PexelsKey::key().isEmpty());
+    searchWith(query, !UnsplashKey::key().isEmpty());
 }
 
-void PhotoSearch::searchWith(const QString &query, bool usePexels)
+void PhotoSearch::searchWith(const QString &query, bool useUnsplash)
 {
     const QString q = query.trimmed();
     const int generation = ++m_generation;
@@ -39,19 +39,19 @@ void PhotoSearch::searchWith(const QString &query, bool usePexels)
         Q_EMIT resultsChanged();
         return;
     }
-    const QString key = usePexels ? PexelsKey::key() : QString();
+    const QString key = useUnsplash ? UnsplashKey::key() : QString();
     QNetworkRequest request;
     if (!key.isEmpty()) {
-        QUrl url(QStringLiteral("https://api.pexels.com/v1/search"));
+        QUrl url(QStringLiteral("https://api.unsplash.com/search/photos"));
         QUrlQuery params;
         params.addQueryItem(QStringLiteral("query"), q);
         params.addQueryItem(QStringLiteral("orientation"), QStringLiteral("landscape"));
-        params.addQueryItem(QStringLiteral("size"), QStringLiteral("large"));
         params.addQueryItem(QStringLiteral("per_page"), QStringLiteral("30"));
-        params.addQueryItem(QStringLiteral("locale"), QStringLiteral("nl-NL"));
+        params.addQueryItem(QStringLiteral("lang"), QStringLiteral("nl"));
         url.setQuery(params);
         request.setUrl(url);
-        request.setRawHeader("Authorization", key.toLatin1());
+        request.setRawHeader("Authorization", "Client-ID " + key.toLatin1());
+        request.setRawHeader("Accept-Version", "v1");
     } else {
         QUrl url(QStringLiteral("https://api.openverse.org/v1/images/"));
         QUrlQuery params;
@@ -67,7 +67,7 @@ void PhotoSearch::searchWith(const QString &query, bool usePexels)
     m_busy = true;
     Q_EMIT resultsChanged();
     QNetworkReply *reply = m_network.get(request);
-    connect(reply, &QNetworkReply::finished, this, [this, reply, generation, q, pexels = !key.isEmpty()] {
+    connect(reply, &QNetworkReply::finished, this, [this, reply, generation, q, unsplash = !key.isEmpty()] {
         reply->deleteLater();
         if (generation != m_generation) {
             return;   // er is intussen verder getypt
@@ -75,18 +75,20 @@ void PhotoSearch::searchWith(const QString &query, bool usePexels)
         m_busy = false;
         m_results.clear();
         const QJsonObject o = QJsonDocument::fromJson(reply->readAll()).object();
-        if (pexels) {
-            for (const QJsonValue &v : o.value(QStringLiteral("photos")).toArray()) {
+        if (unsplash) {
+            for (const QJsonValue &v : o.value(QStringLiteral("results")).toArray()) {
                 const QJsonObject p = v.toObject();
-                const QJsonObject src = p.value(QStringLiteral("src")).toObject();
-                const QString alt = p.value(QStringLiteral("alt")).toString();
-                const QString photographer = p.value(QStringLiteral("photographer")).toString();
+                const QJsonObject urls = p.value(QStringLiteral("urls")).toObject();
+                const QString alt = p.value(QStringLiteral("alt_description")).toString();
+                const QString photographer = p.value(QStringLiteral("user")).toObject().value(QStringLiteral("name")).toString();
                 m_results.append(QVariantMap{
                     {QStringLiteral("name"), alt.isEmpty() ? q : alt},
-                    {QStringLiteral("detail"), tr("Foto: %1 (Pexels)").arg(photographer)},
-                    {QStringLiteral("thumb"), src.value(QStringLiteral("medium")).toString()},
-                    {QStringLiteral("full"), src.value(QStringLiteral("original")).toString() + QStringLiteral("?auto=compress&cs=tinysrgb&w=3840")},
-                    {QStringLiteral("credit"), tr("Foto: %1 op Pexels").arg(photographer)},
+                    {QStringLiteral("detail"), tr("Foto: %1 (Unsplash)").arg(photographer)},
+                    {QStringLiteral("thumb"), urls.value(QStringLiteral("small")).toString()},
+                    {QStringLiteral("full"), urls.value(QStringLiteral("raw")).toString() + QStringLiteral("&w=3840&fm=jpg&q=85")},
+                    {QStringLiteral("credit"), tr("Foto: %1 op Unsplash").arg(photographer)},
+                    // Unsplash vraagt een melding bij elke download
+                    {QStringLiteral("track"), p.value(QStringLiteral("links")).toObject().value(QStringLiteral("download_location")).toString()},
                 });
             }
         } else {
@@ -103,9 +105,9 @@ void PhotoSearch::searchWith(const QString &query, bool usePexels)
                 });
             }
         }
-        qInfo() << "Photo search" << q << m_results.size() << (pexels ? "Pexels" : "Openverse");
-        if (pexels && m_results.isEmpty()) {
-            // Pexels gaf niets (bv. ongeldige sleutel): dan Openverse
+        qInfo() << "Photo search" << q << m_results.size() << (unsplash ? "Unsplash" : "Openverse");
+        if (unsplash && m_results.isEmpty()) {
+            // Unsplash gaf niets (bv. ongeldige sleutel): dan Openverse
             searchWith(q, false);
             return;
         }
@@ -123,6 +125,13 @@ void PhotoSearch::download(int index)
     request.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
     request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("Kijkluister"));
     const QString credit = r.value(QStringLiteral("credit")).toString();
+    const QString track = r.value(QStringLiteral("track")).toString();
+    if (!track.isEmpty() && !UnsplashKey::key().isEmpty()) {
+        QNetworkRequest t{QUrl(track)};
+        t.setRawHeader("Authorization", "Client-ID " + UnsplashKey::key().toLatin1());
+        QNetworkReply *ping = m_network.get(t);
+        connect(ping, &QNetworkReply::finished, ping, &QObject::deleteLater);
+    }
     QNetworkReply *reply = m_network.get(request);
     connect(reply, &QNetworkReply::finished, this, [this, reply, credit] {
         reply->deleteLater();

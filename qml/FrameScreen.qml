@@ -219,7 +219,7 @@ FocusScope {
         visible: false
         z: 10
 
-        readonly property var sourceLabels: ["Schilderijen", "Topstukken (The Met)", "Natuurfoto's", "Natuurfoto's (Pexels)", "Afwisselend"]
+        readonly property var sourceLabels: ["Schilderijen", "Topstukken (The Met)", "Natuurfoto's", "Natuurfoto's (Unsplash)", "Afwisselend"]
         readonly property var intervals: [1, 5, 15, 30, 60]
 
         function open() {
@@ -341,10 +341,11 @@ FocusScope {
                     chosen: frame.showInfo ? 0 : 1
                     onPicked: (i) => frame.showInfo = i === 0
                     KeyNavigation.up: styleRow
-                    KeyNavigation.down: keyField
+                    KeyNavigation.down: closeButton
                 }
-                Label { text: "Pexels-sleutel (gratis aan te vragen op pexels.com/api, alleen nodig voor Natuur (Pexels))" }
+                // Unsplash heeft een ingebouwde sleutel: geen eigen sleutel meer nodig
                 Rectangle {
+                    visible: false
                     width: parent.width
                     height: frameScreen.unit * 6
                     radius: frameScreen.unit
@@ -373,7 +374,7 @@ FocusScope {
                         unit: frameScreen.unit
                         text: "Klaar"
                         onClicked: settings.close()
-                        KeyNavigation.up: keyField
+                        KeyNavigation.up: infoRow
                         KeyNavigation.right: stopButton
                     }
                     FocusButton {
@@ -381,7 +382,7 @@ FocusScope {
                         unit: frameScreen.unit
                         text: "Schilderij stoppen"
                         onClicked: frameScreen.close()
-                        KeyNavigation.up: keyField
+                        KeyNavigation.up: infoRow
                         KeyNavigation.left: closeButton
                     }
                 }

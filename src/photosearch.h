@@ -1,4 +1,4 @@
-// Achtergrond wijzigen → Gratis foto zoeken. Pexels (met ingebouwde sleutel) of, zonder sleutel,
+// Achtergrond wijzigen → Gratis foto zoeken. Unsplash (met ingebouwde sleutel) of, zonder sleutel,
 // Openverse (vrij gelicenseerde foto's). De gekozen foto wordt in %LOCALAPPDATA%\Kijkluister\backgrounds bewaard.
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
@@ -12,7 +12,7 @@ class PhotoSearch : public QObject
     Q_OBJECT
     Q_PROPERTY(QVariantList results READ results NOTIFY resultsChanged)
     Q_PROPERTY(bool busy READ busy NOTIFY resultsChanged)
-    Q_PROPERTY(QString source READ source CONSTANT)   // "Pexels" of "Openverse"
+    Q_PROPERTY(QString source READ source CONSTANT)   // "Unsplash" of "Openverse"
 
 public:
     explicit PhotoSearch(const QString &dataDir, QObject *parent = nullptr);
@@ -31,7 +31,7 @@ Q_SIGNALS:
     void failed(const QString &message);
 
 private:
-    void searchWith(const QString &query, bool usePexels);
+    void searchWith(const QString &query, bool useUnsplash);
     QString m_dataDir;
     QNetworkAccessManager m_network;
     QVariantList m_results;
