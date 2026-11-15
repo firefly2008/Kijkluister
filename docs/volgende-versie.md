@@ -6,6 +6,9 @@ Gemeld 15-11-2026 met schermafbeelding:
 - Selectiekader (wit) en grijze achtergrondkaart liggen verschoven over elkaar; kader loopt rechts over de kaart heen.
 - Tegel is te groot voor één film; tekst (titel, "nog … min") te groot.
 - Rest van het scherm leeg: tegels in een raster met dezelfde maten en marges als het startscherm, poster/achtergrond met donkere verloop onderaan, voortgangsbalk binnen de kaart.
+- Met twee items (gemeld 15-11-2026, 2e schermafbeelding): de grijze kaart van de gekozen tegel schuift over de volgende tegel heen (geen tussenruimte); tweede tegel begint half onder de eerste.
+- Bij series wordt de regel afgekapt ("S02E01 · Aflevering 1 · nog …"): resterende tijd op eigen regel of korter ("S2 A1 · nog 41 min").
+- Niet-gekozen tegels zijn donker/vaag en hebben andere maten dan de gekozen tegel; alle tegels even groot, gekozen tegel alleen kader + gloed.
 - Hints onderaan zijn goed.
 
 ## Films & Series: Esc werkt niet
