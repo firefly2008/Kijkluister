@@ -20,3 +20,11 @@ Gemeld 15-11-2026 (o.a. "Naam van het nieuwe profiel", SearchPicker.qml): het sc
 Met afstandsbediening of controller kun je zo niet bevestigen zonder eerst naar rechts naar het resultaat te gaan.
 Onderste rij: Spatie · ⌫ · Wissen · **OK** (accentkleur). OK doet hetzelfde als Enter op het eerste resultaat
 (profiel opslaan, zoeken, zender toevoegen). Hint onderaan aanvullen. Rooktest: profiel aanmaken via OK.
+
+## Instelling: starten met Windows
+Gevraagd 15-11-2026: optie in Instellingen (Meer instellingen) "Kijkluister starten bij opstarten van Windows" (aan/uit).
+- Aan: waarde in HKCU\Software\Microsoft\Windows\CurrentVersion\Run → "C:\Program Files\Kijkluister\kijkluister.exe" --autostart (per gebruiker, geen beheerdersrechten nodig).
+- Uit: waarde verwijderen. Schakelaar toont de echte stand (register uitlezen).
+- Na stille update blijft de waarde staan (pad verandert niet); bij verwijderen van Kijkluister de waarde opruimen (installer [UninstallDelete]/[Registry] uninsdeletevalue).
+- Optioneel: bij --autostart direct schermvullend op het startscherm, geen welkomststap.
+- Rooktest: aan → registerwaarde aanwezig, uit → weg.
