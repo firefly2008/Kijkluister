@@ -27,4 +27,5 @@ Gevraagd 15-11-2026: optie in Instellingen (Meer instellingen) "Kijkluister star
 - Uit: waarde verwijderen. Schakelaar toont de echte stand (register uitlezen).
 - Na stille update blijft de waarde staan (pad verandert niet); bij verwijderen van Kijkluister de waarde opruimen (installer [UninstallDelete]/[Registry] uninsdeletevalue).
 - Optioneel: bij --autostart direct schermvullend op het startscherm, geen welkomststap.
+- Let op: de installer heeft al een (standaard uitgevinkte) taak "autostart" die een snelkoppeling in de map Opstarten zet ({userstartup}). Schakelaar moet die ook herkennen en bij Uit verwijderen, zodat er niet twee keer gestart wordt. Bij voorkeur één methode: de register-sleutel, en de installer-taak daarop laten aansluiten.
 - Rooktest: aan → registerwaarde aanwezig, uit → weg.
