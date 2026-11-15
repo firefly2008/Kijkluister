@@ -24,10 +24,6 @@ jobs:
             gh api -X PUT repos/firefly2008/kijkluister-releases/contents/README.md -f message=README -f content="$(base64 -w0 README.md)" >/dev/null
           fi
           gh release delete "$tag" -R firefly2008/kijkluister-releases --yes --cleanup-tag 2>/dev/null || true
-          gh release create "$tag" out/*.exe -R firefly2008/kijkluister-releases --title "Kijkluister $v" \
-            --notes "Kijkluister $v voor Windows 10/11 (x64).
-
-$notes
-
-Download de installer hieronder; Kijkluister werkt zichzelf daarna stil bij." --latest
+          printf 'Kijkluister %s voor Windows 10/11 (x64).\n\n%s\n\nDownload de installer hieronder; Kijkluister werkt zichzelf daarna stil bij.\n' "$v" "$notes" > notes.md
+          gh release create "$tag" out/*.exe -R firefly2008/kijkluister-releases --title "Kijkluister $v" --notes-file notes.md --latest
           echo "Gepubliceerd: https://github.com/firefly2008/kijkluister-releases/releases/tag/$tag"
