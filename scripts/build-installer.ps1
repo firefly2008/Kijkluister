@@ -11,22 +11,23 @@ $root = Split-Path $PSScriptRoot -Parent
 Set-Location $root
 
 # 1. Configureren + bouwen (uitvoeren vanuit een "x64 Native Tools" prompt of na vcvars64.bat)
-# Pexels-sleutel (GitHub-geheim PEXELS_KEY) versluierd in src/pexelskey.h zetten
-if ($env:PEXELS_KEY) {
-    $bytes = [Text.Encoding]::ASCII.GetBytes($env:PEXELS_KEY.Trim())
+# Geheimen (GitHub: PEXELS_KEY, TMDB_TOKEN) versluierd in de headers zetten; niets leesbaar in de code
+function Set-HiddenKey([string]$file, [string]$value, [string]$label) {
+    if (-not $value) { "Geen $label"; return }
+    $bytes = [Text.Encoding]::ASCII.GetBytes($value.Trim())
     $mask = New-Object byte[] $bytes.Length
     [Security.Cryptography.RandomNumberGenerator]::Create().GetBytes($mask)
     $data = for ($i = 0; $i -lt $bytes.Length; $i++) { '0x{0:x2}' -f ($bytes[$i] -bxor $mask[$i]) }
     $m = $mask | ForEach-Object { '0x{0:x2}' -f $_ }
-    $h = Get-Content src/pexelskey.h -Raw
+    $h = Get-Content $file -Raw
     $h = $h -replace 'static const int length = 0;', "static const int length = $($bytes.Length);"
     $h = $h -replace 'static const unsigned char data\[\] = \{ 0 \};', "static const unsigned char data[] = { $($data -join ', ') };"
     $h = $h -replace 'static const unsigned char mask\[\] = \{ 0 \};', "static const unsigned char mask[] = { $($m -join ', ') };"
-    Set-Content src/pexelskey.h $h -NoNewline
-    "Pexels-sleutel ingebouwd ($($bytes.Length) tekens)"
-} else {
-    "Geen PEXELS_KEY: gratis foto's via Openverse"
+    Set-Content $file $h -NoNewline
+    "$label ingebouwd ($($bytes.Length) tekens)"
 }
+Set-HiddenKey src/pexelskey.h $env:PEXELS_KEY "Pexels-sleutel"
+Set-HiddenKey src/builtinkey.h $env:TMDB_TOKEN "TMDB-sleutel"
 cmake -B build -S . -G Ninja -DCMAKE_BUILD_TYPE=Release `
     "-DCMAKE_PREFIX_PATH=$QtDir" `
     "-DCMAKE_TOOLCHAIN_FILE=$VcpkgRoot\scripts\buildsystems\vcpkg.cmake" `

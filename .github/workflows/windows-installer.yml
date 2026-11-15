@@ -31,6 +31,7 @@ jobs:
         shell: pwsh
         env:
           PEXELS_KEY: ${{ secrets.PEXELS_KEY }}
+          TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
         run: |
           # Branch release/2.0.0 bepaalt het versienummer; gewone pushes heten "dev"
           $version = if ($env:GITHUB_REF_NAME -like 'release/*') { $env:GITHUB_REF_NAME.Substring(8) } else { 'dev' }
