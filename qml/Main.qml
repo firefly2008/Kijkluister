@@ -27,6 +27,7 @@ Rectangle {
         }
         const overlayOpen = iptvScreen.visible || libraryScreen.visible || frameScreen.visible || radioPlayer.visible || menu.visible
                             || picker.visible || welcomeOverlay.visible || addOverlay.visible || pinPad.visible || placesPicker.visible
+                            || resumeScreen.visible || releaseInfo.visible
         if (!overlayOpen && event.text.length === 1 && /[a-zA-Z0-9]/.test(event.text) && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier))) {
             root.openPicker("all", "Zoeken", root.currentSection ? root.currentSection.grid : quickRow, event.text)
             event.accepted = true
@@ -41,12 +42,12 @@ Rectangle {
         { title: "Muziek", model: webMusic },
         { title: "Radio", model: radio },
         { title: "Podcasts", model: webPodcasts },
-        { title: "Media", model: appModel },
-        { title: "Verder kijken", model: resume }
+        { title: "Nieuws", model: webNews },
+        { title: "Media", model: appModel }
     ]
     readonly property var sectionDefs: {
         const order = appModel.sectionOrder
-        const defs = allSectionDefs.filter(d => d.model !== resume || resume.count > 0)
+        const defs = allSectionDefs.filter(d => d.model.count > 0)
         const rank = (d) => { const i = order.indexOf(d.title); return i >= 0 ? i : 100 + allSectionDefs.indexOf(d) }
         return defs.slice().sort((a, b) => rank(a) - rank(b))
     }
@@ -77,7 +78,7 @@ Rectangle {
         if (i >= 0 && i < visible.length - 1) entries.push({ label: "Rij omlaag verplaatsen", action: "section-down" })
         return entries
     }
-    readonly property var webModels: [webVideo, webMusic, webPodcasts]
+    readonly property var webModels: [webVideo, webMusic, webPodcasts, webNews]
     // Rij "Verder kijken" verschijnt of verdwijnt: de rijen worden opnieuw gemaakt, focus terugzetten
     onSectionDefsChanged: Qt.callLater(() => {
         if (!frameScreen.visible && !iptvScreen.visible && !libraryScreen.visible && !radioPlayer.visible && root.currentSection === null
@@ -302,7 +303,7 @@ Rectangle {
     function commonMenuEntries() {
         return [
             { label: "🌙  Slaaptimer…" + (sleepTimer.active ? "  (nog " + sleepTimer.remainingText + ")" : ""), action: "sleep-menu" },
-            { label: "⚙  Startpagina aanpassen…", action: "personalize-menu" },
+            { label: "⚙  Instellingen…", action: "personalize-menu" },
             { label: "Annuleren", action: "" }
         ]
     }
@@ -335,17 +336,12 @@ Rectangle {
     function openPersonalizeMenu() {
         const entries = [
             { label: "Tegel toevoegen…", action: "add" },
-            { label: "Radiozender toevoegen…", action: "radio-add" },
-            { label: "Achtergrond kiezen…", action: "background" },
+            { label: "Achtergrond wijzigen…", action: "background-menu" },
             { label: appModel.showHero ? "Grote naam en logo linksboven verbergen" : "Grote naam en logo linksboven tonen", action: "toggle-hero" },
             { label: appModel.fontScale > 1 ? "Tekst normaal" : "Tekst groter (kijken op afstand)", action: "font-scale" },
             { label: "Diensten kiezen…", action: "welcome" },
-            { label: "Meer instellingen…", action: "more" },
-            { label: "Release-info (versie " + updater.current + ")", action: "release-info" }
+            { label: "Meer instellingen…", action: "more" }
         ]
-        if (appModel.background !== "") {
-            entries.push({ label: "Standaardachtergrond herstellen", action: "background-reset" })
-        }
         let hidden = appModel.hiddenCount
         for (const m of webModels) {
             hidden += m.hiddenCount
@@ -354,8 +350,9 @@ Rectangle {
         if (hidden > 0) {
             entries.push({ label: "Verwijderde tegels terugzetten (" + hidden + ")", action: "unhide" })
         }
+        entries.push({ label: "Release-info (versie " + updater.current + ")", action: "release-info" })
         entries.push({ label: "Sluiten", action: "" })
-        menu.open("Aanpassen", entries, root.menuFocus())
+        menu.open("Instellingen", entries, root.menuFocus())
     }
 
     // --- Meer instellingen: kinderslot, weer, opnames, tv-afstandsbediening, bijwerken ---
@@ -467,7 +464,18 @@ Rectangle {
     }
 
     function handleMenuAction(action) {
-        if (action === "release-info") {
+        if (action === "background-menu") {
+            const bg = [
+                { label: "Gratis foto zoeken…", action: "background-photo" },
+                { label: "Eigen afbeelding kiezen…", action: "background" }
+            ]
+            if (appModel.background !== "") bg.push({ label: "Standaardachtergrond herstellen", action: "background-reset" })
+            bg.push({ label: "Annuleren", action: "" })
+            menu.open("Achtergrond wijzigen", bg, root.menuFocus(),
+                      photos.source === "Pexels" ? "Gratis foto's van Pexels." : "Gratis foto's met een vrije licentie (Openverse).")
+        } else if (action === "background-photo") {
+            openPicker("photo", "Gratis foto als achtergrond", root.menuFocus(), "landschap")
+        } else if (action === "release-info") {
             releaseInfo.open(root.menuFocus())
         } else if (action === "section-up" || action === "section-down") {
             moveSection(editModel, action === "section-up" ? -1 : 1)
@@ -850,10 +858,19 @@ Rectangle {
             testStep.run(1500, () => homeBridge.goHome())
         } else if (selfTest === "releaseinfo") {
             Qt.callLater(() => releaseInfo.open(quickRow))
+        } else if (selfTest === "news") {
+            Qt.callLater(() => focusSection(sectionDefs.findIndex(d => d.model === webNews), 0, false))
+        } else if (selfTest === "photo") {
+            Qt.callLater(() => root.openPicker("photo", "Gratis foto als achtergrond", quickRow, "bos"))
+        } else if (selfTest === "settingsmenu") {
+            Qt.callLater(() => root.openPersonalizeMenu())
         } else if (selfTest === "radiohome") {
             Qt.callLater(() => focusSection(sectionDefs.findIndex(d => d.model === radio), 0, false))
         } else if (selfTest === "resume") {
-            // Test: startscherm met de rij Verder kijken (geschiedenis door de test klaargezet)
+            // Test: tegel Verder kijken in de rij Media openen (geschiedenis door de test klaargezet)
+            testStep.run(2000, () => {
+                for (let r = 0; r < appModel.count; ++r) if (appModel.pathAt(r) === "bigscreen:resume") root.launch(appModel, r)
+            })
         } else if (selfTest === "epgrecord") {
             iptv.group = "Alle zenders"   // test: de testzenders staan niet in de groep Nederland
             // Test: in de gids het programma van nu en een later programma laten opnemen
@@ -911,7 +928,7 @@ Rectangle {
     ListModel {
         id: quickModel
         ListElement { label: "Zoeken"; code: 0xE721; uri: "search"; about: "Zoek apps, zenders, programma's, films en radio" }
-        ListElement { label: "Aanpassen"; code: 0xE771; uri: "personalize"; about: "Tegels, achtergrond, kinderslot en meer" }
+        ListElement { label: "Instellingen"; code: 0xE713; uri: "personalize"; about: "Tegels, achtergrond, kinderslot en meer" }
         ListElement { label: "Sluiten"; code: 0xE711; uri: ""; about: "Kijkluister sluiten (de computer blijft aan)" }
     }
 
@@ -1380,10 +1397,12 @@ Rectangle {
 
     function openPicker(mode, title, focusItem, startText) {
         pickerMode = mode
+        picker.iconScale = mode === "photo" ? 2 : 1
         picker.placeholder = mode === "radio" ? "Naam van de zender, bv. Omroep Gelderland"
+                           : mode === "photo" ? "Waar wil je een foto van? Bv. bos, zee, bergen"
                            : mode === "place" ? "Naam van je woonplaats"
                            : "Zoek een app, zender, programma, film of radiozender"
-        picker.pickLabel = mode === "radio" ? "Toevoegen" : mode === "place" ? "Kiezen" : "Openen"
+        picker.pickLabel = mode === "radio" ? "Toevoegen" : mode === "place" || mode === "photo" ? "Kiezen" : "Openen"
         picker.emptyText = mode === "radio" ? "Geen zender gevonden. Probeer een ander woord." : "Niets gevonden"
         picker.open(title, focusItem, startText)
     }
@@ -1436,6 +1455,8 @@ Rectangle {
         onQuery: (q) => {
             if (root.pickerMode === "radio") {
                 radio.searchStations(q)
+            } else if (root.pickerMode === "photo") {
+                photos.search(q)
             } else if (root.pickerMode === "place") {
                 if (q.length >= 2) weather.searchPlaces(q)
             } else {
@@ -1457,6 +1478,21 @@ Rectangle {
         }
     }
     Connections {
+        target: photos
+        function onResultsChanged() {
+            if (root.pickerMode !== "photo") return
+            picker.busy = photos.busy
+            picker.results = photos.results.map(p => ({ name: p.name, detail: p.detail, icon: p.thumb }))
+        }
+        function onDownloaded(file, credit) {
+            if (appModel.setBackground(file)) {
+                picker.close()
+                root.showToast("Nieuwe achtergrond. " + credit, 6000)
+            }
+        }
+        function onFailed(message) { root.showToast(message, 5000) }
+    }
+    Connections {
         target: weather
         function onPlacesChanged() {
             if (root.pickerMode !== "place") return
@@ -1474,6 +1510,11 @@ Rectangle {
             } else {
                 showToast(picker.nameAt(index) + " staat al in de rij Radio")
             }
+            return
+        }
+        if (pickerMode === "photo") {
+            showToast("Foto wordt opgehaald…", 20000)
+            photos.download(index)
             return
         }
         if (pickerMode === "place") {
@@ -1535,6 +1576,26 @@ Rectangle {
         id: releaseInfo
     }
 
+    // Tegel Verder kijken (rij Media, naast Schilderij)
+    ResumeScreen {
+        id: resumeScreen
+        onPlayRequested: (row) => { resumeScreen.visible = false; root.launch(resume, row) }
+        onMenuRequested: (row) => {
+            editModel = resume
+            editRow = row
+            menu.open(resume.nameAt(row), [
+                { label: "Verder kijken", action: "resume-play" },
+                { label: "Uit de lijst halen", action: "resume-remove" },
+                { label: "Annuleren", action: "" }
+            ], resumeScreen)
+        }
+    }
+    Connections {
+        target: resume
+        function onCountChanged() { appModel.setResumeCount(resume.count) }
+        Component.onCompleted: appModel.setResumeCount(resume.count)
+    }
+
     // Stil bijwerken: klein bericht rechtsonder; installeren zodra er niets speelt
     Rectangle {
         id: updateBanner
@@ -1592,6 +1653,8 @@ Rectangle {
         if (iptvScreen.visible) iptvScreen.close()
         if (libraryScreen.visible) libraryScreen.close()
         if (frameScreen.visible) frameScreen.close()
+        if (resumeScreen.visible) resumeScreen.close()
+        if (releaseInfo.visible) releaseInfo.close()
         Qt.callLater(() => focusSection(0, 0, false))
     }
 
@@ -1674,7 +1737,9 @@ Rectangle {
     Connections {
         target: appModel
         function onInternalRequested(target) {
-            if (target === "bigscreen:radio-now") {
+            if (target === "bigscreen:resume") {
+                resumeScreen.open(mediaGrid())
+            } else if (target === "bigscreen:radio-now") {
                 radioPlayer.show(mediaGrid())
             } else if (target === "bigscreen:regional") {
                 iptvScreen.open(mediaGrid(), "Regionale tv")

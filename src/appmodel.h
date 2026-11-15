@@ -71,6 +71,8 @@ public:
         Q_EMIT sectionOrderChanged();
     }
     // Media-rij: tegel "Nu op de radio" zolang de radio op de achtergrond speelt (leeg = weg)
+    // Media-rij: tegel "Verder kijken" naast Schilderij (alleen als er iets verder te kijken is)
+    Q_INVOKABLE void setResumeCount(int count);
     Q_INVOKABLE void setNowPlaying(const QString &name, const QString &icon, const QString &accent);
     void setFontScale(double scale)
     {
@@ -145,6 +147,7 @@ private:
     void saveOrder();
 
     Kind m_kind;
+    int m_resumeCount = 0;
     QString m_nowPlaying;
     QString m_nowPlayingIcon;
     QString m_nowPlayingAccent;

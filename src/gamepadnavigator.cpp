@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "gamepadnavigator.h"
 #include "mpcplayer.h"
+#include "homebridge.h"
 
 #include <QCoreApplication>
 #include <QDebug>
@@ -73,6 +74,10 @@ void GamepadNavigator::handleButton(int button, bool pressed)
 {
     // Speelt MPC-HC (film/serie), dan bedient de controller die
     if (MpcPlayer *mpc = MpcPlayer::instance(); mpc && mpc->handleButton(button, pressed)) {
+        return;
+    }
+    // Website voorop (Netflix, nieuws...): controller en tv-afstandsbediening bedienen de browser
+    if (HomeBridge *home = HomeBridge::instance(); home && home->handleBrowserButton(button, pressed)) {
         return;
     }
     switch (button) {

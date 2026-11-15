@@ -13,6 +13,7 @@ FocusScope {
     property bool busy: false
     property string emptyText: "Niets gevonden"
     property string pickLabel: "Openen"
+    property real iconScale: 1      // foto's: grotere voorbeelden
     property Item returnFocusTo: null
     property alias text: field.text
     readonly property real unit: height / 100
@@ -206,7 +207,7 @@ FocusScope {
             required property string badge
             readonly property bool current: list.activeFocus && list.currentIndex === index
             width: list.width
-            height: picker.unit * 8.4
+            height: picker.unit * (8.4 + 6 * (picker.iconScale - 1))
             radius: picker.unit * 1.2
             color: current ? "#3d6fb4" : "transparent"
 
@@ -215,8 +216,8 @@ FocusScope {
                 anchors.left: parent.left
                 anchors.leftMargin: picker.unit * 1.4
                 anchors.verticalCenter: parent.verticalCenter
-                width: picker.unit * 6
-                height: width
+                width: picker.unit * 6 * picker.iconScale * (picker.iconScale > 1 ? 1.6 : 1)
+                height: picker.unit * 6 * picker.iconScale
                 readonly property string icon: resultRow.icon
                 Rectangle {
                     anchors.fill: parent

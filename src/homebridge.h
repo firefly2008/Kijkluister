@@ -30,6 +30,11 @@ public:
     // Home-knop of Home-toets: app sluiten/minimaliseren en Kijkluister naar voren
     Q_INVOKABLE void goHome();
 
+    // Controller/CEC terwijl een browservenster voorop staat: pijltjes, OK, Terug = vorige pagina,
+    // Terug lang vasthouden = startscherm. Geeft true als de knop is afgehandeld.
+    bool handleBrowserButton(int sdlButton, bool pressed);
+    static HomeBridge *instance();
+
     // Voor de toetsenbord-hook (Windows)
     void keyEvent(unsigned long vk, bool down, bool &swallow);
 
@@ -44,6 +49,8 @@ private:
     QWindow *m_main;
     QTimer m_poll;
     QTimer m_escHold;
+    QTimer m_backHold;
+    bool m_backFired = false;
     bool m_external = false;
     bool m_showButton = false;
     bool m_escDown = false;

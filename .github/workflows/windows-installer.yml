@@ -29,6 +29,8 @@ jobs:
         run: choco install innosetup -y --no-progress
       - name: Bouwen + installer maken
         shell: pwsh
+        env:
+          PEXELS_KEY: ${{ secrets.PEXELS_KEY }}
         run: |
           # Branch release/2.0.0 bepaalt het versienummer; gewone pushes heten "dev"
           $version = if ($env:GITHUB_REF_NAME -like 'release/*') { $env:GITHUB_REF_NAME.Substring(8) } else { 'dev' }
@@ -95,7 +97,7 @@ jobs:
           $env:BIGSCREEN_TEST_M3U = "$tv\test.m3u"
           $env:BIGSCREEN_TEST_RECORD_DIR = "$env:RUNNER_TEMP\opnames"
           Get-Content "$tv\test.m3u"
-          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel', 'librarysetup', 'iptvsources', 'iptvfreeguide', 'mpcplay', 'resume', 'epgrecord', 'welcome', 'libraryunlock', 'radio', 'radiohome', 'search', 'radioadd', 'sleep', 'weather', 'update', 'cec', 'radiobg', 'regional', 'nowplaying', 'sections', 'homekey', 'releaseinfo', 'cleanup', 'parental'
+          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel', 'librarysetup', 'iptvsources', 'iptvfreeguide', 'mpcplay', 'resume', 'epgrecord', 'welcome', 'libraryunlock', 'radio', 'radiohome', 'search', 'radioadd', 'sleep', 'weather', 'update', 'cec', 'radiobg', 'regional', 'nowplaying', 'sections', 'homekey', 'releaseinfo', 'news', 'photo', 'settingsmenu', 'cleanup', 'parental'
           $manual = '${{ github.ref }}' -like 'refs/heads/screenshots/*'
           if ($manual) {
             # Schermafbeeldingen voor de handleiding, op Full HD
@@ -141,7 +143,7 @@ jobs:
               }
             }
             $p = Start-Process dist\Kijkluister.exe -PassThru
-            Start-Sleep $(if ($mode -eq 'u-guiderecord') { 13 } elseif ($mode -eq 'u-library') { 30 } elseif ($manual -or $mode -like 'frame*') { 20 } elseif ($mode -eq 'record') { 75 } elseif ($mode -eq 'iptvfreeguide' -or $mode -eq 'mpcplay') { 45 } elseif ($mode -eq 'epgrecord') { 30 } elseif ($mode -eq 'radio') { 75 } elseif ($mode -eq 'radioadd' -or $mode -eq 'sleep') { 22 } elseif ($mode -eq 'weather' -or $mode -eq 'search') { 16 } elseif ($mode -eq 'regional') { 25 } else { 14 })
+            Start-Sleep $(if ($mode -eq 'u-guiderecord') { 13 } elseif ($mode -eq 'u-library') { 30 } elseif ($manual -or $mode -like 'frame*') { 20 } elseif ($mode -eq 'record') { 75 } elseif ($mode -eq 'iptvfreeguide' -or $mode -eq 'mpcplay') { 45 } elseif ($mode -eq 'epgrecord') { 30 } elseif ($mode -eq 'radio') { 75 } elseif ($mode -eq 'radioadd' -or $mode -eq 'sleep') { 22 } elseif ($mode -eq 'weather' -or $mode -eq 'search') { 16 } elseif ($mode -eq 'regional') { 25 } elseif ($mode -eq 'photo') { 18 } else { 14 })
             if ($mode -like 'frame*esc') {
               # Echte toetsaanslag Esc naar het venster sturen (zoals toetsenbord of gamepad-B)
               Add-Type -ErrorAction SilentlyContinue @"
@@ -183,7 +185,7 @@ jobs:
               'search' = 'Search results'; 'radioadd' = 'Radio added'; 'sleep' = 'Sleep timer fired'; 'weather' = 'Weather:';
               'update' = 'Update check'; 'cec' = 'CEC key'; 'radiobg' = 'Radio in background'; 'cleanup' = 'Cleanup suggested';
               'parental' = 'Parental: unlocked'; 'regional' = 'IPTV playing:'; 'nowplaying' = 'Media first tile: Nu op de radio';
-              'sections' = 'Section order moved:'; 'homekey' = 'Home screen'; 'releaseinfo' = 'Release info: '
+              'sections' = 'Section order moved:'; 'homekey' = 'Home screen'; 'releaseinfo' = 'Release info: '; 'photo' = 'Photo search'; 'resume' = 'Resume screen: 1'
             }
             if ($checks.ContainsKey($mode)) {
               Select-String -Path $log -Pattern "Search|Radio|Sleep|Weather|Update|CEC|Cleanup|Parental|Regional|IPTV play|Media first|Section order|Home|TypeError|ReferenceError" | ForEach-Object { $_.Line }

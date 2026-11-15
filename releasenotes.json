@@ -1,5 +1,18 @@
 [
   {
+    "version": "4.2.0",
+    "date": "15 november 2026",
+    "notes": [
+      "Nieuwe rij Nieuws: NOS, NU.nl, AD, De Telegraaf, NRC, de Volkskrant, RTL Nieuws en Het Financieele Dagblad, met grotere tekst",
+      "Websites met de afstandsbediening of controller: pijltjes springen tussen links en knoppen, OK opent, Terug gaat een pagina terug, Terug vasthouden brengt je naar de tegels",
+      "Verder kijken is nu een tegel naast Schilderij in de rij Media",
+      "Aanpassen heet nu Instellingen (tandwiel); Release-info staat onderaan, net boven Sluiten",
+      "Diensten kiezen is ingedeeld in Streaming, Muziek, Podcasts, Nieuws en Radio",
+      "Achtergrond wijzigen: kies een gratis foto (zoeken met het schermtoetsenbord) of een eigen afbeelding",
+      "Radiozender toevoegen staat niet meer in het menu Instellingen (wel via Menu op een zender)"
+    ]
+  },
+  {
     "version": "4.1.0",
     "date": "15 november 2026",
     "notes": [

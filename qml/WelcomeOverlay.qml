@@ -1,5 +1,5 @@
 // Welkomststap: "Welke diensten gebruik je?" Aangevinkte diensten blijven op het startscherm,
-// de rest wordt verborgen (via Aanpassen > Alle verborgen tegels terugzetten weer terug te halen).
+// de rest wordt verborgen (via Instellingen > Alle verborgen tegels terugzetten weer terug te halen).
 // SPDX-License-Identifier: GPL-2.0-or-later
 import QtQuick
 
@@ -13,7 +13,7 @@ FocusScope {
 
     // Populaire diensten in Nederland: voorgeselecteerd bij een nieuwe installatie
     readonly property var popular: ["Netflix", "NPO Start", "YouTube", "Videoland", "Disney+", "Prime Video",
-                                    "Spotify", "YouTube Music", "NPO Luister"]
+                                    "Spotify", "YouTube Music", "NPO Luister", "NOS", "NU.nl"]
 
     anchors.fill: parent
     visible: false
@@ -22,8 +22,15 @@ FocusScope {
     function open(focusItem) {
         returnFocusTo = focusItem
         const list = []
-        const kinds = new Map([[webVideo, "Video"], [webMusic, "Muziek"], [webPodcasts, "Podcasts"]])
-        for (const m of [webVideo, webMusic, webPodcasts]) {
+        // Kopje over de hele breedte; daarna de tegels; rij opvullen met lege vakjes
+        const header = (title) => {
+            while (list.length % 5 !== 0) list.push({ spacer: true })
+            list.push({ header: title })
+            for (let k = 1; k < 5; ++k) list.push({ spacer: true })
+        }
+        const kinds = new Map([[webVideo, "Streaming"], [webMusic, "Muziek"], [webPodcasts, "Podcasts"], [webNews, "Nieuws"]])
+        for (const m of [webVideo, webMusic, webPodcasts, webNews]) {
+            header(kinds.get(m))
             // Wat nu zichtbaar is, blijft aangevinkt; verborgen diensten komen er even bij
             const visibleNow = []
             for (let i = 0; i < m.count; ++i) visibleNow.push(m.nameAt(i))
@@ -31,22 +38,49 @@ FocusScope {
             for (let i = 0; i < m.count; ++i) {
                 const name = m.nameAt(i)
                 const on = appModel.freshInstall ? popular.indexOf(name) >= 0 : visibleNow.indexOf(name) >= 0
-                list.push({ model: m, name: name, icon: m.iconAt(i), accent: m.accentAt(i), on: on, kind: kinds.get(m) })
+                list.push({ model: m, name: name, icon: m.iconAt(i), accent: m.accentAt(i), on: on })
             }
         }
         // Alle Nederlandse radiozenders
         const topRadio = ["NPO Radio 2", "Qmusic", "Radio 538", "Sky Radio", "Radio 10", "JOE", "Radio Veronica"]
+        header("Radio")
         for (const r of radio.catalog()) {
             list.push({ model: radio, name: r.name, icon: r.icon, accent: r.accent,
-                        on: appModel.freshInstall ? topRadio.indexOf(r.name) >= 0 : r.on, kind: "Radio" })
+                        on: appModel.freshInstall ? topRadio.indexOf(r.name) >= 0 : r.on })
         }
         choices = list
-        grid.currentIndex = 0
+        grid.currentIndex = 5
         visible = true
         grid.forceActiveFocus()
     }
 
+    function selectable(i) {
+        return i >= 0 && i < choices.length && !choices[i].header && !choices[i].spacer
+    }
+
+    // Pijltjes: kopjes en lege vakjes overslaan
+    function step(dx, dy) {
+        let i = grid.currentIndex
+        if (dx !== 0) {
+            do { i += dx } while (i >= 0 && i < choices.length && !selectable(i))
+            if (selectable(i)) grid.currentIndex = i
+            return true
+        }
+        const col = grid.currentIndex % 5
+        let row = Math.floor(grid.currentIndex / 5) + dy
+        const rows = Math.ceil(choices.length / 5)
+        while (row >= 0 && row < rows) {
+            // Zelfde kolom, anders het dichtstbijzijnde vakje in die rij
+            for (let c = col; c >= 0; --c) {
+                if (selectable(row * 5 + c)) { grid.currentIndex = row * 5 + c; return true }
+            }
+            row += dy
+        }
+        return false
+    }
+
     function toggle(i) {
+        if (!selectable(i)) return
         const c = choices.slice()
         c[i] = Object.assign({}, c[i], { on: !c[i].on })
         choices = c
@@ -54,7 +88,7 @@ FocusScope {
 
     function finish() {
         // Van achter naar voren verbergen, zodat de rijnummers kloppen
-        for (const m of [webVideo, webMusic, webPodcasts]) {
+        for (const m of [webVideo, webMusic, webPodcasts, webNews]) {
             for (let i = m.count - 1; i >= 0; --i) {
                 const name = m.nameAt(i)
                 const choice = choices.find(c => c.model === m && c.name === name)
@@ -102,7 +136,7 @@ FocusScope {
             wrapMode: Text.Wrap
             color: "#d5d8dc"
             font.pixelSize: (welcome.unit * 2.8) * appModel.fontScale
-            text: "Welke diensten en radiozenders gebruik je? Vink ze aan. De rest zetten we niet op het startscherm; via Aanpassen haal je ze altijd terug."
+            text: "Welke diensten en radiozenders gebruik je? Vink ze aan. De rest zetten we niet op het startscherm; via Instellingen haal je ze altijd terug."
         }
     }
 
@@ -119,16 +153,15 @@ FocusScope {
         cellWidth: Math.floor(width / 5)
         cellHeight: welcome.unit * 11
         model: welcome.choices
-        keyNavigationEnabled: true
+        keyNavigationEnabled: false
+        Keys.onLeftPressed: welcome.step(-1, 0)
+        Keys.onRightPressed: welcome.step(1, 0)
+        Keys.onUpPressed: welcome.step(0, -1)
         Keys.onReturnPressed: welcome.toggle(currentIndex)
         Keys.onEnterPressed: welcome.toggle(currentIndex)
         Keys.onSpacePressed: welcome.toggle(currentIndex)
         Keys.onDownPressed: (event) => {
-            if (currentIndex + 5 >= count) {
-                doneButton.forceActiveFocus()
-            } else {
-                moveCurrentIndexDown()
-            }
+            if (!welcome.step(0, 1)) doneButton.forceActiveFocus()
         }
         delegate: Item {
             id: cell
@@ -137,7 +170,21 @@ FocusScope {
             readonly property bool current: GridView.isCurrentItem && grid.activeFocus
             width: grid.cellWidth
             height: grid.cellHeight
+            z: cell.modelData.header ? 1 : 0
+            // Kopje (Streaming, Muziek, ...) over de hele breedte
+            Text {
+                visible: !!cell.modelData.header
+                anchors.left: parent.left
+                anchors.leftMargin: welcome.unit * 0.7
+                anchors.bottom: parent.bottom
+                anchors.bottomMargin: welcome.unit * 1.5
+                text: cell.modelData.header || ""
+                color: "white"
+                font.pixelSize: (welcome.unit * 3.6) * appModel.fontScale
+                font.weight: Font.DemiBold
+            }
             Rectangle {
+                visible: !cell.modelData.header && !cell.modelData.spacer
                 anchors.fill: parent
                 anchors.margins: welcome.unit * 0.7
                 radius: welcome.unit

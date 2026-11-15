@@ -1,4 +1,4 @@
-// Aanpassen → Release-info: geïnstalleerde versie en wat er per versie nieuw is
+// Instellingen → Release-info: geïnstalleerde versie en wat er per versie nieuw is
 // (uit releasenotes.json; bij elke nieuwe versie bovenaan aanvullen).
 // SPDX-License-Identifier: GPL-2.0-or-later
 import QtQuick

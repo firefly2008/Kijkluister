@@ -38,6 +38,7 @@
 #include "updater.h"
 #include "cec.h"
 #include "homebridge.h"
+#include "photosearch.h"
 #include "resumemodel.h"
 #include "mpcplayer.h"
 #include "iptvmodel.h"
@@ -234,6 +235,7 @@ int main(int argc, char *argv[])
     AppModel webVideo(AppModel::Web, QStringLiteral("video"));
     AppModel webMusic(AppModel::Web, QStringLiteral("muziek"));
     AppModel webPodcasts(AppModel::Web, QStringLiteral("podcasts"));
+    AppModel webNews(AppModel::Web, QStringLiteral("nieuws"));
     MediaLibrary library(appDataDir());
     IptvModel iptv(appDataDir());
     ArtFrame frame(appDataDir());
@@ -262,6 +264,7 @@ int main(int argc, char *argv[])
     view.rootContext()->setContextProperty(QStringLiteral("webVideo"), &webVideo);
     view.rootContext()->setContextProperty(QStringLiteral("webMusic"), &webMusic);
     view.rootContext()->setContextProperty(QStringLiteral("webPodcasts"), &webPodcasts);
+    view.rootContext()->setContextProperty(QStringLiteral("webNews"), &webNews);
     view.rootContext()->setContextProperty(QStringLiteral("library"), &library);
     view.rootContext()->setContextProperty(QStringLiteral("iptv"), &iptv);
     view.rootContext()->setContextProperty(QStringLiteral("frame"), &frame);
@@ -306,6 +309,8 @@ int main(int argc, char *argv[])
     if (selfTestMode.isEmpty() || selfTestMode == QLatin1String("iptvfree")) {
         iptv.addFreeSourcesOnce();
     }
+    PhotoSearch photos(appDataDir());
+    view.rootContext()->setContextProperty(QStringLiteral("photos"), &photos);
     HomeBridge home(&view);
     view.rootContext()->setContextProperty(QStringLiteral("homeBridge"), &home);
     QObject::connect(&home, &HomeBridge::homeRequested, &gamepad, &GamepadNavigator::homeRequested);

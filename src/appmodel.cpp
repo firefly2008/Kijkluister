@@ -82,7 +82,6 @@ const WebDefault webDefaults[] = {
     {"BVN", "https://www.bvn.tv", "video", true},
     {"Human", "https://www.human.nl", "video", true},
     {"Dumpert", "https://www.dumpert.nl", "video", true},
-    {"RTL Nieuws", "https://www.rtl.nl/nieuws", "video", true},
     {"Omroep MAX", "https://www.omroepmax.nl", "video", true},
     {"Eurosport", "https://www.eurosport.nl/watch", "video", true},
     {"Streamz", "https://www.streamz.be", "video", true},
@@ -95,6 +94,15 @@ const WebDefault webDefaults[] = {
     {"Amazon Music", "https://music.amazon.com", "muziek"},
     {"Qobuz", "https://play.qobuz.com", "muziek"},
     {"SoundCloud", "https://soundcloud.com", "muziek"},
+    // Nieuws (vanaf 4.2)
+    {"NOS", "https://nos.nl", "nieuws"},
+    {"NU.nl", "https://www.nu.nl", "nieuws"},
+    {"AD", "https://www.ad.nl", "nieuws"},
+    {"De Telegraaf", "https://www.telegraaf.nl", "nieuws"},
+    {"NRC", "https://www.nrc.nl", "nieuws"},
+    {"de Volkskrant", "https://www.volkskrant.nl", "nieuws"},
+    {"RTL Nieuws", "https://www.rtl.nl/nieuws", "nieuws"},
+    {"Het Financieele Dagblad", "https://fd.nl", "nieuws"},
     // Podcasts (Nederland)
     {"Podimo", "https://podimo.com/nl", "podcasts"},
     {"NPO Luister", "https://www.npoluister.nl", "podcasts"},
@@ -256,16 +264,23 @@ bool AppModel::launchWeb(const QString &url)
         if (!QFile::exists(browser)) {
             continue;
         }
-        const QStringList args = {
+        // Nieuwssites: eigen profiel met grotere tekst (leesbaar vanaf de bank)
+        const bool news = m_category == QLatin1String("nieuws");
+        QStringList args = {
             QStringLiteral("--app=") + url,
+            // Pijltjes springen tussen links en knoppen (bediening met afstandsbediening/controller)
+            QStringLiteral("--enable-spatial-navigation"),
             QStringLiteral("--start-fullscreen"),
             // Geen schuifbalk rechts (scrollen met muiswiel, pijltjes of afstandsbediening blijft werken)
             QStringLiteral("--hide-scrollbars"),
             QStringLiteral("--enable-features=OverlayScrollbar,msOverlayScrollbarWinStyle,msOverlayScrollbarWinStyleAnimation"),
             QStringLiteral("--no-first-run"),
             QStringLiteral("--no-default-browser-check"),
-            QStringLiteral("--user-data-dir=") + QDir::toNativeSeparators(dataDir() + QStringLiteral("/browser")),
+            QStringLiteral("--user-data-dir=") + QDir::toNativeSeparators(dataDir() + (news ? QStringLiteral("/browser-nieuws") : QStringLiteral("/browser"))),
         };
+        if (news) {
+            args << QStringLiteral("--force-device-scale-factor=1.5");
+        }
         if (QProcess::startDetached(browser, args)) {
             qInfo() << "Web tile" << url << "opened with" << browser;
             return true;
@@ -307,6 +322,9 @@ QVariant AppModel::data(const QModelIndex &index, int role) const
         }
         if (app.path == QLatin1String("bigscreen:shows")) {
             return QStringLiteral("glyph:") + QChar(0xE7F4);
+        }
+        if (app.path == QLatin1String("bigscreen:resume")) {
+            return QStringLiteral("glyph:") + QChar(0xE768);   // afspelen
         }
         if (app.path == QLatin1String("bigscreen:regional")) {
             return QStringLiteral("glyph:") + QChar(0xE707);   // kaartspeld
@@ -365,6 +383,10 @@ void AppModel::refresh()
         {QStringLiteral("Regionale tv"), QStringLiteral("bigscreen:regional"), false},
         {QStringLiteral("Schilderij"), QStringLiteral("bigscreen:frame"), false},
     };
+    // Verder kijken: tegel naast Schilderij zolang er iets verder te kijken is
+    if (m_resumeCount > 0) {
+        apps.append({tr("Verder kijken"), QStringLiteral("bigscreen:resume"), false});
+    }
     apps.append(customTiles());
     apps.erase(std::remove_if(apps.begin(), apps.end(), [this](const App &tile) {
         return m_hidden.contains(tile.path);
@@ -558,10 +580,16 @@ void AppModel::applyOrder(QList<App> &tiles) const
     if (order.isEmpty()) {
         return;
     }
-    std::stable_sort(tiles.begin(), tiles.end(), [&order](const App &a, const App &b) {
-        const int ia = order.indexOf(a.path);
-        const int ib = order.indexOf(b.path);
-        return (ia < 0 ? INT_MAX : ia) < (ib < 0 ? INT_MAX : ib);
+    // Verder kijken nog niet zelf verplaatst: direct na Schilderij
+    const int frame = order.indexOf(QStringLiteral("bigscreen:frame"));
+    auto rank = [&order, frame](const QString &path) -> double {
+        const int i = order.indexOf(path);
+        if (i >= 0) return i;
+        if (path == QLatin1String("bigscreen:resume") && frame >= 0) return frame + 0.5;
+        return 1e9;
+    };
+    std::stable_sort(tiles.begin(), tiles.end(), [&rank](const App &a, const App &b) {
+        return rank(a.path) < rank(b.path);
     });
 }
 
@@ -688,5 +716,15 @@ void AppModel::setNowPlaying(const QString &name, const QString &icon, const QSt
     m_nowPlaying = name;
     m_nowPlayingIcon = icon;
     m_nowPlayingAccent = accent;
+    refresh();
+}
+
+void AppModel::setResumeCount(int count)
+{
+    if ((count > 0) == (m_resumeCount > 0)) {
+        m_resumeCount = count;
+        return;
+    }
+    m_resumeCount = count;
     refresh();
 }
