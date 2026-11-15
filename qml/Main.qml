@@ -188,14 +188,21 @@ Rectangle {
             asynchronous: true
             visible: false
         }
-        MultiEffect {
+        // Eén keer vervagen en als plaatje bewaren (layer): anders rekent de vervaging bij elk videobeeld mee.
+        // Verborgen zolang een volledig scherm (tv, bibliotheek, schilderij, radio) open is.
+        Item {
             anchors.fill: ambientIcon
-            source: ambientIcon
-            blurEnabled: true
-            blur: 1.0
-            blurMax: 64
+            visible: !(iptvScreen.visible || libraryScreen.visible || frameScreen.visible || radioPlayer.visible)
+            layer.enabled: visible
             opacity: root.focusIcon !== "" ? 0.28 : 0
             Behavior on opacity { NumberAnimation { duration: 450 } }
+            MultiEffect {
+                anchors.fill: parent
+                source: ambientIcon
+                blurEnabled: true
+                blur: 1.0
+                blurMax: 32
+            }
         }
         Rectangle {
             anchors.fill: parent
