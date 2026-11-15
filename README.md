@@ -1,6 +1,6 @@
-# Bigscreen Host -- Windows PoC skeleton (Fase 0/1)
+# Kijkluister -- Windows PoC skeleton (Fase 0/1)
 
-Startpunt voor **Optie A** uit het migratieplan ("Plasma Bigscreen -> Windows:
+Startpunt voor **Optie A** uit het migratieplan ("Kijkluister -> Windows:
 Architectuur-audit & Migratieplan"): een losse, standalone Qt Quick kiosk-app
 die de rol van KWin/ksmserver/envmanager/inputhandler-portal vervangt, zonder
 D-Bus en zonder Plasma-sessie.
