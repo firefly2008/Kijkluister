@@ -5,6 +5,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 import QtQuick
 import QtQuick.Dialogs
+import QtQuick.Effects
 
 Rectangle {
     id: root
@@ -27,8 +28,19 @@ Rectangle {
         }
         const overlayOpen = iptvScreen.visible || libraryScreen.visible || frameScreen.visible || radioPlayer.visible || menu.visible
                             || picker.visible || welcomeOverlay.visible || addOverlay.visible || pinPad.visible || placesPicker.visible
-                            || resumeScreen.visible || releaseInfo.visible
-        if (!overlayOpen && event.text.length === 1 && /[a-zA-Z0-9]/.test(event.text) && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier))) {
+                            || resumeScreen.visible || releaseInfo.visible || helpOverlay.visible
+        // Cijfers 1-9: tegel 1-9 van de bovenste rij openen
+        if (!overlayOpen && event.text.length === 1 && /[1-9]/.test(event.text) && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier))) {
+            const top = sectionDefs.length > 0 ? sectionDefs[0].model : null
+            const n = parseInt(event.text) - 1
+            if (top && n < top.count) {
+                console.info("Number key", event.text, top.nameAt(n))
+                launch(top, n)
+            }
+            event.accepted = true
+            return
+        }
+        if (!overlayOpen && event.text.length === 1 && /[a-zA-Z0]/.test(event.text) && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier))) {
             root.openPicker("all", "Zoeken", root.currentSection ? root.currentSection.grid : quickRow, event.text)
             event.accepted = true
         }
@@ -38,6 +50,7 @@ Rectangle {
     // Rijen in de volgorde die je zelf kiest (Menu op een tegel: Rij omhoog/omlaag).
     // Standaard staat Verder kijken onder Media.
     readonly property var allSectionDefs: [
+        { title: "Vaak gebruikt", model: usage },
         { title: "Video", model: webVideo },
         { title: "Muziek", model: webMusic },
         { title: "Radio", model: radio },
@@ -47,7 +60,8 @@ Rectangle {
     ]
     readonly property var sectionDefs: {
         const order = appModel.sectionOrder
-        const defs = allSectionDefs.filter(d => d.model.count > 0)
+        // (In de rooktests alleen bij de test "usage", zodat de rijvolgorde van andere tests klopt)
+        const defs = allSectionDefs.filter(d => d.model === usage ? usage.count >= 3 && (selfTest === "" || selfTest === "usage") : d.model.count > 0)
         const rank = (d) => { const i = order.indexOf(d.title); return i >= 0 ? i : 100 + allSectionDefs.indexOf(d) }
         return defs.slice().sort((a, b) => rank(a) - rank(b))
     }
@@ -70,12 +84,40 @@ Rectangle {
         showToast("Rij " + title + (step < 0 ? " staat nu hoger" : " staat nu lager"))
         Qt.callLater(() => { const sec = sectionFor(model); if (sec) sec.grid.forceActiveFocus() })
     }
+    // Categorie van een rij (voor Vaak gebruikt en inklappen)
+    function categoryOf(model) {
+        return model === appModel ? "media" : model === webVideo ? "video" : model === webMusic ? "muziek"
+             : model === webPodcasts ? "podcasts" : model === webNews ? "nieuws" : model === radio ? "radio" : ""
+    }
+    // Rij ingeklapt? Zelf ingeklapt, of (automatisch) twee weken niet gebruikt
+    property int settingsRevision: 0
+    Connections { target: appModel; function onSettingsChanged() { root.settingsRevision++ } }
+    function isCollapsed(title, model) {
+        settingsRevision
+        const manual = appModel.setting("collapsed", [])
+        const expanded = appModel.setting("expanded", [])
+        if (manual.indexOf(title) >= 0) return true
+        if (expanded.indexOf(title) >= 0 || model === usage || model === appModel) return false
+        return appModel.setting("autoCollapse", true) && usage.daysUnused(categoryOf(model)) > 14
+    }
+    function toggleCollapsed(model) {
+        const title = allSectionDefs.find(d => d.model === model).title
+        const now = isCollapsed(title, model)
+        let manual = appModel.setting("collapsed", []).filter(t => t !== title)
+        let expanded = appModel.setting("expanded", []).filter(t => t !== title)
+        if (now) expanded.push(title); else manual.push(title)
+        appModel.setSetting("collapsed", manual)
+        appModel.setSetting("expanded", expanded)
+        showToast(now ? "Rij " + title + " staat weer open" : "Rij " + title + " is ingeklapt (kies hem om te openen)")
+    }
     function sectionMoveEntries(model) {
         const visible = sectionDefs.map(d => d.model)
         const i = visible.indexOf(model)
         const entries = []
         if (i > 0) entries.push({ label: "Rij omhoog verplaatsen", action: "section-up" })
         if (i >= 0 && i < visible.length - 1) entries.push({ label: "Rij omlaag verplaatsen", action: "section-down" })
+        const def = allSectionDefs.find(d => d.model === model)
+        if (def && model !== usage) entries.push({ label: isCollapsed(def.title, model) ? "Rij uitklappen" : "Rij inklappen", action: "section-collapse" })
         return entries
     }
     readonly property var webModels: [webVideo, webMusic, webPodcasts, webNews]
@@ -132,6 +174,29 @@ Rectangle {
         visible: appModel.background === ""
         color: root.accent
         Behavior on color { ColorAnimation { duration: 450 } }
+        // Meebewegende achtergrond: het logo van de gekozen tegel, groot en wazig (zoals Apple TV)
+        Image {
+            id: ambientIcon
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            anchors.rightMargin: -parent.width * 0.05
+            width: parent.width * 0.55
+            height: width
+            source: root.focusIcon
+            fillMode: Image.PreserveAspectFit
+            sourceSize: Qt.size(256, 256)
+            asynchronous: true
+            visible: false
+        }
+        MultiEffect {
+            anchors.fill: ambientIcon
+            source: ambientIcon
+            blurEnabled: true
+            blur: 1.0
+            blurMax: 64
+            opacity: root.focusIcon !== "" ? 0.28 : 0
+            Behavior on opacity { NumberAnimation { duration: 450 } }
+        }
         Rectangle {
             anchors.fill: parent
             gradient: Gradient {
@@ -189,12 +254,21 @@ Rectangle {
         if (row < 0) {
             return
         }
+        // Vaak gebruikt: de echte tegel in zijn eigen rij openen
+        if (model === usage) {
+            const cat = usage.categoryAt(row)
+            const src = usage.sourceModel(cat)
+            const r = usage.sourceRow(cat, usage.pathAt(row))
+            if (src && r >= 0) launch(src, r, pinOk)
+            return
+        }
         if (model === radio) {
             if (radio.isAddTile(row)) {
                 openRadioSearch()
                 return
             }
             // Radio speelt in Kijkluister zelf
+            usage.record("radio", radio.pathAt(row))
             const section = sectionFor(radio)
             radioPlayer.open(row, section ? section.grid : mediaGrid())
             return
@@ -211,6 +285,9 @@ Rectangle {
         // Een andere app of film: radio stoppen (bij het schilderij mag hij doorspelen)
         if (radioPlayer.row >= 0 && path !== "bigscreen:frame") {
             radioPlayer.stopPlayback()
+        }
+        if (path !== "bigscreen:radio-now" && path !== "bigscreen:resume" && categoryOf(model) !== "") {
+            usage.record(categoryOf(model), path)
         }
         if (model.launch(row)) {
             // App of website voorop: Home-knop en Home-toets brengen je terug
@@ -263,6 +340,13 @@ Rectangle {
             if (!radio.isAddTile(row)) entries.push({ label: "Van startpagina verwijderen", action: "radio-remove" })
             entries.push(...commonMenuEntries())
             menu.open(model.nameAt(row), entries, focusItem)
+            return
+        }
+        if (model === usage) {
+            menu.open(model.nameAt(row), [
+                { label: "Openen", action: "usage-open" },
+                { label: "Uit Vaak gebruikt halen", action: "usage-remove" }
+            ].concat(sectionMoveEntries(model)).concat(commonMenuEntries()), focusItem)
             return
         }
         if (model === resume) {
@@ -358,7 +442,11 @@ Rectangle {
     // --- Meer instellingen: kinderslot, weer, opnames, tv-afstandsbediening, bijwerken ---
     function openMoreMenu() {
         menu.open("Meer instellingen", [
+            { label: "Profielen…  (" + profiles.currentName + ")", action: "profiles" },
             { label: "Kinderslot…  (" + (parental.enabled ? "aan" : "uit") + ")", action: "parental" },
+            { label: "Nachtmodus: " + nightModeLabel(), action: "night" },
+            { label: "Bij opstarten radio hervatten: " + (appModel.setting("resumeRadio", false) ? "aan" : "uit"), action: "resume-radio" },
+            { label: "Weinig gebruikte rijen inklappen: " + (appModel.setting("autoCollapse", true) ? "aan" : "uit"), action: "auto-collapse" },
             { label: "Weer…  (" + (weather.enabled ? (weather.place || "aan") : "uit") + ")", action: "weather" },
             { label: "Opnames opruimen…", action: "cleanup-settings" },
             { label: "Tv-afstandsbediening (HDMI-CEC)…", action: "cec" },
@@ -366,6 +454,29 @@ Rectangle {
             { label: "Zoeken naar een nieuwe versie", action: "update-check" },
             { label: "Sluiten", action: "" }
         ], root.menuFocus(), "Kijkluister " + updater.current)
+    }
+
+    function nightModeLabel() {
+        const m = appModel.setting("night", "auto")
+        return m === "on" ? "altijd aan" : m === "off" ? "uit" : "automatisch (22–7 uur)"
+    }
+
+    // --- Profielen ---
+    property bool pendingKidsProfile: false
+    function openProfileMenu() {
+        const entries = profiles.list.map(p => ({
+            label: (p.current ? "✓  " : "      ") + p.name + (p.kids ? "  (kind)" : ""),
+            action: p.current ? "" : "profile-switch:" + p.id }))
+        if (!profiles.kids) {
+            entries.push({ label: "Profiel toevoegen…", action: "profile-add" })
+            entries.push({ label: "Kinderprofiel toevoegen…", action: "profile-add-kids" })
+            for (const p of profiles.list) {
+                if (p.id !== "" && !p.current) entries.push({ label: "Profiel " + p.name + " verwijderen", action: "profile-remove:" + p.id })
+            }
+        }
+        entries.push({ label: "Sluiten", action: "" })
+        menu.open("Profielen", entries, root.menuFocus(),
+                  "Nu: " + profiles.currentName + ". Elk profiel heeft eigen tegels, rijen, radiozenders en Vaak gebruikt. Wisselen herstart Kijkluister.")
     }
 
     function openParentalMenu() {
@@ -477,6 +588,44 @@ Rectangle {
             openPicker("photo", "Gratis foto als achtergrond", root.menuFocus(), "landschap")
         } else if (action === "release-info") {
             releaseInfo.open(root.menuFocus())
+        } else if (action === "section-collapse") {
+            toggleCollapsed(editModel)
+        } else if (action === "usage-remove") {
+            usage.remove(editRow)
+        } else if (action === "usage-open") {
+            launch(usage, editRow)
+        } else if (action === "profiles") {
+            openProfileMenu()
+        } else if (action.startsWith("profile-switch:")) {
+            const id = action.substring(15)
+            if (profiles.kids && parental.enabled) {
+                withPin("Ander profiel kiezen", () => profiles.switchTo(id))
+            } else {
+                profiles.switchTo(id)
+            }
+        } else if (action === "profile-add" || action === "profile-add-kids") {
+            pendingKidsProfile = action === "profile-add-kids"
+            if (pendingKidsProfile && !parental.enabled) {
+                showToast("Stel eerst een pincode in voor het kinderslot", 5000)
+                askNewPin()
+                return
+            }
+            openPicker("name", pendingKidsProfile ? "Naam van het kinderprofiel" : "Naam van het nieuwe profiel", root.menuFocus())
+        } else if (action.startsWith("profile-remove:")) {
+            const pid = action.substring(15)
+            const pname = profiles.nameOf(pid)
+            profiles.remove(pid)
+            showToast("Profiel " + pname + " verwijderd")
+        } else if (action === "night") {
+            const order = ["auto", "on", "off"]
+            appModel.setSetting("night", order[(order.indexOf(appModel.setting("night", "auto")) + 1) % 3])
+            openMoreMenu()
+        } else if (action === "resume-radio") {
+            appModel.setSetting("resumeRadio", !appModel.setting("resumeRadio", false))
+            openMoreMenu()
+        } else if (action === "auto-collapse") {
+            appModel.setSetting("autoCollapse", !appModel.setting("autoCollapse", true))
+            openMoreMenu()
         } else if (action === "section-up" || action === "section-down") {
             moveSection(editModel, action === "section-up" ? -1 : 1)
         } else if (action === "sleep-menu") {
@@ -693,6 +842,7 @@ Rectangle {
 
     Component.onCompleted: {
         focusSection(0, 0, false)
+        startWhereLeft.start()
         // Eerste keer: welkomststap (diensten kiezen)
         if ((selfTest === "" && !appModel.welcomeDone) || selfTest === "welcome") {
             Qt.callLater(() => welcomeOverlay.open(mediaGrid()))
@@ -864,6 +1014,25 @@ Rectangle {
             Qt.callLater(() => root.openPicker("photo", "Gratis foto als achtergrond", quickRow, "bos"))
         } else if (selfTest === "settingsmenu") {
             Qt.callLater(() => root.openPersonalizeMenu())
+        } else if (selfTest === "usage") {
+            // Een paar keer iets openen: rij Vaak gebruikt verschijnt bovenaan
+            usage.record("video", webVideo.pathAt(0)); usage.record("video", webVideo.pathAt(0))
+            usage.record("video", webVideo.pathAt(1)); usage.record("radio", radio.pathAt(0))
+            usage.record("media", appModel.pathAt(0))
+            console.info("Usage count", usage.count, usage.nameAt(0))
+            Qt.callLater(() => focusSection(0, 0, false))
+        } else if (selfTest === "help") {
+            Qt.callLater(() => helpOverlay.open(quickRow))
+        } else if (selfTest === "night") {
+            Qt.callLater(() => focusSection(0, 0, false))
+        } else if (selfTest === "profiles") {
+            const pid = profiles.add("Petra", false)
+            console.info("Profiles count", profiles.count, profiles.nameOf(pid))
+            Qt.callLater(() => openProfileMenu())
+        } else if (selfTest === "collapse") {
+            appModel.setSetting("collapsed", ["Podcasts"])
+            console.info("Collapsed Podcasts:", isCollapsed("Podcasts", webPodcasts))
+            Qt.callLater(() => focusSection(0, 0, false))
         } else if (selfTest === "radiohome") {
             Qt.callLater(() => focusSection(sectionDefs.findIndex(d => d.model === radio), 0, false))
         } else if (selfTest === "resume") {
@@ -928,6 +1097,7 @@ Rectangle {
     ListModel {
         id: quickModel
         ListElement { label: "Zoeken"; code: 0xE721; uri: "search"; about: "Zoek apps, zenders, programma's, films en radio" }
+        ListElement { label: "Hulp"; code: 0xE897; uri: "help"; about: "Welke knop doet wat?" }
         ListElement { label: "Instellingen"; code: 0xE713; uri: "personalize"; about: "Tegels, achtergrond, kinderslot en meer" }
         ListElement { label: "Sluiten"; code: 0xE711; uri: ""; about: "Kijkluister sluiten (de computer blijft aan)" }
     }
@@ -1042,6 +1212,12 @@ Rectangle {
                     : "Je computer blijft aan.")
             } else if (item.uri === "personalize") {
                 root.openPersonalizeMenu()
+            } else if (item.uri === "help") {
+                helpOverlay.open(quickRow)
+            } else if (item.uri === "profile") {
+                root.openProfileMenu()
+            } else if (item.uri === "sleep") {
+                root.openSleepMenu(quickRow)
             } else if (item.uri === "search") {
                 root.openPicker("all", "Zoeken", root.menuFocus())
             } else if (item.uri === "sleep") {
@@ -1157,6 +1333,7 @@ Rectangle {
                     width: sectionColumn.width
                     title: modelData.title
                     model: modelData.model
+                    collapsed: root.isCollapsed(modelData.title, modelData.model)
                     columns: root.columns
                     unit: root.unit
                     canHover: () => !menu.visible && !addOverlay.visible && !placesPicker.visible && !picker.visible && !pinPad.visible && root.mouseActive()
@@ -1398,6 +1575,7 @@ Rectangle {
     function openPicker(mode, title, focusItem, startText) {
         pickerMode = mode
         picker.iconScale = mode === "photo" ? 2 : 1
+        picker.voice = mode === "all" || mode === "radio" || mode === "photo"
         picker.placeholder = mode === "radio" ? "Naam van de zender, bv. Omroep Gelderland"
                            : mode === "photo" ? "Waar wil je een foto van? Bv. bos, zee, bergen"
                            : mode === "place" ? "Naam van je woonplaats"
@@ -1457,6 +1635,8 @@ Rectangle {
                 radio.searchStations(q)
             } else if (root.pickerMode === "photo") {
                 photos.search(q)
+            } else if (root.pickerMode === "name") {
+                picker.results = q.length > 0 ? [{ name: "Opslaan als “" + q + "”", detail: "Enter om het profiel te maken", icon: "glyph:\uE77B" }] : []
             } else if (root.pickerMode === "place") {
                 if (q.length >= 2) weather.searchPlaces(q)
             } else {
@@ -1510,6 +1690,17 @@ Rectangle {
             } else {
                 showToast(picker.nameAt(index) + " staat al in de rij Radio")
             }
+            return
+        }
+        if (pickerMode === "name") {
+            const name = picker.text.trim()
+            if (name === "") return
+            const id = profiles.add(name, pendingKidsProfile)
+            picker.close()
+            menu.open("Profiel " + name + " is gemaakt", [
+                { label: "Nu naar " + name + " wisselen", action: "profile-switch:" + id },
+                { label: "Later", action: "" }
+            ], root.menuFocus())
             return
         }
         if (pickerMode === "photo") {
@@ -1574,6 +1765,81 @@ Rectangle {
 
     ReleaseInfo {
         id: releaseInfo
+    }
+
+    HelpOverlay {
+        id: helpOverlay
+    }
+
+    // Nachtmodus: 22-7 uur (of altijd) gedimd en warmer beeld, radio zachter, slaaptimer in de bovenbalk
+    property bool nightActive: false
+    function updateNight() {
+        const mode = appModel.setting("night", "auto")
+        const h = new Date().getHours()
+        nightActive = selfTest === "night" || mode === "on" || (mode === "auto" && (h >= 22 || h < 7))
+    }
+    Timer {
+        interval: 60000
+        repeat: true
+        running: true
+        triggeredOnStart: true
+        onTriggered: root.updateNight()
+    }
+    Connections { target: appModel; function onSettingsChanged() { root.updateNight() } }
+    onNightActiveChanged: {
+        console.info("Night mode", nightActive)
+        let index = -1
+        for (let i = 0; i < quickModel.count; ++i) if (quickModel.get(i).uri === "sleep") index = i
+        if (nightActive && index < 0) {
+            quickModel.insert(1, { label: "Slaaptimer", code: 0xE708, uri: "sleep", about: "Radio, tv en films stoppen vanzelf" })
+        } else if (!nightActive && index >= 0) {
+            quickModel.remove(index)
+        }
+        radioPlayer.maxVolume = nightActive ? 0.5 : 1.0
+    }
+    Rectangle {
+        anchors.fill: parent
+        z: 400
+        visible: root.nightActive
+        color: "#3a1a0c00"   // warm en iets donkerder
+        enabled: false
+    }
+
+    // Profielknop in de bovenbalk zodra er meer dan één profiel is
+    Connections {
+        target: profiles
+        function onChanged() { root.syncProfileButton() }
+    }
+    function syncProfileButton() {
+        let index = -1
+        for (let i = 0; i < quickModel.count; ++i) if (quickModel.get(i).uri === "profile") index = i
+        if (profiles.count > 1 && index < 0) {
+            quickModel.insert(0, { label: profiles.currentName, code: 0xE77B, uri: "profile", about: "Ander profiel kiezen" })
+        } else if (profiles.count <= 1 && index >= 0) {
+            quickModel.remove(index)
+        }
+    }
+
+    // Opstarten waar je was: kader op de laatst geopende tegel; radio eventueel hervatten
+    Timer {
+        id: startWhereLeft
+        interval: 400
+        onTriggered: {
+            root.syncProfileButton()
+            const cat = usage.lastCategory
+            const src = cat !== "" ? usage.sourceModel(cat) : null
+            const row = src ? usage.sourceRow(cat, usage.lastPath) : -1
+            if (cat === "radio" && row >= 0 && appModel.setting("resumeRadio", false) && selfTest === "") {
+                radioPlayer.open(row, mediaGrid())
+                radioPlayer.close()
+            }
+            const sec = src ? sectionFor(src) : null
+            if (sec && row >= 0 && !welcomeOverlay.visible && selfTest === "") {
+                sec.grid.currentIndex = row
+                sec.grid.forceActiveFocus()
+                console.info("Start where left:", src.nameAt(row))
+            }
+        }
     }
 
     // Tegel Verder kijken (rij Media, naast Schilderij)

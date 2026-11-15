@@ -14,6 +14,13 @@ FocusScope {
     property string emptyText: "Niets gevonden"
     property string pickLabel: "Openen"
     property real iconScale: 1      // foto's: grotere voorbeelden
+    property bool voice: false      // microfoonknop (Windows-dicteren)
+
+    // Spreken: het zoekveld krijgt de focus en Windows-dicteren (Win+H) zet de tekst erin
+    function startVoice() {
+        field.forceActiveFocus()
+        homeBridge.startDictation()
+    }
     property Item returnFocusTo: null
     property alias text: field.text
     readonly property real unit: height / 100
@@ -70,6 +77,9 @@ FocusScope {
         if (event.key === Qt.Key_Escape || event.key === Qt.Key_Back) {
             close()
             event.accepted = true
+        } else if (picker.voice && (event.key === Qt.Key_I || event.key === Qt.Key_F4)) {
+            startVoice()   // Y op de controller
+            event.accepted = true
         }
     }
 
@@ -110,14 +120,37 @@ FocusScope {
             font.pixelSize: picker.unit * 2.8
             color: "#a8acb3"
         }
+        Rectangle {
+            id: micButton
+            visible: picker.voice
+            anchors.right: parent.right
+            anchors.rightMargin: picker.unit * 0.8
+            anchors.verticalCenter: parent.verticalCenter
+            width: picker.unit * 5.2
+            height: width
+            radius: width / 2
+            color: field.activeFocus ? "#e53935" : micMouse.containsMouse ? "#3d6fb4" : "#2a2f38"
+            Text {
+                anchors.centerIn: parent
+                text: "\uE720"   // microfoon
+                font.family: "Segoe MDL2 Assets"
+                font.pixelSize: picker.unit * 2.6
+                color: "white"
+            }
+            MouseArea { id: micMouse; anchors.fill: parent; hoverEnabled: true; onClicked: picker.startVoice() }
+        }
         TextInput {
             id: field
             anchors.left: parent.left
             anchors.leftMargin: picker.unit * 6.5
-            anchors.right: parent.right
+            anchors.right: picker.voice ? micButton.left : parent.right
             anchors.rightMargin: picker.unit * 2
             anchors.verticalCenter: parent.verticalCenter
             color: "white"
+            // Na het dicteren: pijltje of Enter terug naar het toetsenbord / de resultaten
+            Keys.onDownPressed: keyboard.forceActiveFocus()
+            Keys.onReturnPressed: if (list.count > 0) list.forceActiveFocus()
+            Keys.onEscapePressed: keyboard.forceActiveFocus()
             font.pixelSize: picker.unit * 3.2 * appModel.fontScale
             clip: true
             activeFocusOnPress: false
@@ -312,6 +345,7 @@ FocusScope {
         unit: picker.unit
         items: list.activeFocus
                ? [{ pad: "A", key: "Enter", label: picker.pickLabel }, { pad: "◀", key: "◀", label: "Toetsenbord" }, { pad: "B", key: "Esc", label: "Terug" }]
-               : [{ pad: "A", key: "Typen", label: "Letter kiezen" }, { pad: "▶", key: "▶", label: "Naar de resultaten" }, { pad: "B", key: "Esc", label: "Terug" }]
+               : [{ pad: "A", key: "Typen", label: "Letter kiezen" }, { pad: "▶", key: "▶", label: "Naar de resultaten" }]
+                 .concat(picker.voice ? [{ pad: "Y", key: "F4", label: "Spreken" }] : []).concat([{ pad: "B", key: "Esc", label: "Terug" }])
     }
 }

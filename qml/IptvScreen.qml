@@ -90,6 +90,25 @@ FocusScope {
 
     signal pinRequired(int row)
 
+    // Zender kiezen met cijfers (afstandsbediening): nummer = plaats in de huidige lijst
+    property string numberEntry: ""
+    function digit(d) {
+        numberEntry = (numberEntry + d).slice(-4)
+        numberTimer.restart()
+    }
+    Timer {
+        id: numberTimer
+        interval: 1500
+        onTriggered: {
+            const n = parseInt(tv.numberEntry) - 1
+            tv.numberEntry = ""
+            if (n >= 0 && n < iptv.count) {
+                console.info("Channel by number", n + 1, iptv.channelAt(n).name)
+                tv.play(n)
+            }
+        }
+    }
+
     function play(row) {
         const ch = iptv.channelAt(row)
         if (!ch.url) {
@@ -519,7 +538,10 @@ FocusScope {
             Keys.onEnterPressed: tv.play(currentIndex)
             Keys.onMenuPressed: tv.toggleFavorite(currentIndex)
             Keys.onPressed: (event) => {
-                if (event.key === Qt.Key_F2) {
+                if (event.text.length === 1 && event.text >= "0" && event.text <= "9") {
+                    tv.digit(event.text)
+                    event.accepted = true
+                } else if (event.key === Qt.Key_F2) {
                     tv.toggleFavorite(currentIndex)
                     event.accepted = true
                 } else if (event.key === Qt.Key_I) {
@@ -772,7 +794,10 @@ FocusScope {
         Keys.onEnterPressed: tv.openGuide(tv.playingRow)
         Keys.onMenuPressed: tv.toggleFavorite(tv.playingRow)
         Keys.onPressed: (event) => {
-            if (event.key === Qt.Key_F2) {
+            if (event.text.length === 1 && event.text >= "0" && event.text <= "9") {
+                tv.digit(event.text)
+                event.accepted = true
+            } else if (event.key === Qt.Key_F2) {
                 tv.toggleFavorite(tv.playingRow)
                 event.accepted = true
             } else if (event.key === Qt.Key_I) {
@@ -906,6 +931,37 @@ FocusScope {
                 text: "Opname stoppen"
                 color: "white"
                 font.pixelSize: (tv.unit * 2) * appModel.fontScale
+            }
+        }
+    }
+
+    // Getypt zendernummer, groot rechtsboven
+    Rectangle {
+        visible: tv.numberEntry !== "" && tv.visible
+        anchors.top: parent.top
+        anchors.right: parent.right
+        anchors.margins: tv.unit * 4
+        z: 40
+        width: Math.max(tv.unit * 14, numberText.implicitWidth + tv.unit * 4)
+        height: tv.unit * 12
+        radius: tv.unit * 1.5
+        color: "#e016181d"
+        Column {
+            anchors.centerIn: parent
+            Text {
+                id: numberText
+                anchors.horizontalCenter: parent.horizontalCenter
+                text: tv.numberEntry
+                color: "white"
+                font.pixelSize: tv.unit * 6
+                font.weight: Font.Bold
+            }
+            Text {
+                anchors.horizontalCenter: parent.horizontalCenter
+                readonly property int n: parseInt(tv.numberEntry) - 1
+                text: n >= 0 && n < iptv.count ? iptv.channelAt(n).name : "—"
+                color: "#c9ccd1"
+                font.pixelSize: tv.unit * 2 * appModel.fontScale
             }
         }
     }

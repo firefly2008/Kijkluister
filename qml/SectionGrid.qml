@@ -15,6 +15,9 @@ Item {
     property var canHover: function() { return true }
     readonly property alias grid: grid
     readonly property int count: model ? model.count : 0
+    // Ingeklapte rij: alleen de titel ("Podcasts ▸ 5"); klapt open zodra je erin staat
+    property bool collapsed: false
+    readonly property bool folded: collapsed && !grid.activeFocus
 
     signal exitUp(int column)
     signal exitDown(int column)
@@ -44,7 +47,8 @@ Item {
         color: "white"
         font.pixelSize: (section.unit * 2.6) * appModel.fontScale
         font.weight: Font.DemiBold
-        text: section.title
+        text: section.folded ? section.title + "   ▸ " + section.count : section.title
+        opacity: section.folded ? 0.75 : 1
     }
 
     GridView {
@@ -60,7 +64,9 @@ Item {
         bottomMargin: pad * 0.6
         cellWidth: Math.floor((width - pad * 2) / section.columns)
         cellHeight: Math.floor(cellWidth * 0.46)
-        height: Math.ceil(section.count / section.columns) * cellHeight + pad * 1.2
+        height: section.folded ? 0 : Math.ceil(section.count / section.columns) * cellHeight + pad * 1.2
+        visible: !section.folded || activeFocus
+        Behavior on height { NumberAnimation { duration: 180; easing.type: Easing.OutCubic } }
         interactive: false
         keyNavigationEnabled: true
         highlightMoveDuration: 150

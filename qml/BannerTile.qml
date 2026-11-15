@@ -30,13 +30,26 @@ Item {
     // Gekozen tegel komt boven zijn buren te liggen
     z: dragging ? 3 : selected ? 2 : 0
 
+    // Gloed in de kleur van de dienst rond de gekozen tegel (goed te zien vanaf de bank)
+    Rectangle {
+        anchors.fill: card
+        anchors.margins: -tile.height * 0.07
+        radius: card.radius * 1.6
+        color: "transparent"
+        border.width: tile.height * 0.07
+        border.color: Qt.lighter(tile.accent, 1.6)
+        opacity: tile.selected ? 0.55 : 0
+        scale: card.scale
+        Behavior on opacity { NumberAnimation { duration: 150 } }
+    }
+
     Rectangle {
         id: card
         anchors.fill: parent
         anchors.margins: parent.height * 0.06
         radius: height * 0.06
         color: tile.accent
-        border.width: tile.selected ? Math.max(3, height * 0.035) : 0
+        border.width: tile.selected ? Math.max(4, height * 0.045) : 0
         border.color: "white"
         scale: tile.dragging ? 1.28 : tile.selected ? 1.2 : 1.0
         opacity: tile.dragging ? 0.85 : 1.0

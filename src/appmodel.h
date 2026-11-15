@@ -4,6 +4,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #pragma once
 
+#include "paths.h"
+
 #include <QAbstractListModel>
 #include <QColor>
 #include <QHash>
@@ -64,13 +66,23 @@ public:
     }
     bool showHero() const { return m_settings.value(QStringLiteral("showHero"), true).toBool(); }
     double fontScale() const { return m_settings.value(QStringLiteral("fontScale"), 1.0).toDouble(); }
-    QStringList sectionOrder() const { return m_settings.value(QStringLiteral("sectionOrder")).toStringList(); }
+    QStringList sectionOrder() const { return m_settings.value(key("sectionOrder")).toStringList(); }
     void setSectionOrder(const QStringList &order)
     {
-        m_settings.setValue(QStringLiteral("sectionOrder"), order);
+        m_settings.setValue(key("sectionOrder"), order);
         Q_EMIT sectionOrderChanged();
     }
     // Media-rij: tegel "Nu op de radio" zolang de radio op de achtergrond speelt (leeg = weg)
+    // Algemene instellingen per profiel (rijen inklappen, nachtmodus, radio hervatten, ...)
+    Q_INVOKABLE QVariant setting(const QString &name, const QVariant &fallback = {}) const
+    {
+        return m_settings.value(profileKey(QStringLiteral("ui/") + name), fallback);
+    }
+    Q_INVOKABLE void setSetting(const QString &name, const QVariant &value)
+    {
+        m_settings.setValue(profileKey(QStringLiteral("ui/") + name), value);
+        Q_EMIT settingsChanged();
+    }
     // Media-rij: tegel "Verder kijken" naast Schilderij (alleen als er iets verder te kijken is)
     Q_INVOKABLE void setResumeCount(int count);
     Q_INVOKABLE void setNowPlaying(const QString &name, const QString &icon, const QString &accent);
@@ -120,6 +132,7 @@ public:
 
 Q_SIGNALS:
     void sectionOrderChanged();
+    void settingsChanged();
     void countChanged();
     void backgroundChanged();
     // Tegel die een scherm binnen Bigscreen opent (bigscreen:movies, bigscreen:shows)

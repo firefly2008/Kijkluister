@@ -28,7 +28,9 @@ public:
     Q_INVOKABLE bool disable(const QString &pin);   // kinderslot helemaal uit
     Q_INVOKABLE void lockNow();
     Q_INVOKABLE bool isLocked(const QString &path) const;    // vraagt deze tegel om de pincode?
-    Q_INVOKABLE bool needsPin(const QString &path) const { return enabled() && !unlocked() && isLocked(path); }
+    // Kinderprofiel: vergrendelde tegels vragen altijd de pincode (ook binnen het uur)
+    Q_INVOKABLE bool needsPin(const QString &path) const { return enabled() && (m_kids || !unlocked()) && isLocked(path); }
+    void setKids(bool kids) { m_kids = kids; }
     Q_INVOKABLE void setLocked(const QString &path, bool on);
     // Zendergroep of zendernaam voor volwassenen (altijd vergrendeld als het kinderslot aan staat)
     Q_INVOKABLE bool isAdultChannel(const QString &group, const QString &name) const;
@@ -40,4 +42,5 @@ private:
     QString hash(const QString &pin) const;
     QSettings m_settings{appSettingsFile(), QSettings::IniFormat};
     qint64 m_unlockedUntil = 0;
+    bool m_kids = false;
 };

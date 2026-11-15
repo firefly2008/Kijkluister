@@ -26,6 +26,9 @@ FocusScope {
     readonly property bool active: row >= 0 && player.playbackState !== MediaPlayer.StoppedState
     readonly property bool inBackground: active && !visible
     signal sleepRequested()
+    // Nachtmodus: radio zachter
+    property real maxVolume: 1.0
+    onMaxVolumeChanged: if (audio.volume > maxVolume) audio.volume = maxVolume
     property string sleepText: ""
 
     anchors.fill: parent
@@ -123,7 +126,7 @@ FocusScope {
     }
 
     function changeVolume(delta) {
-        audio.volume = Math.max(0, Math.min(1, Math.round((audio.volume + delta) * 20) / 20))
+        audio.volume = Math.max(0, Math.min(maxVolume, Math.round((audio.volume + delta) * 20) / 20))
         volumeFlash.restart()
     }
 

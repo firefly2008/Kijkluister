@@ -173,13 +173,14 @@ AppModel::AppModel(Kind kind, const QString &category, QObject *parent)
 QString AppModel::key(const char *name) const
 {
     // Elke rij eigen instellingen; "video" houdt de sleutels van eerdere versies
+    // Per profiel (4.3); het hoofdprofiel houdt de oude sleutels
     if (m_kind != Web) {
-        return QLatin1String(name);
+        return profileKey(QLatin1String(name));
     }
     if (m_category == QLatin1String("video")) {
-        return QStringLiteral("web/") + QLatin1String(name);
+        return profileKey(QStringLiteral("web/") + QLatin1String(name));
     }
-    return QStringLiteral("web/%1/").arg(m_category) + QLatin1String(name);
+    return profileKey(QStringLiteral("web/%1/").arg(m_category) + QLatin1String(name));
 }
 
 QList<AppModel::App> AppModel::customTiles() const

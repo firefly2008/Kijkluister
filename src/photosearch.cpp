@@ -26,6 +26,11 @@ QString PhotoSearch::source() const
 
 void PhotoSearch::search(const QString &query)
 {
+    searchWith(query, !PexelsKey::key().isEmpty());
+}
+
+void PhotoSearch::searchWith(const QString &query, bool usePexels)
+{
     const QString q = query.trimmed();
     const int generation = ++m_generation;
     if (q.size() < 2) {
@@ -34,7 +39,7 @@ void PhotoSearch::search(const QString &query)
         Q_EMIT resultsChanged();
         return;
     }
-    const QString key = PexelsKey::key();
+    const QString key = usePexels ? PexelsKey::key() : QString();
     QNetworkRequest request;
     if (!key.isEmpty()) {
         QUrl url(QStringLiteral("https://api.pexels.com/v1/search"));
@@ -99,6 +104,11 @@ void PhotoSearch::search(const QString &query)
             }
         }
         qInfo() << "Photo search" << q << m_results.size() << (pexels ? "Pexels" : "Openverse");
+        if (pexels && m_results.isEmpty()) {
+            // Pexels gaf niets (bv. ongeldige sleutel): dan Openverse
+            searchWith(q, false);
+            return;
+        }
         Q_EMIT resultsChanged();
     });
 }

@@ -1,5 +1,22 @@
 [
   {
+    "version": "4.3.0",
+    "date": "15 november 2026",
+    "notes": [
+      "Rij Vaak gebruikt bovenaan: de tegels die je het meest opent",
+      "Rijen die je twee weken niet gebruikt klappen in tot één regel (Menu op een tegel: Rij in- of uitklappen; uit te zetten in Meer instellingen)",
+      "De gekozen tegel heeft een gloed in de kleur van de dienst",
+      "Opstarten waar je was: het kader staat op de laatst geopende tegel; radio hervatten bij opstarten kan aan in Meer instellingen",
+      "Cijfertoetsen 1–9 openen een tegel van de bovenste rij; in Live tv kies je een zender op nummer",
+      "Zoeken met je stem: microfoonknop of Y (Windows-dicteren)",
+      "Profielen, ook een kinderprofiel met kinderslot (Meer instellingen → Profielen)",
+      "Knop Hulp in de bovenbalk: welke knop doet wat",
+      "Achtergrond beweegt mee met het logo van de gekozen tegel",
+      "Nachtmodus (22–7 uur): warmer en gedimd beeld, radio zachter, slaaptimer in de bovenbalk",
+      "Gratis foto's: zonder werkende Pexels-sleutel worden ze via Openverse gezocht"
+    ]
+  },
+  {
     "version": "4.2.0",
     "date": "15 november 2026",
     "notes": [

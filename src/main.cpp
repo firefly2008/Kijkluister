@@ -39,6 +39,8 @@
 #include "cec.h"
 #include "homebridge.h"
 #include "photosearch.h"
+#include "profiles.h"
+#include "usagemodel.h"
 #include "resumemodel.h"
 #include "mpcplayer.h"
 #include "iptvmodel.h"
@@ -309,6 +311,17 @@ int main(int argc, char *argv[])
     if (selfTestMode.isEmpty() || selfTestMode == QLatin1String("iptvfree")) {
         iptv.addFreeSourcesOnce();
     }
+    Profiles profiles;
+    view.rootContext()->setContextProperty(QStringLiteral("profiles"), &profiles);
+    parental.setKids(profiles.kids());
+    UsageModel usage;
+    usage.addSource(QStringLiteral("media"), &appModel);
+    usage.addSource(QStringLiteral("video"), &webVideo);
+    usage.addSource(QStringLiteral("muziek"), &webMusic);
+    usage.addSource(QStringLiteral("podcasts"), &webPodcasts);
+    usage.addSource(QStringLiteral("nieuws"), &webNews);
+    usage.addSource(QStringLiteral("radio"), &radio);
+    view.rootContext()->setContextProperty(QStringLiteral("usage"), &usage);
     PhotoSearch photos(appDataDir());
     view.rootContext()->setContextProperty(QStringLiteral("photos"), &photos);
     HomeBridge home(&view);

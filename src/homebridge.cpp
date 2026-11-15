@@ -275,3 +275,16 @@ bool HomeBridge::handleBrowserButton(int button, bool pressed)
     return false;
 #endif
 }
+
+void HomeBridge::startDictation()
+{
+#ifdef Q_OS_WIN
+    INPUT in[4] = {};
+    in[0].type = INPUT_KEYBOARD; in[0].ki.wVk = VK_LWIN;
+    in[1].type = INPUT_KEYBOARD; in[1].ki.wVk = 'H';
+    in[2].type = INPUT_KEYBOARD; in[2].ki.wVk = 'H'; in[2].ki.dwFlags = KEYEVENTF_KEYUP;
+    in[3].type = INPUT_KEYBOARD; in[3].ki.wVk = VK_LWIN; in[3].ki.dwFlags = KEYEVENTF_KEYUP;
+    SendInput(4, in, sizeof(INPUT));
+    qInfo() << "Dictation started";
+#endif
+}

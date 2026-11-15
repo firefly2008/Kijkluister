@@ -103,7 +103,7 @@ RadioModel::RadioModel(const QString &dataDir, QObject *parent)
 
 void RadioModel::loadCustom()
 {
-    const QJsonArray list = QJsonDocument::fromJson(QSettings(appSettingsFile(), QSettings::IniFormat).value(QStringLiteral("radio/custom")).toByteArray()).array();
+    const QJsonArray list = QJsonDocument::fromJson(QSettings(appSettingsFile(), QSettings::IniFormat).value(profileKey(QStringLiteral("radio/custom"))).toByteArray()).array();
     for (const QJsonValue &v : list) {
         const QJsonObject o = v.toObject();
         Station s;
@@ -130,15 +130,15 @@ void RadioModel::saveCustom() const
                                     {QStringLiteral("logo"), s.logoUrl}});
         }
     }
-    QSettings(appSettingsFile(), QSettings::IniFormat).setValue(QStringLiteral("radio/custom"), QJsonDocument(list).toJson(QJsonDocument::Compact));
+    QSettings(appSettingsFile(), QSettings::IniFormat).setValue(profileKey(QStringLiteral("radio/custom")), QJsonDocument(list).toJson(QJsonDocument::Compact));
 }
 
 void RadioModel::rebuild()
 {
     QSettings settings(appSettingsFile(), QSettings::IniFormat);
-    const QStringList hidden = settings.value(QStringLiteral("radio/hidden")).toStringList();
-    const QStringList order = settings.value(QStringLiteral("radio/order")).toStringList();
-    const QStringList shown = settings.value(QStringLiteral("radio/shown")).toStringList();
+    const QStringList hidden = settings.value(profileKey(QStringLiteral("radio/hidden"))).toStringList();
+    const QStringList order = settings.value(profileKey(QStringLiteral("radio/order"))).toStringList();
+    const QStringList shown = settings.value(profileKey(QStringLiteral("radio/shown"))).toStringList();
     QList<int> rows;
     for (int i = 0; i < m_stations.size(); ++i) {
         const Station &st = m_stations.at(i);
@@ -167,7 +167,7 @@ void RadioModel::saveOrder() const
     for (int i : m_visible) {
         order << (i < 0 ? QStringLiteral("+add") : m_stations.at(i).name);
     }
-    QSettings(appSettingsFile(), QSettings::IniFormat).setValue(QStringLiteral("radio/order"), order);
+    QSettings(appSettingsFile(), QSettings::IniFormat).setValue(profileKey(QStringLiteral("radio/order")), order);
 }
 
 void RadioModel::move(int from, int to)
@@ -228,8 +228,8 @@ void RadioModel::setChosen(const QStringList &names)
         }
     }
     QSettings settings(appSettingsFile(), QSettings::IniFormat);
-    settings.setValue(QStringLiteral("radio/hidden"), hidden);
-    settings.setValue(QStringLiteral("radio/shown"), shown);
+    settings.setValue(profileKey(QStringLiteral("radio/hidden")), hidden);
+    settings.setValue(profileKey(QStringLiteral("radio/shown")), shown);
     beginResetModel();
     rebuild();
     endResetModel();
@@ -277,14 +277,14 @@ void RadioModel::remove(int row)
         saveCustom();
     } else if (m_stations.at(index).extra) {
         QSettings settings(appSettingsFile(), QSettings::IniFormat);
-        QStringList shown = settings.value(QStringLiteral("radio/shown")).toStringList();
+        QStringList shown = settings.value(profileKey(QStringLiteral("radio/shown"))).toStringList();
         shown.removeAll(m_stations.at(index).name);
-        settings.setValue(QStringLiteral("radio/shown"), shown);
+        settings.setValue(profileKey(QStringLiteral("radio/shown")), shown);
     } else {
         QSettings settings(appSettingsFile(), QSettings::IniFormat);
-        QStringList hidden = settings.value(QStringLiteral("radio/hidden")).toStringList();
+        QStringList hidden = settings.value(profileKey(QStringLiteral("radio/hidden"))).toStringList();
         hidden.append(m_stations.at(index).name);
-        settings.setValue(QStringLiteral("radio/hidden"), hidden);
+        settings.setValue(profileKey(QStringLiteral("radio/hidden")), hidden);
     }
     rebuild();
     endResetModel();
@@ -296,7 +296,7 @@ void RadioModel::remove(int row)
 void RadioModel::restoreHidden()
 {
     beginResetModel();
-    QSettings(appSettingsFile(), QSettings::IniFormat).remove(QStringLiteral("radio/hidden"));
+    QSettings(appSettingsFile(), QSettings::IniFormat).remove(profileKey(QStringLiteral("radio/hidden")));
     rebuild();
     endResetModel();
     Q_EMIT countChanged();
@@ -381,9 +381,9 @@ bool RadioModel::addResult(int index)
     for (const Station &known : std::as_const(m_stations)) {
         if (known.extra && known.streams.contains(url)) {
             QSettings settings(appSettingsFile(), QSettings::IniFormat);
-            QStringList shown = settings.value(QStringLiteral("radio/shown")).toStringList();
+            QStringList shown = settings.value(profileKey(QStringLiteral("radio/shown"))).toStringList();
             shown.append(known.name);
-            settings.setValue(QStringLiteral("radio/shown"), shown);
+            settings.setValue(profileKey(QStringLiteral("radio/shown")), shown);
             beginResetModel();
             rebuild();
             endResetModel();

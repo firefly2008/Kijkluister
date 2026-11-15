@@ -31,6 +31,7 @@ Q_SIGNALS:
     void failed(const QString &message);
 
 private:
+    void searchWith(const QString &query, bool usePexels);
     QString m_dataDir;
     QNetworkAccessManager m_network;
     QVariantList m_results;
