@@ -17,6 +17,9 @@ FocusScope {
         { what: "Tegel 1 t/m 9 van de bovenste rij openen", pad: "—", remote: "Cijfers 1–9", key: "1–9" },
         { what: "Live tv: zender kiezen op nummer", pad: "—", remote: "Cijfers", key: "Cijfers" },
         { what: "Live tv: tv-gids / opnemen", pad: "Y / RB", remote: "Gids / rood", key: "I / R" },
+        { what: "Live tv: gids van alle zenders", pad: "—", remote: "—", key: "G" },
+        { what: "Live tv: vorige zender / zappen", pad: "—", remote: "0 / P+ P−", key: "0 / PgUp PgDn" },
+        { what: "Tv-gids: herinnering / serie opnemen", pad: "—", remote: "—", key: "H / S" },
         { what: "Zoeken", pad: "Zoeken (bovenbalk)", remote: "Typen of 🎤", key: "Gewoon typen" },
         { what: "Radio: andere zender / volume", pad: "◀ ▶ / ▲ ▼", remote: "◀ ▶ / ▲ ▼", key: "◀ ▶ / ▲ ▼" },
         { what: "Slaaptimer", pad: "Y in de radio", remote: "Menu → Slaaptimer", key: "T in de radio" }

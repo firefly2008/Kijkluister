@@ -38,6 +38,9 @@
 #include "updater.h"
 #include "cec.h"
 #include "homebridge.h"
+#include "systemtools.h"
+#include "remoteserver.h"
+#include "nowtvmodel.h"
 #include "photosearch.h"
 #include "profiles.h"
 #include "usagemodel.h"
@@ -203,7 +206,9 @@ int main(int argc, char *argv[])
     {
         const QString logDir = appDataDir();
         g_logPath = logDir + QStringLiteral("/kijkluister.log");
-        QFile::remove(g_logPath);
+        // Vorig log bewaren (voor "Logbestand delen")
+        QFile::remove(logDir + QStringLiteral("/kijkluister-vorige.log"));
+        QFile::rename(g_logPath, logDir + QStringLiteral("/kijkluister-vorige.log"));
         QFile::remove(logDir + QStringLiteral("/bigscreen-host.log")); // oude naam
         qInstallMessageHandler(logHandler);
         qInfo() << "main() reached; Qt" << qVersion() << "data" << logDir;
@@ -322,6 +327,19 @@ int main(int argc, char *argv[])
     usage.addSource(QStringLiteral("nieuws"), &webNews);
     usage.addSource(QStringLiteral("radio"), &radio);
     view.rootContext()->setContextProperty(QStringLiteral("usage"), &usage);
+    RemoteServer remote(appDataDir());
+    view.rootContext()->setContextProperty(QStringLiteral("remote"), &remote);
+    // Serie opnemen: elke gevonden uitzending inplannen (dubbele slaat de recorder over)
+    QObject::connect(&iptv, &IptvModel::seriesEpisode, &recorder,
+                     [&recorder](const QString &channel, const QString &url, const QString &title, qint64 start, qint64 stop) {
+                         if (!recorder.isScheduled(url, start)) {
+                             recorder.addToSchedule(channel, url, title, start, stop);
+                         }
+                     });
+    NowTvModel nowTv(&iptv);
+    view.rootContext()->setContextProperty(QStringLiteral("nowTv"), &nowTv);
+    SystemTools systemTools;
+    view.rootContext()->setContextProperty(QStringLiteral("systemTools"), &systemTools);
     PhotoSearch photos(appDataDir());
     view.rootContext()->setContextProperty(QStringLiteral("photos"), &photos);
     HomeBridge home(&view);

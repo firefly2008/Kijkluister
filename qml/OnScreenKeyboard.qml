@@ -15,19 +15,20 @@ FocusScope {
         ["q", "w", "e", "r", "t", "y", "u", "i", "o", "p"],
         ["a", "s", "d", "f", "g", "h", "j", "k", "l", "'"],
         ["z", "x", "c", "v", "b", "n", "m", "-", ".", "&"],
-        ["Spatie", "⌫", "Wissen"]
+        ["Spatie", "⌫", "Wissen", "OK"]
     ]
     readonly property real keyWidth: unit * 5.6
     readonly property real keyHeight: unit * 5.6
     signal exitRight()
     signal exitUp()
     signal typed()
+    signal accepted()      // OK-toets: bevestigen (zoals Enter op het eerste resultaat)
 
     width: keyWidth * 10
     height: keyHeight * rows.length
 
     function keyWidthFor(row, col) {
-        return row === 4 ? (col === 0 ? keyWidth * 5 : keyWidth * 2.5) : keyWidth
+        return row === 4 ? (col === 0 ? keyWidth * 3.5 : col === 3 ? keyWidth * 2.5 : keyWidth * 2) : keyWidth
     }
 
     function press(label) {
@@ -40,6 +41,9 @@ FocusScope {
             }
         } else if (label === "Wissen") {
             target.text = ""
+        } else if (label === "OK") {
+            accepted()
+            return
         } else {
             target.text += label === "Spatie" ? " " : label
         }
@@ -79,13 +83,13 @@ FocusScope {
             return
         }
         if (currentRow === 4) {
-            currentCol = currentCol === 0 ? 2 : currentCol === 1 ? 6 : 8
+            currentCol = currentCol === 0 ? 1 : currentCol === 1 ? 4 : currentCol === 2 ? 6 : 8
         }
         currentRow -= 1
     }
     Keys.onDownPressed: {
         if (currentRow === 3) {
-            currentCol = currentCol < 5 ? 0 : currentCol < 7 ? 1 : 2
+            currentCol = currentCol < 4 ? 0 : currentCol < 6 ? 1 : currentCol < 8 ? 2 : 3
         }
         currentRow = Math.min(rows.length - 1, currentRow + 1)
         clampCol()
@@ -112,7 +116,7 @@ FocusScope {
                             anchors.fill: parent
                             anchors.margins: kb.unit * 0.35
                             radius: kb.unit * 0.8
-                            color: parent.current ? "#3d6fb4" : "#262b33"
+                            color: parent.current ? "#3d6fb4" : modelData === "OK" ? "#2f6b3a" : "#262b33"
                             border.color: parent.current ? "white" : "#3a3f48"
                             border.width: parent.current ? kb.unit * 0.25 : 1
                             Text {

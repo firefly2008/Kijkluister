@@ -170,6 +170,21 @@ IptvModel::IptvModel(const QString &dataDir, QObject *parent)
             m_epgUrls << u;
         }
     }
+    m_reminders = m_settings.value(QStringLiteral("iptv/reminders")).toList();
+    m_seriesRules = m_settings.value(QStringLiteral("iptv/series")).toList();
+    // Herinneringen en series: elke halve minuut kijken
+    auto *tick = new QTimer(this);
+    tick->setInterval(30000);
+    connect(tick, &QTimer::timeout, this, &IptvModel::checkReminders);
+    tick->start();
+    connect(this, &IptvModel::epgChanged, this, [this] {
+        static qint64 lastPlan = 0;
+        const qint64 now = QDateTime::currentSecsSinceEpoch();
+        if (!m_seriesRules.isEmpty() && now - lastPlan > 600) {
+            lastPlan = now;
+            QTimer::singleShot(0, this, &IptvModel::planSeries);
+        }
+    });
     // 4.3.1: M3U-links van een Xtream-paneel krijgen nu ook de gids; eenmalig de lijst opnieuw laden
     if (!m_settings.value(QStringLiteral("iptv/xtreamLinkGuide")).toBool()) {
         m_settings.setValue(QStringLiteral("iptv/xtreamLinkGuide"), true);
@@ -1240,6 +1255,200 @@ int IptvModel::showChannel(const QString &url)
     if (m_group != allGroup) {
         setGroup(allGroup);
     }
+    for (int row = 0; row < m_visible.size(); ++row) {
+        if (m_all.at(m_visible.at(row)).url == url) {
+            return row;
+        }
+    }
+    return -1;
+}
+
+// ---------------------------------------------------------------- 4.4: gidsraster, Nu op tv, herinneringen, series
+
+const IptvModel::Channel *IptvModel::channelByUrl(const QString &url) const
+{
+    for (const Channel &c : m_all) {
+        if (c.url == url) {
+            return &c;
+        }
+    }
+    return nullptr;
+}
+
+QVariantList IptvModel::guideGrid(int first, int count, double from, double until) const
+{
+    QVariantList rows;
+    const qint64 now = QDateTime::currentSecsSinceEpoch();
+    auto fmt = [](qint64 secs) { return QDateTime::fromSecsSinceEpoch(secs).toLocalTime().toString(QStringLiteral("HH:mm")); };
+    for (int row = qMax(0, first); row < m_visible.size() && row < first + count; ++row) {
+        const Channel &c = m_all.at(m_visible.at(row));
+        QVariantList programmes;
+        if (const QList<Programme> *list = programmesFor(c)) {
+            for (const Programme &p : *list) {
+                if (p.stop <= qint64(from) || p.start >= qint64(until)) {
+                    continue;
+                }
+                programmes.append(QVariantMap{
+                    {QStringLiteral("title"), p.title},
+                    {QStringLiteral("description"), p.description},
+                    {QStringLiteral("startSecs"), double(p.start)},
+                    {QStringLiteral("stopSecs"), double(p.stop)},
+                    {QStringLiteral("start"), fmt(p.start)},
+                    {QStringLiteral("stop"), fmt(p.stop)},
+                    {QStringLiteral("isNow"), p.start <= now && p.stop > now},
+                });
+            }
+        }
+        rows.append(QVariantMap{{QStringLiteral("row"), row}, {QStringLiteral("name"), c.name}, {QStringLiteral("logo"), c.logo},
+                                {QStringLiteral("url"), c.url}, {QStringLiteral("programmes"), programmes}});
+    }
+    return rows;
+}
+
+QVariantList IptvModel::favoritesNow(int limit) const
+{
+    QVariantList result;
+    const qint64 now = QDateTime::currentSecsSinceEpoch();
+    auto fmt = [](qint64 secs) { return QDateTime::fromSecsSinceEpoch(secs).toLocalTime().toString(QStringLiteral("HH:mm")); };
+    for (const Channel &c : m_all) {
+        if (!m_favorites.contains(c.url)) {
+            continue;
+        }
+        QVariantMap item{{QStringLiteral("url"), c.url}, {QStringLiteral("name"), c.name}, {QStringLiteral("logo"), c.logo},
+                         {QStringLiteral("title"), QString()}, {QStringLiteral("time"), QString()}, {QStringLiteral("progress"), -1.0}};
+        if (const QList<Programme> *list = programmesFor(c)) {
+            for (const Programme &p : *list) {
+                if (p.start <= now && p.stop > now) {
+                    item[QStringLiteral("title")] = p.title;
+                    item[QStringLiteral("time")] = fmt(p.start) + QStringLiteral(" – ") + fmt(p.stop);
+                    item[QStringLiteral("progress")] = double(now - p.start) / qMax<qint64>(1, p.stop - p.start);
+                    break;
+                }
+            }
+        }
+        result.append(item);
+        if (result.size() >= limit) {
+            break;
+        }
+    }
+    return result;
+}
+
+bool IptvModel::isReminder(const QString &url, double start) const
+{
+    for (const QVariant &v : m_reminders) {
+        const QVariantMap r = v.toMap();
+        if (r.value(QStringLiteral("url")).toString() == url && qint64(r.value(QStringLiteral("start")).toDouble()) == qint64(start)) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void IptvModel::toggleReminder(const QString &channel, const QString &url, const QString &logo, const QString &title, double start)
+{
+    for (int i = 0; i < m_reminders.size(); ++i) {
+        const QVariantMap r = m_reminders.at(i).toMap();
+        if (r.value(QStringLiteral("url")).toString() == url && qint64(r.value(QStringLiteral("start")).toDouble()) == qint64(start)) {
+            m_reminders.removeAt(i);
+            m_settings.setValue(QStringLiteral("iptv/reminders"), m_reminders);
+            qInfo() << "Reminder removed" << title;
+            Q_EMIT remindersChanged();
+            return;
+        }
+    }
+    m_reminders.append(QVariantMap{{QStringLiteral("channel"), channel}, {QStringLiteral("url"), url}, {QStringLiteral("logo"), logo},
+                                   {QStringLiteral("title"), title}, {QStringLiteral("start"), start}});
+    m_settings.setValue(QStringLiteral("iptv/reminders"), m_reminders);
+    qInfo() << "Reminder set" << title << QDateTime::fromSecsSinceEpoch(qint64(start)).toString(Qt::ISODate);
+    Q_EMIT remindersChanged();
+    checkReminders();
+}
+
+void IptvModel::checkReminders()
+{
+    const qint64 now = QDateTime::currentSecsSinceEpoch();
+    bool changed = false;
+    for (int i = m_reminders.size() - 1; i >= 0; --i) {
+        QVariantMap r = m_reminders.at(i).toMap();
+        const qint64 start = qint64(r.value(QStringLiteral("start")).toDouble());
+        if (start - now <= 120) {
+            m_reminders.removeAt(i);
+            changed = true;
+            // Te laat (meer dan een half uur bezig): stil weghalen
+            if (now - start < 1800) {
+                r[QStringLiteral("time")] = QDateTime::fromSecsSinceEpoch(start).toLocalTime().toString(QStringLiteral("HH:mm"));
+                qInfo() << "Reminder due" << r.value(QStringLiteral("title")).toString();
+                Q_EMIT reminderDue(r);
+            }
+        }
+    }
+    if (changed) {
+        m_settings.setValue(QStringLiteral("iptv/reminders"), m_reminders);
+        Q_EMIT remindersChanged();
+    }
+}
+
+bool IptvModel::isSeries(const QString &url, const QString &title) const
+{
+    for (const QVariant &v : m_seriesRules) {
+        const QVariantMap r = v.toMap();
+        if (r.value(QStringLiteral("url")).toString() == url
+            && r.value(QStringLiteral("title")).toString().compare(title, Qt::CaseInsensitive) == 0) {
+            return true;
+        }
+    }
+    return false;
+}
+
+void IptvModel::toggleSeries(const QString &channel, const QString &url, const QString &title)
+{
+    for (int i = 0; i < m_seriesRules.size(); ++i) {
+        const QVariantMap r = m_seriesRules.at(i).toMap();
+        if (r.value(QStringLiteral("url")).toString() == url
+            && r.value(QStringLiteral("title")).toString().compare(title, Qt::CaseInsensitive) == 0) {
+            m_seriesRules.removeAt(i);
+            m_settings.setValue(QStringLiteral("iptv/series"), m_seriesRules);
+            qInfo() << "Series removed" << title;
+            Q_EMIT seriesChanged();
+            return;
+        }
+    }
+    m_seriesRules.append(QVariantMap{{QStringLiteral("channel"), channel}, {QStringLiteral("url"), url}, {QStringLiteral("title"), title}});
+    m_settings.setValue(QStringLiteral("iptv/series"), m_seriesRules);
+    qInfo() << "Series added" << title << channel;
+    Q_EMIT seriesChanged();
+    planSeries();
+}
+
+void IptvModel::planSeries()
+{
+    const qint64 now = QDateTime::currentSecsSinceEpoch();
+    int planned = 0;
+    for (const QVariant &v : std::as_const(m_seriesRules)) {
+        const QVariantMap r = v.toMap();
+        const QString url = r.value(QStringLiteral("url")).toString();
+        const QString title = r.value(QStringLiteral("title")).toString();
+        const Channel *c = channelByUrl(url);
+        const QList<Programme> *list = c ? programmesFor(*c) : nullptr;
+        if (!list) {
+            continue;
+        }
+        for (const Programme &p : *list) {
+            // Alles wat nog komt (of net begonnen is) in de komende twee dagen
+            if (p.stop > now && p.start < now + 48 * 3600 && p.title.compare(title, Qt::CaseInsensitive) == 0) {
+                Q_EMIT seriesEpisode(r.value(QStringLiteral("channel")).toString(), url, p.title, p.start, p.stop);
+                ++planned;
+            }
+        }
+    }
+    if (planned > 0) {
+        qInfo() << "Series: checked" << planned << "broadcast(s)";
+    }
+}
+
+int IptvModel::rowOf(const QString &url) const
+{
     for (int row = 0; row < m_visible.size(); ++row) {
         if (m_all.at(m_visible.at(row)).url == url) {
             return row;

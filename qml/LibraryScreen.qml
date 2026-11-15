@@ -155,8 +155,28 @@ FocusScope {
         })
     }
 
-    Keys.onEscapePressed: lib.detail !== null ? lib.hideDetail() : lib.close()
-    Keys.onBackPressed: lib.detail !== null ? lib.hideDetail() : lib.close()
+    // Esc/Terug: één stap terug (instellingen → detail → lijst → startscherm), waar de focus ook staat
+    function back() {
+        if (setup.visible) {
+            setup.close()
+            if (!library.configured) lib.close()
+            else grid.forceActiveFocus()
+        } else if (lib.detail !== null) {
+            lib.hideDetail()
+        } else {
+            lib.close()
+        }
+        console.info("Library back; visible", lib.visible)
+    }
+    Keys.onEscapePressed: lib.back()
+    Keys.onBackPressed: lib.back()
+    // Ook als een knop, zoekveld of lijst de toets zelf zou houden, of de focus kwijt is
+    Shortcut {
+        sequences: ["Esc", "Back"]
+        context: Qt.WindowShortcut
+        enabled: lib.visible
+        onActivated: lib.back()
+    }
 
     // --- Achtergrond: afbeelding van de gekozen titel, links en onder donker ---
     Rectangle {

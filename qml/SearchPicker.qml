@@ -63,6 +63,11 @@ FocusScope {
     }
     ListModel { id: resultModel }
 
+    // Test: OK-toets van het schermtoetsenbord
+    function pressOk() {
+        keyboard.press("OK")
+    }
+
     function nameAt(index) {
         return index >= 0 && index < results.length ? results[index].name : ""
     }
@@ -189,6 +194,15 @@ FocusScope {
         target: field
         focus: true
         onExitRight: if (list.count > 0) list.forceActiveFocus()
+        // OK: eerste resultaat kiezen (profiel opslaan, zender toevoegen, zoeken…)
+        onAccepted: {
+            if (list.count > 0) {
+                console.info("Keyboard OK:", picker.nameAt(0))
+                picker.picked(0)
+            } else {
+                list.forceActiveFocus()
+            }
+        }
     }
 
     // Resultaten
@@ -345,7 +359,7 @@ FocusScope {
         unit: picker.unit
         items: list.activeFocus
                ? [{ pad: "A", key: "Enter", label: picker.pickLabel }, { pad: "◀", key: "◀", label: "Toetsenbord" }, { pad: "B", key: "Esc", label: "Terug" }]
-               : [{ pad: "A", key: "Typen", label: "Letter kiezen" }, { pad: "▶", key: "▶", label: "Naar de resultaten" }]
+               : [{ pad: "A", key: "Typen", label: "Letter kiezen" }, { pad: "▶", key: "▶", label: "Naar de resultaten" }, { pad: "OK", key: "OK", label: "Bevestigen" }]
                  .concat(picker.voice ? [{ pad: "Y", key: "F4", label: "Spreken" }] : []).concat([{ pad: "B", key: "Esc", label: "Terug" }])
     }
 }

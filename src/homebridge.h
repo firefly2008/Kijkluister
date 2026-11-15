@@ -29,6 +29,8 @@ public:
     Q_INVOKABLE void externalLaunched();
     // Home-knop of Home-toets: app sluiten/minimaliseren en Kijkluister naar voren
     Q_INVOKABLE void goHome();
+    // Kijkluister naar voren halen zonder iets te sluiten (bv. bij een herinnering)
+    Q_INVOKABLE void raiseWindow();
 
     // Controller/CEC terwijl een browservenster voorop staat: pijltjes, OK, Terug = vorige pagina,
     // Terug lang vasthouden = startscherm. Geeft true als de knop is afgehandeld.

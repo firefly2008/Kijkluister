@@ -50,6 +50,14 @@ qt_add_executable(bigscreen-host WIN32
     src/homebridge.cpp
     src/homebridge.h
     src/photosearch.cpp
+    src/systemtools.cpp
+    src/remoteserver.cpp
+    src/nowtvmodel.cpp
+    src/nowtvmodel.h
+    src/remoteserver.h
+    src/thirdparty/qrcodegen.cpp
+    src/thirdparty/qrcodegen.hpp
+    src/systemtools.h
     src/profiles.cpp
     src/profiles.h
     src/usagemodel.cpp
@@ -83,7 +91,7 @@ else()
 endif()
 
 # Zonder alias komt het bestand in de resources onder .../host/qml/Main.qml terecht
-set(BIGSCREEN_QML_FILES qml/Main.qml qml/BannerTile.qml qml/QuickTile.qml qml/MenuOverlay.qml qml/PlacesPicker.qml qml/SectionGrid.qml qml/AddTileOverlay.qml qml/LibraryScreen.qml qml/LibrarySetup.qml qml/FocusButton.qml qml/PosterTile.qml qml/IptvScreen.qml qml/IptvSources.qml qml/EpgPanel.qml qml/FrameScreen.qml qml/RecordPanel.qml qml/HintBar.qml qml/WelcomeOverlay.qml qml/RadioPlayer.qml qml/PinPad.qml qml/OnScreenKeyboard.qml qml/SearchPicker.qml qml/HomeButton.qml qml/ReleaseInfo.qml qml/ResumeScreen.qml qml/HelpOverlay.qml)
+set(BIGSCREEN_QML_FILES qml/Main.qml qml/BannerTile.qml qml/QuickTile.qml qml/MenuOverlay.qml qml/PlacesPicker.qml qml/SectionGrid.qml qml/AddTileOverlay.qml qml/LibraryScreen.qml qml/LibrarySetup.qml qml/FocusButton.qml qml/PosterTile.qml qml/IptvScreen.qml qml/IptvSources.qml qml/EpgPanel.qml qml/FrameScreen.qml qml/RecordPanel.qml qml/HintBar.qml qml/WelcomeOverlay.qml qml/RadioPlayer.qml qml/PinPad.qml qml/OnScreenKeyboard.qml qml/SearchPicker.qml qml/HomeButton.qml qml/ReleaseInfo.qml qml/ResumeScreen.qml qml/HelpOverlay.qml qml/GuideGrid.qml qml/RemoteOverlay.qml)
 foreach(qml_file IN LISTS BIGSCREEN_QML_FILES)
     get_filename_component(qml_name ${qml_file} NAME)
     set_source_files_properties(${qml_file} PROPERTIES QT_RESOURCE_ALIAS ${qml_name})
@@ -109,7 +117,7 @@ target_link_libraries(bigscreen-host PRIVATE
 )
 
 if(WIN32)
-    target_link_libraries(bigscreen-host PRIVATE user32 shell32 ole32 comctl32)
+    target_link_libraries(bigscreen-host PRIVATE user32 shell32 ole32 comctl32 ws2_32 iphlpapi)
 endif()
 
 # Installatie: alles plat in een map, zodat windeployqt + Inno Setup er een installer van maken

@@ -64,29 +64,135 @@ FocusScope {
     GridView {
         id: grid
         anchors.top: title.bottom
-        anchors.topMargin: screen.unit * 3
+        anchors.topMargin: screen.unit * 2
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.bottom: hints.top
+        anchors.bottomMargin: screen.unit * 2
+        // Zelfde marges als het startscherm; ruimte rond elke tegel voor kader en vergroting
         anchors.leftMargin: screen.unit * 4
         anchors.rightMargin: screen.unit * 4
-        cellWidth: Math.floor(width / 3)
-        cellHeight: Math.floor(cellWidth * 0.62)
-        clip: true
+        cellWidth: Math.floor(width / 4)
+        cellHeight: Math.floor(cellWidth * 0.66)
+        clip: false
         keyNavigationEnabled: true
         highlightMoveDuration: 150
         model: resume
 
-        delegate: BannerTile {
+        delegate: Item {
+            id: cell
+            required property int index
+            required property string name
             width: grid.cellWidth
             height: grid.cellHeight
-            selected: grid.activeFocus && grid.currentIndex === index
-            backdrop: resume.backdropAt(index + resume.revision * 0)
-            subtitle: resume.subtitleAt(index)
-            progress: resume.progressAt(index)
-            onActivated: { grid.currentIndex = index; screen.playRequested(index) }
-            onMenuRequested: { grid.currentIndex = index; screen.menuRequested(index) }
-            onHovered: { grid.currentIndex = index; grid.forceActiveFocus() }
+            readonly property bool selected: grid.activeFocus && grid.currentIndex === index
+            readonly property string sub: resume.subtitleAt(index + resume.revision * 0)
+            // "S02E01 · Aflevering 1 · nog 41 min" → resterende tijd op een eigen regel
+            readonly property int split: sub.lastIndexOf(" · nog ")
+            z: selected ? 2 : 0
+
+            Rectangle {
+                id: card
+                anchors.fill: parent
+                anchors.margins: screen.unit * 1.4
+                radius: screen.unit * 1.2
+                color: "#1d2026"
+                scale: cell.selected ? 1.06 : 1.0
+                Behavior on scale { NumberAnimation { duration: 130; easing.type: Easing.OutCubic } }
+
+                Image {
+                    anchors.fill: parent
+                    source: resume.backdropAt(cell.index + resume.revision * 0) || resume.iconAt(cell.index)
+                    fillMode: Image.PreserveAspectCrop
+                    asynchronous: true
+                    sourceSize.width: 640
+                }
+                // Donker verloop onderaan voor leesbare tekst
+                Rectangle {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    height: parent.height * 0.65
+                    gradient: Gradient {
+                        GradientStop { position: 0.0; color: "#00000000" }
+                        GradientStop { position: 1.0; color: "#e6000000" }
+                    }
+                }
+                Column {
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: bar.top
+                    anchors.margins: screen.unit * 1.4
+                    anchors.bottomMargin: screen.unit * 0.9
+                    spacing: screen.unit * 0.3
+                    Text {
+                        width: parent.width
+                        text: cell.name
+                        color: "white"
+                        elide: Text.ElideRight
+                        font.pixelSize: screen.unit * 2.4 * appModel.fontScale
+                        font.weight: Font.DemiBold
+                    }
+                    Text {
+                        width: parent.width
+                        text: cell.split >= 0 ? cell.sub.slice(0, cell.split) : cell.sub
+                        color: "#d4d7dc"
+                        elide: Text.ElideRight
+                        font.pixelSize: screen.unit * 1.8 * appModel.fontScale
+                    }
+                    Text {
+                        width: parent.width
+                        visible: cell.split >= 0
+                        text: cell.split >= 0 ? cell.sub.slice(cell.split + 3) : ""
+                        color: "#a8acb3"
+                        font.pixelSize: screen.unit * 1.7 * appModel.fontScale
+                    }
+                }
+                Rectangle {
+                    id: bar
+                    anchors.left: parent.left
+                    anchors.right: parent.right
+                    anchors.bottom: parent.bottom
+                    anchors.margins: screen.unit * 1.4
+                    height: screen.unit * 0.6
+                    radius: height / 2
+                    color: "#55ffffff"
+                    Rectangle {
+                        width: parent.width * Math.max(0.02, Math.min(1, resume.progressAt(cell.index + resume.revision * 0)))
+                        height: parent.height
+                        radius: height / 2
+                        color: "#e5484d"
+                    }
+                }
+                // Kader en gloed bij de gekozen tegel (zelfde maat als de kaart, valt niet over de buren)
+                Rectangle {
+                    anchors.fill: parent
+                    radius: parent.radius
+                    color: "transparent"
+                    border.width: cell.selected ? Math.max(3, screen.unit * 0.45) : 0
+                    border.color: "white"
+                }
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.margins: -screen.unit * 0.8
+                    radius: parent.radius + screen.unit * 0.8
+                    color: "transparent"
+                    border.width: screen.unit * 0.8
+                    border.color: "#59ffffff"
+                    visible: cell.selected
+                }
+            }
+            MouseArea {
+                anchors.fill: card
+                acceptedButtons: Qt.LeftButton | Qt.RightButton
+                hoverEnabled: true
+                onEntered: { grid.currentIndex = cell.index; grid.forceActiveFocus() }
+                onClicked: (mouse) => {
+                    grid.currentIndex = cell.index
+                    if (mouse.button === Qt.RightButton) screen.menuRequested(cell.index)
+                    else screen.playRequested(cell.index)
+                }
+            }
         }
 
         Keys.onReturnPressed: screen.playRequested(currentIndex)

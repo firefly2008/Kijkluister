@@ -355,3 +355,23 @@ void HomeBridge::startDictation()
     qInfo() << "Dictation started";
 #endif
 }
+
+void HomeBridge::raiseWindow()
+{
+#ifdef Q_OS_WIN
+    const HWND ours = m_main ? reinterpret_cast<HWND>(m_main->winId()) : nullptr;
+    if (!ours) {
+        return;
+    }
+    const DWORD fgThread = GetWindowThreadProcessId(GetForegroundWindow(), nullptr);
+    const DWORD ourThread = GetCurrentThreadId();
+    if (fgThread != ourThread) {
+        AttachThreadInput(fgThread, ourThread, TRUE);
+    }
+    ShowWindow(ours, SW_SHOW);
+    SetForegroundWindow(ours);
+    if (fgThread != ourThread) {
+        AttachThreadInput(fgThread, ourThread, FALSE);
+    }
+#endif
+}

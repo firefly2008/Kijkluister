@@ -1,5 +1,26 @@
 [
   {
+    "version": "4.4.0",
+    "date": "2026-11-15",
+    "notes": [
+      "Live tv: gids van alle zenders in één overzicht (knop Gids of G): zenders onder elkaar, programma's op een tijdlijn",
+      "Live tv: vorige zender met 0 of Backspace; zappen met Pagina omhoog/omlaag (P+ / P−)",
+      "Tv-gids: herinnering (H of 🔔 Herinner me): twee minuten van tevoren een melding met de knop Kijken, ook als je iets anders kijkt",
+      "Tv-gids: serie opnemen (S): elke uitzending met dezelfde titel op die zender wordt opgenomen",
+      "Startscherm: rij Nu op tv met je favoriete zenders en wat er nu speelt",
+      "Bij opstarten: Wie kijkt er? (als er meer profielen zijn; uit te zetten)",
+      "Sfeerstand: na 10 minuten niets doen gaat Kijkluister vanzelf naar Schilderij (instelbaar)",
+      "Knop Geluid in de bovenbalk: kies tv, soundbar of koptelefoon",
+      "Telefoon als afstandsbediening: QR-code scannen, dan pijltjes, OK, Terug, Home, volume en typen op je telefoon",
+      "Kinderprofiel: kijktijd per dag, daarna is de pincode nodig",
+      "Back-up maken en terugzetten van al je instellingen, en Logbestand delen (op het bureaublad)",
+      "Instelling: Kijkluister starten bij opstarten van Windows",
+      "Verder kijken: tegels netjes in een raster, niets meer buiten beeld; bij series de resterende tijd op een eigen regel",
+      "Films & Series: Esc gaat altijd een stap terug, tot het startscherm",
+      "Schermtoetsenbord: OK-knop om te bevestigen"
+    ]
+  },
+  {
     "version": "4.3.1",
     "date": "2026-11-15",
     "notes": [

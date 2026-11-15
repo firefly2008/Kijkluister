@@ -99,6 +99,12 @@ void Profiles::switchTo(const QString &id)
     m_settings.sync();
     qInfo() << "Profile switch to" << id;
     // Nieuw proces in het andere profiel; dit proces sluit
-    QProcess::startDetached(QCoreApplication::applicationFilePath(), QCoreApplication::arguments().mid(1));
+    // "--profile-chosen": niet opnieuw vragen wie er kijkt
+    QStringList args = QCoreApplication::arguments().mid(1);
+    args.removeAll(QStringLiteral("--autostart"));
+    if (!args.contains(QStringLiteral("--profile-chosen"))) {
+        args << QStringLiteral("--profile-chosen");
+    }
+    QProcess::startDetached(QCoreApplication::applicationFilePath(), args);
     QTimer::singleShot(200, qApp, &QCoreApplication::quit);
 }

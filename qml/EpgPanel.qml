@@ -57,7 +57,50 @@ FocusScope {
         } else if (event.key === Qt.Key_R) {
             toggleRecord(list.currentIndex)
             event.accepted = true
+        } else if (event.key === Qt.Key_H) {
+            toggleReminder(list.currentIndex)
+            event.accepted = true
+        } else if (event.key === Qt.Key_S) {
+            toggleSeries(list.currentIndex)
+            event.accepted = true
         }
+    }
+
+    // Herinnering (2 minuten voor het begin een melding) en serie opnemen (elke uitzending met deze titel)
+    property int extraRevision: 0
+    Connections {
+        target: iptv
+        function onRemindersChanged() { panel.extraRevision++ }
+        function onSeriesChanged() { panel.extraRevision++ }
+    }
+    function hasReminder(p) {
+        return extraRevision >= 0 && p && channel.url ? iptv.isReminder(channel.url, p.startSecs) : false
+    }
+    function isSeries(p) {
+        return extraRevision >= 0 && p && channel.url ? iptv.isSeries(channel.url, p.title) : false
+    }
+    function toggleReminder(index) {
+        const p = index >= 0 && index < programmes.length ? programmes[index] : null
+        if (!p || !channel.url || p.isNow) {
+            return
+        }
+        iptv.toggleReminder(channel.name, channel.url, channel.logo || "", p.title, p.startSecs)
+        const on = iptv.isReminder(channel.url, p.startSecs)
+        recordToastTitle.text = on ? "🔔 Herinnering: " + p.title : "Herinnering weg: " + p.title
+        recordToastText.text = on ? p.day.toLowerCase() + " " + p.start + " · " + channel.name
+                                    + "\nTwee minuten van tevoren krijg je een melding, ook als je iets anders kijkt." : ""
+        recordToastTimer.restart()
+    }
+    function toggleSeries(index) {
+        const p = index >= 0 && index < programmes.length ? programmes[index] : null
+        if (!p || !channel.url) {
+            return
+        }
+        iptv.toggleSeries(channel.name, channel.url, p.title)
+        const on = iptv.isSeries(channel.url, p.title)
+        recordToastTitle.text = on ? "● Serie wordt opgenomen: " + p.title : "Serie-opname gestopt: " + p.title
+        recordToastText.text = on ? "Elke uitzending van \u201c" + p.title + "\u201d op " + channel.name + " wordt opgenomen.\nLaat Kijkluister aan staan." : ""
+        recordToastTimer.restart()
     }
 
     // Programma opnemen (of de geplande opname weer weghalen)
@@ -120,6 +163,8 @@ FocusScope {
                 items: [
                     { pad: "✛", key: "↑ ↓", label: "Programma kiezen" },
                     { pad: "RB", key: "R", label: "Opnemen" },
+                    { pad: "", key: "H", label: "Herinnering" },
+                    { pad: "", key: "S", label: "Serie" },
                     { pad: "B", key: "Esc", label: "Sluiten" }
                 ]
             }
@@ -189,6 +234,12 @@ FocusScope {
                     font.weight: item.modelData.isNow ? Font.DemiBold : Font.Normal
                     text: (item.modelData.isNow ? "▶ " : "") + item.modelData.title
                 }
+                Text {
+                    visible: panel.hasReminder(item.modelData)
+                    anchors.verticalCenter: parent.verticalCenter
+                    font.pixelSize: (panel.unit * 2) * appModel.fontScale
+                    text: "🔔"
+                }
                 Rectangle {
                     visible: panel.isPlanned(item.modelData)
                     anchors.verticalCenter: parent.verticalCenter
@@ -253,6 +304,23 @@ FocusScope {
                           ? (details.p.isNow ? "■  Opname stoppen" : "Opname annuleren")
                           : "●  Dit programma opnemen"
                     onClicked: panel.toggleRecord(list.currentIndex)
+                    KeyNavigation.right: remindButton
+                }
+                FocusButton {
+                    id: remindButton
+                    visible: details.p && !details.p.isNow
+                    unit: panel.unit
+                    text: details.p && panel.hasReminder(details.p) ? "Herinnering weg" : "🔔  Herinner me"
+                    onClicked: panel.toggleReminder(list.currentIndex)
+                    KeyNavigation.left: recordButton
+                    KeyNavigation.right: seriesButton
+                }
+                FocusButton {
+                    id: seriesButton
+                    unit: panel.unit
+                    text: details.p && panel.isSeries(details.p) ? "Serie-opname stoppen" : "Serie opnemen"
+                    onClicked: panel.toggleSeries(list.currentIndex)
+                    KeyNavigation.left: remindButton.visible ? remindButton : recordButton
                 }
 
             }

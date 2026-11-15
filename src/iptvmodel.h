@@ -37,6 +37,9 @@ class IptvModel : public QAbstractListModel
     // Gids (EPG): telt op bij nieuwe gegevens, zodat QML opnieuw opvraagt
     Q_PROPERTY(int epgRevision READ epgRevision NOTIFY epgChanged)
     Q_PROPERTY(QString epgStatus READ epgStatus NOTIFY epgChanged)
+    // 4.4: herinneringen en series opnemen
+    Q_PROPERTY(QVariantList reminders READ reminders NOTIFY remindersChanged)
+    Q_PROPERTY(QVariantList seriesRules READ seriesRules NOTIFY seriesChanged)
 
 public:
     enum Roles { NameRole = Qt::UserRole + 1, IconRole, AccentRole, GroupRole, UrlRole, FavoriteRole, NumberRole };
@@ -88,6 +91,27 @@ public:
     // Groep "Alle zenders" kiezen en de rij van deze zender teruggeven (-1 = niet gevonden)
     Q_INVOKABLE int showChannel(const QString &url);
 
+    // Gidsraster: zenders first..first+count uit de huidige lijst met hun programma's tussen from en until
+    // [{ row, name, logo, url, programmes: [{ title, startSecs, stopSecs, start, stop, description, isNow }] }]
+    Q_INVOKABLE QVariantList guideGrid(int first, int count, double from, double until) const;
+    // Favoriete zenders met wat er nu speelt (rij "Nu op tv")
+    // [{ url, name, logo, title, time, progress }]
+    Q_INVOKABLE QVariantList favoritesNow(int limit = 12) const;
+    // Rij van een zender in de huidige lijst (-1 = niet in deze lijst)
+    Q_INVOKABLE int rowOf(const QString &url) const;
+
+    // Herinneringen: melding 2 minuten voor het begin (signaal reminderDue)
+    QVariantList reminders() const { return m_reminders; }
+    Q_INVOKABLE bool isReminder(const QString &url, double start) const;
+    Q_INVOKABLE void toggleReminder(const QString &channel, const QString &url, const QString &logo, const QString &title, double start);
+    Q_INVOKABLE void checkReminders();
+
+    // Serie opnemen: alle uitzendingen met deze titel op deze zender (via signaal seriesEpisode → recorder)
+    QVariantList seriesRules() const { return m_seriesRules; }
+    Q_INVOKABLE bool isSeries(const QString &url, const QString &title) const;
+    Q_INVOKABLE void toggleSeries(const QString &channel, const QString &url, const QString &title);
+    Q_INVOKABLE void planSeries();
+
 Q_SIGNALS:
     void countChanged();
     void channelsChanged();
@@ -95,6 +119,10 @@ Q_SIGNALS:
     void sourcesChanged();
     void statusChanged();
     void epgChanged();
+    void remindersChanged();
+    void seriesChanged();
+    void reminderDue(const QVariantMap &reminder);
+    void seriesEpisode(const QString &channel, const QString &url, const QString &title, qint64 start, qint64 stop);
 
 private:
     struct Channel {
@@ -169,4 +197,7 @@ private:
     int m_epgRevision = 0;
     QString m_epgStatus;
     bool m_epgBusy = false;
+    QVariantList m_reminders;
+    QVariantList m_seriesRules;
+    const Channel *channelByUrl(const QString &url) const;
 };

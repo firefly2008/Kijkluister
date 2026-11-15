@@ -93,6 +93,11 @@ FocusScope {
     // Zender kiezen met cijfers (afstandsbediening): nummer = plaats in de huidige lijst
     property string numberEntry: ""
     function digit(d) {
+        // 0 als eerste cijfer: terug naar de vorige zender
+        if (d === "0" && numberEntry === "") {
+            previousChannel()
+            return
+        }
         numberEntry = (numberEntry + d).slice(-4)
         numberTimer.restart()
     }
@@ -109,10 +114,29 @@ FocusScope {
         }
     }
 
+    // Vorige zender (knop 0 of Backspace tijdens het kijken)
+    property string previousUrl: ""
+    function previousChannel() {
+        if (previousUrl === "") {
+            toast("Nog geen vorige zender")
+            return
+        }
+        let row = iptv.rowOf(previousUrl)
+        if (row < 0) row = iptv.showChannel(previousUrl)
+        console.info("Previous channel", row)
+        if (row >= 0) play(row)
+    }
+    function openGrid() {
+        guideGrid.open(playing ? playingRow : Math.max(0, grid.currentIndex), playing ? playerView : grid)
+    }
+
     function play(row) {
         const ch = iptv.channelAt(row)
         if (!ch.url) {
             return
+        }
+        if (playing && channel.url && channel.url !== ch.url) {
+            previousUrl = channel.url
         }
         // Kinderslot: zenders voor volwassenen alleen met de pincode
         if (parental.enabled && !parental.unlocked && parental.isAdultChannel(ch.group || "", ch.name || "")) {
@@ -431,10 +455,19 @@ FocusScope {
             anchors.margins: tv.unit * 3
             spacing: tv.unit * 1.2
             FocusButton {
+                id: gridButton
+                unit: tv.unit
+                text: "Gids"
+                onClicked: tv.openGrid()
+                KeyNavigation.right: recordingsButton
+                KeyNavigation.down: grid
+            }
+            FocusButton {
                 id: recordingsButton
                 unit: tv.unit
                 text: recorder.recording ? "●  Opnames" : "Opnames"
                 onClicked: recordPanel.open(iptv.channelAt(Math.max(0, grid.currentIndex)), recordingsButton)
+                KeyNavigation.left: gridButton
                 KeyNavigation.right: sourcesButton
                 KeyNavigation.down: grid
             }
@@ -488,7 +521,7 @@ FocusScope {
             color: "#9fb4d0"
             font.pixelSize: (tv.unit * 2) * appModel.fontScale
             text: iptv.status + (iptv.count > 0 ? "  ·  " + iptv.count + " zenders" : "")
-                  + (gamepad.connectedCount > 0 ? "  ·  Ⓧ favoriet  ·  Ⓨ tv-gids  ·  RB opnemen" : "  ·  F2 of rechtermuisknop: favoriet  ·  I: tv-gids  ·  R: opnemen")
+                  + (gamepad.connectedCount > 0 ? "  ·  Ⓧ favoriet  ·  Ⓨ tv-gids  ·  RB opnemen" : "  ·  F2 of rechtermuisknop: favoriet  ·  I: tv-gids  ·  G: gids alle zenders  ·  R: opnemen")
         }
 
         GridView {
@@ -547,6 +580,9 @@ FocusScope {
                 } else if (event.key === Qt.Key_I) {
                     tv.openGuide(currentIndex)
                     event.accepted = true
+                } else if (event.key === Qt.Key_G) {
+                    tv.openGrid()
+                    event.accepted = true
                 } else if (event.key === Qt.Key_R) {
                     tv.openRecord(currentIndex)
                     event.accepted = true
@@ -561,7 +597,7 @@ FocusScope {
             }
             Keys.onUpPressed: (event) => {
                 if (currentIndex < columns) {
-                    sourcesButton.forceActiveFocus()
+                    gridButton.forceActiveFocus()
                 } else {
                     event.accepted = false
                 }
@@ -776,6 +812,8 @@ FocusScope {
                             { pad: "A", key: "Enter", label: "Tv-gids" },
                             { pad: "RB", key: "R", label: "Opnemen" },
                             { pad: "X", key: "F2", label: "Favoriet" },
+                            { pad: "", key: "0", label: "Vorige zender" },
+                            { pad: "", key: "G", label: "Gids" },
                             { pad: "B", key: "Esc", label: "Terug" }
                         ]
                     }
@@ -799,6 +837,18 @@ FocusScope {
                 event.accepted = true
             } else if (event.key === Qt.Key_F2) {
                 tv.toggleFavorite(tv.playingRow)
+                event.accepted = true
+            } else if (event.key === Qt.Key_PageUp || event.key === Qt.Key_ChannelUp) {
+                tv.zap(-1)
+                event.accepted = true
+            } else if (event.key === Qt.Key_PageDown || event.key === Qt.Key_ChannelDown) {
+                tv.zap(1)
+                event.accepted = true
+            } else if (event.key === Qt.Key_Backspace) {
+                tv.previousChannel()
+                event.accepted = true
+            } else if (event.key === Qt.Key_G) {
+                tv.openGrid()
                 event.accepted = true
             } else if (event.key === Qt.Key_I) {
                 tv.openGuide(tv.playingRow)
@@ -857,6 +907,11 @@ FocusScope {
     EpgPanel {
         id: guidePanel
         unit: tv.unit
+    }
+
+    GuideGrid {
+        id: guideGrid
+        onWatchRequested: (row) => tv.play(row)
     }
 
     RecordPanel {
