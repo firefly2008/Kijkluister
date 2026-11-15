@@ -1,0 +1,30 @@
+name: radio-probe
+on:
+  push:
+    branches: ['probe/**']
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          sudo apt-get -qq install -y ffmpeg >/dev/null 2>&1 || true
+          curl -sL https://iptv-org.github.io/iptv/countries/nl.m3u -o nl.m3u
+          python3 - <<'PY'
+          import re,subprocess
+          names=['NH','AT5','RTV Utrecht','Gelderland','Brabant','L1','Oost','Noord','Fryslân','Fryslan','Drenthe','Zeeland','Rijnmond','West','Flevoland','Omrop','Dumpert','Haaglanden','WOS','RTV','TV Limburg','Zuid']
+          lines=open('nl.m3u',encoding='utf8').read().splitlines()
+          for i,l in enumerate(lines):
+            if l.startswith('#EXTINF'):
+              name=l.split(',')[-1]
+              if any(n.lower() in name.lower() for n in names):
+                url=lines[i+1] if i+1<len(lines) else ''
+                j=i+1
+                while j<len(lines) and lines[j].startswith('#'): j+=1
+                url=lines[j]
+                logo=re.search(r'tvg-logo="([^"]*)"',l); tid=re.search(r'tvg-id="([^"]*)"',l)
+                try:
+                  r=subprocess.run(['ffprobe','-v','error','-rw_timeout','8000000','-show_entries','stream=codec_type,width','-of','csv=p=0',url],capture_output=True,text=True,timeout=15)
+                  ok=('video' in r.stdout) and 'OK' or 'FAIL '+(r.stderr.strip().splitlines() or [''])[-1][:80]
+                except Exception as e: ok='TIMEOUT'
+                print('CH|',name,'|',url,'|',logo.group(1) if logo else '','|',tid.group(1) if tid else '','|',ok)
+          PY
