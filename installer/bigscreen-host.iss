@@ -73,7 +73,7 @@ Filename: "{app}\{#AppExe}"; Flags: nowait runasoriginaluser; Check: IsRelaunch
 [UninstallRun]
 Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{app}\register-update-task.ps1"" -Remove"; Flags: runhidden waituntilterminated; RunOnceId: "KijkluisterUpdateTask"
 Filename: "{sys}\netsh.exe"; Parameters: "advfirewall firewall delete rule name=""Kijkluister afstandsbediening"""; Flags: runhidden waituntilterminated; RunOnceId: "KijkluisterFirewall"
-Filename: "{sys}\reg.exe"; Parameters: "delete HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v Kijkluister /f"; Flags: runhidden waituntilterminated runasoriginaluser; RunOnceId: "KijkluisterAutostart"
+Filename: "{sys}\reg.exe"; Parameters: "delete HKCU\Software\Microsoft\Windows\CurrentVersion\Run /v Kijkluister /f"; Flags: runhidden waituntilterminated; RunOnceId: "KijkluisterAutostart"
 
 [UninstallDelete]
 Type: filesandordirs; Name: "{app}\update"
