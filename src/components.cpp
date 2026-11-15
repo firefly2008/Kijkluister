@@ -203,6 +203,12 @@ void Components::fetchRelease()
                 }
             }
         }
+        if (url.isEmpty() && kind != MpcHc) {
+            // GitHub-API geweigerd (bv. limiet bereikt): vaste downloadlink van de nieuwste master-bouw
+            chosen = QStringLiteral("ffmpeg-master-latest-win64-gpl.zip");
+            url = QStringLiteral("https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/") + chosen;
+            qInfo() << "Components: API unavailable, using direct ffmpeg link";
+        }
         const QString key = kind == MpcHc ? QStringLiteral("components/mpc-hc") : QStringLiteral("components/ffmpeg");
         const QString version = kind == MpcHc ? tag : chosen;
         qInfo().noquote() << "Components:" << name(kind) << "latest" << tag << chosen
