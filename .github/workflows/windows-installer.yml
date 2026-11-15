@@ -188,7 +188,7 @@ jobs:
               'parental' = 'Parental: unlocked'; 'regional' = 'IPTV playing:'; 'nowplaying' = 'Media first tile: Nu op de radio';
               'sections' = 'Section order moved:'; 'homekey' = 'Home screen'; 'releaseinfo' = 'Release info: '; 'photo' = 'Photo search';  'frame-unsplash' = 'Frame: Unsplash gave'; 'usage' = 'Usage count'; 'help' = 'Help opened'; 'night' = 'Night mode true';
               'collapse' = 'Collapsed Podcasts: true'; 'profiles' = 'Profiles count 2'; 'resume' = 'Resume screen: 1';
-              'libraryesc' = 'Library back; visible false'; 'nowtv' = 'Now tv count 3'; 'guidegrid' = 'Guide grid opened'; 'reminder' = 'Reminder due';
+              'libraryesc' = 'Library back; visible false'; 'nowtv' = 'Now tv count ok true'; 'guidegrid' = 'Guide grid opened'; 'reminder' = 'Reminder due';
               'series' = 'Series: checked'; 'prevchannel' = 'Previous channel 0'; 'ambient' = 'Ambient mode'; 'audio' = 'Audio outputs';
               'remote' = 'Remote test down right code 200'; 'backup' = 'Autostart off: false'; 'kidslimit' = 'Kids lock shown true';
               'okkey' = 'Keyboard OK: Opslaan als'; 'whoswatching' = 'Who is watching:'

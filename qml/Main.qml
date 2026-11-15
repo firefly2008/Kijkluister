@@ -103,8 +103,10 @@ Rectangle {
     Connections { target: appModel; function onSettingsChanged() { root.settingsRevision++ } }
     function isCollapsed(title, model) {
         settingsRevision
-        const manual = appModel.setting("collapsed", [])
-        const expanded = appModel.setting("expanded", [])
+        // Lege lijst komt uit het ini-bestand als "ongeldig" terug, één naam als tekst
+        const asList = (v) => !v ? [] : typeof v === "string" ? [v] : v
+        const manual = asList(appModel.setting("collapsed", []))
+        const expanded = asList(appModel.setting("expanded", []))
         if (manual.indexOf(title) >= 0) return true
         if (expanded.indexOf(title) >= 0 || model === usage || model === appModel || model === nowTv) return false
         return appModel.setting("autoCollapse", true) && usage.daysUnused(categoryOf(model)) > 14
@@ -112,8 +114,9 @@ Rectangle {
     function toggleCollapsed(model) {
         const title = allSectionDefs.find(d => d.model === model).title
         const now = isCollapsed(title, model)
-        let manual = appModel.setting("collapsed", []).filter(t => t !== title)
-        let expanded = appModel.setting("expanded", []).filter(t => t !== title)
+        const asList = (v) => !v ? [] : typeof v === "string" ? [v] : v
+        let manual = asList(appModel.setting("collapsed", [])).filter(t => t !== title)
+        let expanded = asList(appModel.setting("expanded", [])).filter(t => t !== title)
         if (now) expanded.push(title); else manual.push(title)
         appModel.setSetting("collapsed", manual)
         appModel.setSetting("expanded", expanded)
@@ -1161,7 +1164,7 @@ Rectangle {
                 testStep.run(4000, () => {
                     for (let r = 0; r < 3; ++r) if (!iptv.isFavorite(r)) iptv.toggleFavorite(r)
                     nowTv.refresh()
-                    console.info("Now tv count", nowTv.count, nowTv.subtitleAt(0))
+                    console.info("Now tv count ok", nowTv.count >= 3, nowTv.count, nowTv.subtitleAt(0))
                     Qt.callLater(() => focusSection(sectionDefs.findIndex(d => d.model === nowTv), 0, false))
                 })
             } else if (selfTest === "guidegrid") {
