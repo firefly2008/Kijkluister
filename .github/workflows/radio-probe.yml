@@ -1,0 +1,30 @@
+name: radio-probe
+on:
+  push:
+    branches: ['probe/**']
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          sudo apt-get -qq install -y ffmpeg >/dev/null 2>&1 || true
+          python3 - <<'PY'
+          import json, urllib.request, urllib.parse, subprocess
+          names = ["NPO Radio 1","NPO 3FM","NPO Klassiek","NPO Radio 5","NPO Soul & Jazz","FunX","100% NL","Sublime","SLAM!","KINK","Arrow Classic Rock","BNR Nieuwsradio","Radio 538 Dance Department","Qmusic Non-Stop","Sky Radio 80s","Radio 10 80s","Radio Veronica Rock","NH Radio","Radio Rijnmond","Omroep Brabant","L1 Radio","Radio Oost","Radio Noord","Omrop Fryslân","Radio Drenthe","Omroep Zeeland","Radio West","Radio M Utrecht","Omroep Flevoland","Groot Nieuws Radio","Radio Decibel","Pinguin Radio","Concertzender","Grand Prix Radio","Simone FM","Wild FM","Radio Continu","Radio 10 Top 4000","Classic NL","NPO Radio 2 Soul & Jazz","Joe 70s & 80s","Qmusic Foute Uur","Sky Radio Lovesongs","Radio Gelderland","Omroep West Radio","Radio Noordzee","De Sublime Soul","Radio Royaal","Radio Tour","Arrow Bluesradio","Radio 538 Hitzone","Slam! The Boom Room","Radio Veronica Top 1000","Sublime Weekendsoul","NPO FunX","BNR"]
+          seen=set()
+          for n in names:
+            q=urllib.parse.urlencode({"name":n,"countrycode":"NL","order":"votes","reverse":"true","limit":"5","hidebroken":"true"})
+            try:
+              r=json.load(urllib.request.urlopen(urllib.request.Request("https://de1.api.radio-browser.info/json/stations/search?"+q,headers={"User-Agent":"kijkluister-probe"}),timeout=20))
+            except Exception as e:
+              print("ERR",n,e); continue
+            for s in r[:2]:
+              url=s.get("url_resolved") or s["url"]
+              if url in seen: continue
+              seen.add(url)
+              try:
+                p=subprocess.run(["ffprobe","-v","error","-rw_timeout","8000000","-show_entries","stream=codec_type","-of","csv=p=0",url],capture_output=True,text=True,timeout=15)
+                ok="OK" if "audio" in p.stdout else "FAIL"
+              except Exception: ok="TIMEOUT"
+              print("ST|"+n+"|"+s["name"].strip()+"|"+url+"|"+(s.get("favicon") or "")+"|"+(s.get("homepage") or "")+"|"+str(s.get("votes"))+"|"+ok)
+          PY
