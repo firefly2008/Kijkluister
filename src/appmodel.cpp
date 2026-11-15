@@ -39,6 +39,7 @@ struct WebDefault {
     const char *name;
     const char *url;
     const char *category; // video, muziek, podcasts
+    bool optional = false; // standaard verborgen; aanzetten via Diensten kiezen
 };
 const WebDefault webDefaults[] = {
     {"Netflix", "https://www.netflix.com", "video"},
@@ -70,6 +71,21 @@ const WebDefault webDefaults[] = {
     {"ESPN", "https://www.espn.nl/watch/", "video"},
     {"Twitch", "https://www.twitch.tv", "video"},
     {"Plex", "https://app.plex.tv", "video"},
+    // Op Nederland gerichte diensten (vanaf 4.1): standaard verborgen, te kiezen via Diensten kiezen
+    {"NOS", "https://nos.nl/live", "video", true},
+    {"NPO Zapp", "https://www.zapp.nl", "video", true},
+    {"NPO Zappelin", "https://www.zappelin.nl", "video", true},
+    {"Schooltv", "https://schooltv.nl", "video", true},
+    {"Ziggo Sport", "https://www.ziggosport.nl", "video", true},
+    {"DAZN", "https://www.dazn.com/nl-NL", "video", true},
+    {"Delta TV", "https://tv.delta.nl", "video", true},
+    {"BVN", "https://www.bvn.tv", "video", true},
+    {"Human", "https://www.human.nl", "video", true},
+    {"Dumpert", "https://www.dumpert.nl", "video", true},
+    {"RTL Nieuws", "https://www.rtl.nl/nieuws", "video", true},
+    {"Omroep MAX", "https://www.omroepmax.nl", "video", true},
+    {"Eurosport", "https://www.eurosport.nl/watch", "video", true},
+    {"Streamz", "https://www.streamz.be", "video", true},
     // Muziek
     {"Spotify", "https://open.spotify.com", "muziek"},
     {"YouTube Music", "https://music.youtube.com", "muziek"},
@@ -122,6 +138,25 @@ AppModel::AppModel(Kind kind, const QString &category, QObject *parent)
         }
     }
     m_hidden = m_settings.value(key("hiddenApps")).toStringList();
+    // Nieuwe optionele diensten één keer verborgen zetten (daarna beslist Diensten kiezen)
+    if (m_kind == Web) {
+        QStringList introduced = m_settings.value(QStringLiteral("web/optionalIntroduced")).toStringList();
+        bool changed = false;
+        for (const WebDefault &entry : webDefaults) {
+            const QString url = QString::fromUtf8(entry.url);
+            if (entry.optional && QString::fromUtf8(entry.category) == m_category && !introduced.contains(url)) {
+                introduced.append(url);
+                if (!m_hidden.contains(url)) {
+                    m_hidden.append(url);
+                }
+                changed = true;
+            }
+        }
+        if (changed) {
+            m_settings.setValue(key("hiddenApps"), m_hidden);
+            m_settings.setValue(QStringLiteral("web/optionalIntroduced"), introduced);
+        }
+    }
     m_customIcons = m_settings.value(key("customIcons")).toMap();
     m_background = m_settings.value(QStringLiteral("background")).toString();
     refresh();

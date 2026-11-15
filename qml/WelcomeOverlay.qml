@@ -22,6 +22,7 @@ FocusScope {
     function open(focusItem) {
         returnFocusTo = focusItem
         const list = []
+        const kinds = new Map([[webVideo, "Video"], [webMusic, "Muziek"], [webPodcasts, "Podcasts"]])
         for (const m of [webVideo, webMusic, webPodcasts]) {
             // Wat nu zichtbaar is, blijft aangevinkt; verborgen diensten komen er even bij
             const visibleNow = []
@@ -30,8 +31,14 @@ FocusScope {
             for (let i = 0; i < m.count; ++i) {
                 const name = m.nameAt(i)
                 const on = appModel.freshInstall ? popular.indexOf(name) >= 0 : visibleNow.indexOf(name) >= 0
-                list.push({ model: m, name: name, icon: m.iconAt(i), accent: m.accentAt(i), on: on })
+                list.push({ model: m, name: name, icon: m.iconAt(i), accent: m.accentAt(i), on: on, kind: kinds.get(m) })
             }
+        }
+        // Alle Nederlandse radiozenders
+        const topRadio = ["NPO Radio 2", "Qmusic", "Radio 538", "Sky Radio", "Radio 10", "JOE", "Radio Veronica"]
+        for (const r of radio.catalog()) {
+            list.push({ model: radio, name: r.name, icon: r.icon, accent: r.accent,
+                        on: appModel.freshInstall ? topRadio.indexOf(r.name) >= 0 : r.on, kind: "Radio" })
         }
         choices = list
         grid.currentIndex = 0
@@ -54,6 +61,7 @@ FocusScope {
                 if (choice && !choice.on) m.hide(i)
             }
         }
+        radio.setChosen(choices.filter(c => c.model === radio && c.on).map(c => c.name))
         appModel.welcomeDone = true
         visible = false
         console.info("Welcome done:", choices.filter(c => c.on).length, "services")
@@ -94,7 +102,7 @@ FocusScope {
             wrapMode: Text.Wrap
             color: "#d5d8dc"
             font.pixelSize: (welcome.unit * 2.8) * appModel.fontScale
-            text: "Welke diensten gebruik je? Vink ze aan. De rest zetten we niet op het startscherm; via Aanpassen haal je ze altijd terug."
+            text: "Welke diensten en radiozenders gebruik je? Vink ze aan. De rest zetten we niet op het startscherm; via Aanpassen haal je ze altijd terug."
         }
     }
 
@@ -165,14 +173,21 @@ FocusScope {
                         fillMode: Image.PreserveAspectFit
                         asynchronous: true
                     }
-                    Text {
+                    Column {
                         anchors.verticalCenter: parent.verticalCenter
-                        width: grid.cellWidth - welcome.unit * 13
-                        elide: Text.ElideRight
-                        color: "white"
-                        font.pixelSize: (welcome.unit * 2.4) * appModel.fontScale
-                        font.weight: Font.DemiBold
-                        text: cell.modelData.name
+                        Text {
+                            width: grid.cellWidth - welcome.unit * 13
+                            elide: Text.ElideRight
+                            color: "white"
+                            font.pixelSize: (welcome.unit * 2.4) * appModel.fontScale
+                            font.weight: Font.DemiBold
+                            text: cell.modelData.name
+                        }
+                        Text {
+                            color: "#d5d8dc"
+                            font.pixelSize: (welcome.unit * 1.7) * appModel.fontScale
+                            text: cell.modelData.kind || ""
+                        }
                     }
                 }
                 MouseArea {

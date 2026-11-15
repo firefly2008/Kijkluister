@@ -72,7 +72,8 @@ Item {
         delegate: BannerTile {
             width: grid.cellWidth
             height: grid.cellHeight
-            selected: grid.activeFocus && grid.currentIndex === index
+            // Ook zichtbaar als Kijkluister (nog) niet het actieve venster is, bv. direct na het opstarten
+            selected: grid.currentIndex === index && (grid.activeFocus || (Qt.application.state !== Qt.ApplicationActive && root.currentSection === section))
             backdrop: section.model && section.model.backdropAt ? section.model.backdropAt(index) : ""
             subtitle: section.model && section.model.subtitleAt ? section.model.subtitleAt(index) : ""
             progress: section.model && section.model.progressAt ? section.model.progressAt(index) : -1

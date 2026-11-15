@@ -41,6 +41,61 @@ RadioModel::RadioModel(const QString &dataDir, QObject *parent)
         {QStringLiteral("Radio Veronica"), QStringLiteral("Rock en classics"), QStringLiteral("www.radioveronica.nl"), QStringLiteral("#3b2a7a"),
          {stw + QStringLiteral("VERONICA.mp3"), QStringLiteral("https://stream.radioveronica.nl/veronica")}},
     };
+    // Alle andere Nederlandse zenders (getest november 2026): te kiezen via Diensten kiezen
+    struct Extra { const char *name; const char *slogan; const char *site; const char *accent; const char *url; const char *url2; };
+    static const Extra extras[] = {
+        {"NPO Radio 1", "Nieuws en sport", "www.nporadio1.nl", "#b3261e", "https://icecast.omroep.nl/radio1-bb-mp3", "https://icecast.omroep.nl/radio1-bb-aac"},
+        {"NPO 3FM", "Nieuwe muziek", "www.npo3fm.nl", "#d4331f", "https://icecast.omroep.nl/3fm-bb-mp3", ""},
+        {"NPO Klassiek", "Klassieke muziek", "www.npoklassiek.nl", "#7a1f3d", "https://icecast.omroep.nl/radio4-bb-mp3", ""},
+        {"NPO Radio 5", "Hits van de jaren 60, 70 en 80", "www.nporadio5.nl", "#2f5aa8", "https://icecast.omroep.nl/radio5-bb-mp3", "https://icecast.omroep.nl/radio5-sb-aac"},
+        {"NPO FunX", "Urban en hiphop", "www.funx.nl", "#4b2a8a", "https://icecast.omroep.nl/funx-bb-mp3", "http://icecast.omroep.nl/funx-hiphopfb-bb-mp3"},
+        {"100% NL", "Alleen Nederlandse muziek", "www.100p.nl", "#c2410c", "https://stream.100p.nl/100pctnl.mp3", ""},
+        {"Sublime", "Soul, funk en jazz", "sublime.nl", "#3b2a6b", "https://playerservices.streamtheworld.com/api/livestream-redirect/SUBLIME.mp3", ""},
+        {"SLAM!", "Dance", "www.slam.nl", "#a21caf", "http://stream.slam.nl/slam", ""},
+        {"KINK", "Alternatieve rock", "kink.nl", "#1f2937", "https://29043.live.streamtheworld.com/KINKAAC_SC", ""},
+        {"Arrow Classic Rock", "Classic rock", "www.arrow.nl", "#7c2d12", "https://stream.player.arrow.nl/arrowcr", "http://stream.gal.io/arrow"},
+        {"BNR Nieuwsradio", "Zakelijk nieuws", "www.bnr.nl", "#1e3a5f", "https://stream.bnr.nl/bnr_mp3_128_20", "https://stream.bnr.nl/bnr_aac_96_20"},
+        {"Radio Noordzee", "Hits van toen en nu", "www.radionoordzee.nl", "#0e5a7a", "https://playerservices.streamtheworld.com/api/livestream-redirect/TLPSTR17.mp3", ""},
+        {"Groot Nieuws Radio", "Christelijke muziek", "www.grootnieuwsradio.nl", "#14532d", "https://playerservices.streamtheworld.com/api/livestream-redirect/GNR.mp3", ""},
+        {"Radio Decibel", "Hits uit Amsterdam", "decibel.nl", "#9a1b5f", "https://28033.live.streamtheworld.com/RADIODECIBEL.mp3", ""},
+        {"Simone FM", "Gezellige muziek", "www.simone.nl", "#be185d", "https://stream.simone.nl/simone", ""},
+        {"Radio Continu", "Easy listening", "radiocontinu.nl", "#365314", "https://stream.radiocontinu.nl/radiocontinu", ""},
+        {"Classic NL", "Klassiek", "classic.nl", "#4a3728", "https://stream.classic.nl/classicnl.mp3", ""},
+        {"Grand Prix Radio", "Motorsport", "grandprixradio.nl", "#991b1b", "https://playerservices.streamtheworld.com/api/livestream-redirect/GRAND_PRIX_RADIO.mp3", ""},
+        {"Concertzender", "Oude muziek", "www.concertzender.nl", "#44403c", "http://streams.greenhost.nl:8080/oudemuziek", ""},
+        {"Qmusic Non-Stop", "Hits zonder praatjes", "qmusic.nl", "#b8231f", "https://icecast-qmusicnl-cdp.triple-it.nl/Qmusic_nl_nonstop_96.mp3", ""},
+        {"Qmusic Foute Uur", "Foute hits", "qmusic.nl", "#b8231f", "https://stream.qmusic.nl/fouteuur/aac", ""},
+        {"Sky Radio Lovesongs", "Liefdesliedjes", "www.skyradio.nl", "#0d5a9e", "https://25233.live.streamtheworld.com/SRGSTR03AAC.aac", ""},
+        {"Radio 538 Hitzone", "Hitzone", "www.538.nl", "#1e3f8a", "https://playerservices.streamtheworld.com/api/livestream-redirect/TLPSTR11.mp3", ""},
+        {"Radio 10 Top 4000", "De Top 4000", "www.radio10.nl", "#c2410c", "https://playerservices.streamtheworld.com/api/livestream-redirect/TLPSTR24.mp3", ""},
+        {"JOE 70s & 80s", "Hits uit de jaren 70 en 80", "joe.nl", "#8a1d3f", "https://stream.joe.nl/joe/aachigh", ""},
+        {"SLAM! Non Stop", "Dance zonder praatjes", "www.slam.nl", "#a21caf", "http://stream.radiocorp.nl/web10_mp3", ""},
+        // Regionale omroepen
+        {"Radio Gelderland", "Omroep Gelderland", "www.gld.nl", "#1d4ed8", "https://d2od87akyl46nm.cloudfront.net/icecast/omroepgelderland/radiogelderland", ""},
+        {"NH Radio", "Noord-Holland", "www.nhnieuws.nl", "#c2410c", "https://ice.cr6.streamzilla.xlcdn.com:8000/sz=nhnieuws=NHRadio_mp3", ""},
+        {"Radio Rijnmond", "Rotterdam en omgeving", "www.rijnmond.nl", "#15803d", "http://d2e9xgjjdd9cr5.cloudfront.net/icecast/rijnmond/radio-mp3", ""},
+        {"Omroep Brabant Radio", "Brabant", "www.omroepbrabant.nl", "#b91c1c", "https://av.omroepbrabant.nl/icecast/omroepbrabant/mp3hq", "http://streaming.omroepbrabant.nl/mp3hq"},
+        {"L1 Radio", "Limburg", "l1.nl", "#0f766e", "https://d34pj260kw1xmk.cloudfront.net/icecast/l1/radio-bb-mp3", ""},
+        {"Radio Oost", "Overijssel", "www.oost.nl", "#be123c", "https://d34cg2bnc08ruf.cloudfront.net/icecast/rtvoost/radio-oost-mp3", ""},
+        {"Radio Noord", "Groningen", "www.rtvnoord.nl", "#1d4ed8", "https://media.rtvnoord.nl/icecast/rtvnoord/radio", ""},
+        {"Omrop Fryslân Radio", "Friesland", "www.omropfryslan.nl", "#1e40af", "https://d3pvma9xb2775h.cloudfront.net/icecast/omropfryslan/radio.mp3", ""},
+        {"Radio Drenthe", "Drenthe", "www.rtvdrenthe.nl", "#b45309", "https://cdn.rtvdrenthe.nl/icecast/rtvdrenthe/rtvradio", ""},
+        {"Omroep Zeeland Radio", "Zeeland", "www.omroepzeeland.nl", "#0369a1", "https://d3isaxd2t6q8zm.cloudfront.net/icecast/omroepzeeland/omroepzeeland_radio", ""},
+        {"Radio M Utrecht", "Utrecht", "www.rtvutrecht.nl", "#c2410c", "https://d18rwjdhpr8dcw.cloudfront.net/icecast/rtvutrecht/radiomutrecht-bb-mp3", ""},
+    };
+    for (const Extra &e : extras) {
+        Station st;
+        st.name = QString::fromUtf8(e.name);
+        st.slogan = QString::fromUtf8(e.slogan);
+        st.site = QString::fromUtf8(e.site);
+        st.accent = QString::fromUtf8(e.accent);
+        st.streams = {QString::fromUtf8(e.url)};
+        if (*e.url2) {
+            st.streams.append(QString::fromUtf8(e.url2));
+        }
+        st.extra = true;
+        m_stations.append(st);
+    }
     loadCustom();
     rebuild();
     fetchLogos();
@@ -83,9 +138,12 @@ void RadioModel::rebuild()
     QSettings settings(appSettingsFile(), QSettings::IniFormat);
     const QStringList hidden = settings.value(QStringLiteral("radio/hidden")).toStringList();
     const QStringList order = settings.value(QStringLiteral("radio/order")).toStringList();
+    const QStringList shown = settings.value(QStringLiteral("radio/shown")).toStringList();
     QList<int> rows;
     for (int i = 0; i < m_stations.size(); ++i) {
-        if (!hidden.contains(m_stations.at(i).name)) {
+        const Station &st = m_stations.at(i);
+        const bool visible = st.extra ? shown.contains(st.name) : !hidden.contains(st.name);
+        if (visible) {
             rows.append(i);
         }
     }
@@ -138,9 +196,58 @@ int RadioModel::nextStation(int row, int step) const
     return row;
 }
 
+QVariantList RadioModel::catalog() const
+{
+    QVariantList list;
+    for (int i = 0; i < m_stations.size(); ++i) {
+        const Station &st = m_stations.at(i);
+        if (st.custom) {
+            continue;
+        }
+        const QString file = logoFileFor(st);
+        list.append(QVariantMap{{QStringLiteral("name"), st.name},
+                                {QStringLiteral("icon"), QFile::exists(file) ? QUrl::fromLocalFile(file).toString() : QString()},
+                                {QStringLiteral("accent"), st.accent},
+                                {QStringLiteral("on"), m_visible.contains(i)}});
+    }
+    return list;
+}
+
+void RadioModel::setChosen(const QStringList &names)
+{
+    QStringList hidden;
+    QStringList shown;
+    for (const Station &st : std::as_const(m_stations)) {
+        if (st.custom) {
+            continue;
+        }
+        if (st.extra && names.contains(st.name)) {
+            shown << st.name;
+        } else if (!st.extra && !names.contains(st.name)) {
+            hidden << st.name;
+        }
+    }
+    QSettings settings(appSettingsFile(), QSettings::IniFormat);
+    settings.setValue(QStringLiteral("radio/hidden"), hidden);
+    settings.setValue(QStringLiteral("radio/shown"), shown);
+    beginResetModel();
+    rebuild();
+    endResetModel();
+    Q_EMIT countChanged();
+    ++m_revision;
+    Q_EMIT revisionChanged();
+    qInfo() << "Radio chosen" << stationCount();
+}
+
 int RadioModel::hiddenCount() const
 {
-    return int(m_stations.size() - stationCount());
+    int n = 0;
+    for (int i = 0; i < m_stations.size(); ++i) {
+        if (!m_stations.at(i).extra && !m_stations.at(i).custom && !m_visible.contains(i)) {
+            ++n;
+        }
+    }
+    return n;
 }
 
 QString RadioModel::pathAt(int row) const
@@ -168,6 +275,11 @@ void RadioModel::remove(int row)
     if (m_stations.at(index).custom) {
         m_stations.removeAt(index);
         saveCustom();
+    } else if (m_stations.at(index).extra) {
+        QSettings settings(appSettingsFile(), QSettings::IniFormat);
+        QStringList shown = settings.value(QStringLiteral("radio/shown")).toStringList();
+        shown.removeAll(m_stations.at(index).name);
+        settings.setValue(QStringLiteral("radio/shown"), shown);
     } else {
         QSettings settings(appSettingsFile(), QSettings::IniFormat);
         QStringList hidden = settings.value(QStringLiteral("radio/hidden")).toStringList();

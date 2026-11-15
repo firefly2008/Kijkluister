@@ -54,6 +54,9 @@ public:
     Q_INVOKABLE bool hasResult(int index) const;
     Q_INVOKABLE void remove(int row);
     Q_INVOKABLE void restoreHidden();
+    // Diensten kiezen: alle ingebouwde zenders met aan/uit, en de keuze opslaan
+    Q_INVOKABLE QVariantList catalog() const;
+    Q_INVOKABLE void setChosen(const QStringList &names);
 
 Q_SIGNALS:
     void revisionChanged();
@@ -70,6 +73,7 @@ private:
         QString accent;
         QStringList streams;
         bool custom = false;
+        bool extra = false;  // uit de lijst met alle Nederlandse zenders: alleen als gekozen
         QString logoUrl;     // eigen zender: logo uit Radio Browser
     };
     const Station &st(int row) const { return m_stations.at(m_visible.at(row)); }
