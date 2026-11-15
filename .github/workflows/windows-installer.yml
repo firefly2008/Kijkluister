@@ -30,7 +30,7 @@ jobs:
       - name: Bouwen + installer maken
         shell: pwsh
         env:
-          UNSPLASH_KEY: ${{ secrets.UNSPLASH_KEY || secrets.UNSPLASH_ACCESS_KEY || secrets.UNSPLASH }}
+          UNSPLASH_KEY: ${{ secrets.UNSPLASH_TOKEN }}
           TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
         run: |
           # Branch release/2.0.0 bepaalt het versienummer; gewone pushes heten "dev"
