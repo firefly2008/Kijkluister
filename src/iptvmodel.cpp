@@ -272,14 +272,14 @@ const Regional regionals[] = {
 
 void IptvModel::rebuildGroups()
 {
-    // Regionale zenders altijd vooraan in hun eigen groep
+    // Regionale zenders altijd in hun eigen groep
     m_all.erase(std::remove_if(m_all.begin(), m_all.end(), [](const Channel &c) { return c.group == regionalGroup; }), m_all.end());
     QList<Channel> regional;
     for (const Regional &r : regionals) {
         regional.append({QString::fromUtf8(r.name), QString::fromUtf8(r.logo), regionalGroup, QString::fromUtf8(r.url),
                          QString::fromUtf8(r.epg), -1, QString()});
     }
-    m_all = regional + m_all;
+    m_all.append(regional);   // achteraan: in "Alle zenders" blijven je eigen zenders vooraan
 
     QStringList groups{favoritesGroup, allGroup};
     QSet<QString> seen;
