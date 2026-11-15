@@ -362,8 +362,8 @@ bool RadioModel::hasResult(int index) const
         return false;
     }
     const QString url = m_results.at(index).toMap().value(QStringLiteral("url")).toString();
-    for (const Station &s : m_stations) {
-        if (s.streams.contains(url)) {
+    for (int i : m_visible) {
+        if (i >= 0 && m_stations.at(i).streams.contains(url)) {
             return true;
         }
     }
@@ -376,6 +376,22 @@ bool RadioModel::addResult(int index)
         return false;
     }
     const QVariantMap r = m_results.at(index).toMap();
+    // Staat de zender al in de ingebouwde lijst (maar uit)? Dan die aanzetten
+    const QString url = r.value(QStringLiteral("url")).toString();
+    for (const Station &known : std::as_const(m_stations)) {
+        if (known.extra && known.streams.contains(url)) {
+            QSettings settings(appSettingsFile(), QSettings::IniFormat);
+            QStringList shown = settings.value(QStringLiteral("radio/shown")).toStringList();
+            shown.append(known.name);
+            settings.setValue(QStringLiteral("radio/shown"), shown);
+            beginResetModel();
+            rebuild();
+            endResetModel();
+            Q_EMIT countChanged();
+            qInfo() << "Radio added" << known.name << url;
+            return true;
+        }
+    }
     Station s;
     s.name = r.value(QStringLiteral("name")).toString();
     s.slogan = r.value(QStringLiteral("detail")).toString();
