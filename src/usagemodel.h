@@ -66,7 +66,7 @@ private:
     void rebuild();
     QVariant callSource(const QString &category, const char *method, int row) const;
 
-    QSettings m_settings{appSettingsFile(), QSettings::IniFormat};
+    mutable QSettings m_settings{appSettingsFile(), QSettings::IniFormat};
     QHash<QString, QObject *> m_sources;
     QList<Entry> m_entries;
     QList<Entry> m_rows;   // top 6

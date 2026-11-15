@@ -24,8 +24,10 @@ void UsageModel::addSource(const QString &category, QObject *model)
 {
     m_sources.insert(category, model);
     // Pictogrammen en namen komen uit de bron: bij wijzigingen opnieuw opbouwen
-    connect(model, &QAbstractItemModel::modelReset, this, &UsageModel::rebuild);
-    connect(model, &QAbstractItemModel::dataChanged, this, [this] {
+    auto *im = qobject_cast<QAbstractItemModel *>(model);
+    if (!im) { rebuild(); return; }
+    connect(im, &QAbstractItemModel::modelReset, this, &UsageModel::rebuild);
+    connect(im, &QAbstractItemModel::dataChanged, this, [this] {
         ++m_revision;
         Q_EMIT revisionChanged();
     });
