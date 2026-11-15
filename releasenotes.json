@@ -1,5 +1,14 @@
 [
   {
+    "version": "4.3.1",
+    "date": "2026-11-15",
+    "notes": [
+      "Diensten (Ziggo, YouTube, Netflix…) blijven niet meer op de achtergrond openstaan: bij Home en bij het openen van een andere dienst worden ze gesloten",
+      "Live tv: tv-gids werkt nu ook met een eigen lijst via een link van je aanbieder (Xtream-paneel, get.php)",
+      "Geen onterechte melding “opent nog niet” meer bij Live tv, Schilderij en andere eigen schermen"
+    ]
+  },
+  {
     "version": "4.3.0",
     "date": "15 november 2026",
     "notes": [

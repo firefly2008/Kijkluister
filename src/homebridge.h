@@ -34,6 +34,8 @@ public:
     // Terug lang vasthouden = startscherm. Geeft true als de knop is afgehandeld.
     bool handleBrowserButton(int sdlButton, bool pressed);
     static HomeBridge *instance();
+    // Alle browservensters die Kijkluister opende (eigen profielmap) sluiten; geeft het aantal
+    static int closeOwnBrowserWindows();
     // Spraak: Windows-dicteren (Win+H) openen; de tekst komt in het veld met de focus
     Q_INVOKABLE void startDictation();
 

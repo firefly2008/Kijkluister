@@ -15,6 +15,7 @@
 #include <QNetworkRequest>
 #include <QProcess>
 #include <QRegularExpression>
+#include <QTimer>
 #include <QUrlQuery>
 #include <QLocale>
 #include <QTimeZone>
@@ -38,6 +39,35 @@ const QRegularExpression logoAttr(QStringLiteral(R"re(tvg-logo="([^"]*)")re"));
 const QRegularExpression groupAttr(QStringLiteral(R"re(group-title="([^"]*)")re"));
 // Verwijzing naar de gids in de kop van de lijst: #EXTM3U url-tvg="..." of x-tvg-url="..."
 const QRegularExpression epgHeader(QStringLiteral(R"re((?:url-tvg|x-tvg-url)="([^"]*)")re"));
+
+// Link van een Xtream-paneel (…/get.php?username=…&password=…): server en inloggegevens eruit halen,
+// zodat ook bij een M3U-link de gids van de aanbieder (xmltv.php en per zender) gebruikt kan worden
+struct XtreamLogin {
+    QString server;
+    QString user;
+    QString password;
+    bool valid() const { return !server.isEmpty() && !user.isEmpty() && !password.isEmpty(); }
+};
+XtreamLogin xtreamLoginFor(const QVariantMap &source)
+{
+    XtreamLogin login;
+    if (source.value(QStringLiteral("type")).toString() == QLatin1String("xtream")) {
+        login.server = source.value(QStringLiteral("url")).toString();
+        login.user = source.value(QStringLiteral("user")).toString();
+        login.password = source.value(QStringLiteral("password")).toString();
+        return login;
+    }
+    const QUrl url(source.value(QStringLiteral("url")).toString());
+    if (!url.path().endsWith(QLatin1String("get.php"), Qt::CaseInsensitive)) {
+        return login;
+    }
+    const QUrlQuery query(url);
+    login.user = query.queryItemValue(QStringLiteral("username"), QUrl::FullyDecoded);
+    login.password = query.queryItemValue(QStringLiteral("password"), QUrl::FullyDecoded);
+    QUrl server = url.adjusted(QUrl::RemoveQuery | QUrl::RemoveFragment | QUrl::RemoveFilename | QUrl::StripTrailingSlash);
+    login.server = server.toString();
+    return login;
+}
 
 // .xml.gz-gidsen uitpakken (gzip)
 QByteArray gunzip(const QByteArray &data)
@@ -138,6 +168,17 @@ IptvModel::IptvModel(const QString &dataDir, QObject *parent)
     for (const QString &u : std::as_const(m_extraEpgUrls)) {
         if (!m_epgUrls.contains(u)) {
             m_epgUrls << u;
+        }
+    }
+    // 4.3.1: M3U-links van een Xtream-paneel krijgen nu ook de gids; eenmalig de lijst opnieuw laden
+    if (!m_settings.value(QStringLiteral("iptv/xtreamLinkGuide")).toBool()) {
+        m_settings.setValue(QStringLiteral("iptv/xtreamLinkGuide"), true);
+        for (const QVariant &v : std::as_const(m_sources)) {
+            const QVariantMap source = v.toMap();
+            if (source.value(QStringLiteral("type")).toString() != QLatin1String("xtream") && xtreamLoginFor(source).valid()) {
+                QTimer::singleShot(3000, this, &IptvModel::reload);
+                break;
+            }
         }
     }
     connect(&m_epgWatcher, &QFutureWatcher<EpgData>::finished, this, [this] {
@@ -464,7 +505,8 @@ void IptvModel::loadNext()
     if (source.value(QStringLiteral("free")).toBool()) {
         m_loadingEpgUrls << freeGuideUrl();
     }
-    connect(reply, &QNetworkReply::finished, this, [this, reply, name, fixedGroup] {
+    const XtreamLogin login = xtreamLoginFor(source);
+    connect(reply, &QNetworkReply::finished, this, [this, reply, name, fixedGroup, login] {
         reply->deleteLater();
         if (reply->error() != QNetworkReply::NoError) {
             m_errors << tr("%1: %2").arg(name, reply->errorString());
@@ -472,6 +514,26 @@ void IptvModel::loadNext()
         } else {
             const int before = m_loading.size();
             parseM3u(reply->readAll());
+            if (login.valid()) {
+                // Xtream-paneel achter de link: volledige gids (xmltv.php) en per zender het stream-id
+                QUrl xmltv(login.server + QStringLiteral("/xmltv.php"));
+                QUrlQuery q;
+                q.addQueryItem(QStringLiteral("username"), login.user);
+                q.addQueryItem(QStringLiteral("password"), login.password);
+                xmltv.setQuery(q);
+                m_loadingEpgUrls << xmltv.toString();
+                static const QRegularExpression streamPath(QStringLiteral(R"((?:/live)?/[^/]+/[^/]+/(\d+)(?:\.\w+)?$)"));
+                int linked = 0;
+                for (int i = before; i < m_loading.size(); ++i) {
+                    const auto m = streamPath.match(QUrl(m_loading.at(i).url).path());
+                    if (m.hasMatch()) {
+                        m_loading[i].xtreamSource = m_loadIndex;
+                        m_loading[i].streamId = m.captured(1);
+                        ++linked;
+                    }
+                }
+                qInfo() << "IPTV: M3U link is an Xtream panel; guide via xmltv.php," << linked << "channels with stream id";
+            }
             // Gratis lijsten: één groep per land in plaats van losse categorieën
             for (int i = before; !fixedGroup.isEmpty() && i < m_loading.size(); ++i) {
                 m_loading[i].group = fixedGroup;
@@ -1023,11 +1085,14 @@ void IptvModel::requestEpg(int row)
         return; // al genoeg gids
     }
     m_shortEpgRequested.insert(c.streamId);
-    const QVariantMap source = m_sources.at(c.xtreamSource).toMap();
-    QUrl url(source.value(QStringLiteral("url")).toString() + QStringLiteral("/player_api.php"));
+    const XtreamLogin login = xtreamLoginFor(m_sources.at(c.xtreamSource).toMap());
+    if (!login.valid()) {
+        return;
+    }
+    QUrl url(login.server + QStringLiteral("/player_api.php"));
     QUrlQuery query;
-    query.addQueryItem(QStringLiteral("username"), source.value(QStringLiteral("user")).toString());
-    query.addQueryItem(QStringLiteral("password"), source.value(QStringLiteral("password")).toString());
+    query.addQueryItem(QStringLiteral("username"), login.user);
+    query.addQueryItem(QStringLiteral("password"), login.password);
     query.addQueryItem(QStringLiteral("action"), QStringLiteral("get_simple_data_table"));
     query.addQueryItem(QStringLiteral("stream_id"), c.streamId);
     url.setQuery(query);

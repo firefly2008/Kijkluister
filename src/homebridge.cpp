@@ -49,8 +49,73 @@ QString processNameOf(HWND hwnd)
     CloseHandle(process);
     return name;
 }
+
+// Opdrachtregel van een ander proces (Windows 8.1+: ProcessCommandLineInformation)
+QString commandLineOf(DWORD pid)
+{
+    using NtQip = LONG(NTAPI *)(HANDLE, ULONG, PVOID, ULONG, PULONG);
+    static const auto query = reinterpret_cast<NtQip>(
+        reinterpret_cast<void *>(GetProcAddress(GetModuleHandleW(L"ntdll.dll"), "NtQueryInformationProcess")));
+    if (!query) {
+        return {};
+    }
+    HANDLE process = OpenProcess(PROCESS_QUERY_LIMITED_INFORMATION, FALSE, pid);
+    if (!process) {
+        return {};
+    }
+    QString result;
+    ULONG needed = 0;
+    query(process, 60, nullptr, 0, &needed);
+    if (needed > 0 && needed < 1 << 20) {
+        QByteArray buffer(int(needed), Qt::Uninitialized);
+        if (query(process, 60, buffer.data(), needed, &needed) >= 0) {
+            struct Us { USHORT length; USHORT maximum; PWSTR text; };
+            const auto *us = reinterpret_cast<const Us *>(buffer.constData());
+            if (us->text) {
+                result = QString::fromWCharArray(us->text, us->length / 2);
+            }
+        }
+    }
+    CloseHandle(process);
+    return result;
+}
+
+BOOL CALLBACK collectOwnBrowser(HWND hwnd, LPARAM param)
+{
+    if (!IsWindowVisible(hwnd) || GetWindow(hwnd, GW_OWNER)) {
+        return TRUE;
+    }
+    const QString exe = processNameOf(hwnd);
+    if (exe != QLatin1String("msedge.exe") && exe != QLatin1String("chrome.exe")) {
+        return TRUE;
+    }
+    DWORD pid = 0;
+    GetWindowThreadProcessId(hwnd, &pid);
+    // Onze profielmappen: %LOCALAPPDATA%\Kijkluister\browser en \browser-nieuws
+    if (commandLineOf(pid).contains(QLatin1String("\\Kijkluister\\browser"), Qt::CaseInsensitive)) {
+        reinterpret_cast<QList<HWND> *>(param)->append(hwnd);
+    }
+    return TRUE;
+}
 }
 #endif
+
+int HomeBridge::closeOwnBrowserWindows()
+{
+#ifdef Q_OS_WIN
+    QList<HWND> windows;
+    EnumWindows(collectOwnBrowser, reinterpret_cast<LPARAM>(&windows));
+    for (HWND w : std::as_const(windows)) {
+        PostMessageW(w, WM_CLOSE, 0, 0);
+    }
+    if (!windows.isEmpty()) {
+        qInfo() << "Closed" << windows.size() << "own browser window(s)";
+    }
+    return int(windows.size());
+#else
+    return 0;
+#endif
+}
 
 namespace {
 HomeBridge *g_instance = nullptr;
@@ -171,6 +236,8 @@ void HomeBridge::keyEvent(unsigned long vk, bool down, bool &swallow)
 void HomeBridge::goHome()
 {
 #ifdef Q_OS_WIN
+    // Alle diensten die we openden sluiten, ook die achter andere vensters (niet alleen het voorste)
+    closeOwnBrowserWindows();
     HWND foreground = GetForegroundWindow();
     const HWND ours = m_main ? reinterpret_cast<HWND>(m_main->winId()) : nullptr;
     if (foreground && foreground != ours && m_external) {

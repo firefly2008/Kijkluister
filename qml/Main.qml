@@ -298,11 +298,13 @@ Rectangle {
         }
         if (model.launch(row)) {
             // App of website voorop: Home-knop en Home-toets brengen je terug
-            if (!path.startsWith("bigscreen:")) homeBridge.externalLaunched()
-            // Blijft staan tot het venster echt open is (Kijkluister gaat dan naar de achtergrond)
-            showToast(name + " wordt geopend…", 12000)
-            launchSlowTimer.name = name
-            launchSlowTimer.restart()
+            if (!path.startsWith("bigscreen:")) {
+                homeBridge.externalLaunched()
+                // Blijft staan tot het venster echt open is (Kijkluister gaat dan naar de achtergrond)
+                showToast(name + " wordt geopend…", 12000)
+                launchSlowTimer.name = name
+                launchSlowTimer.restart()
+            }
         } else {
             showToast(name + " kon niet worden geopend. Probeer het opnieuw.", 5000)
         }

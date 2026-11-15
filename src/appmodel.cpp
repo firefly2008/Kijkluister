@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "paths.h"
 #include "appmodel.h"
+#include "homebridge.h"
 
 #include <QCryptographicHash>
 #include <QDateTime>
@@ -13,6 +14,7 @@
 #include <QNetworkReply>
 #include <QNetworkRequest>
 #include <QProcess>
+#include <QTimer>
 #include <QSet>
 #include <QStandardPaths>
 
@@ -281,6 +283,16 @@ bool AppModel::launchWeb(const QString &url)
         };
         if (news) {
             args << QStringLiteral("--force-device-scale-factor=1.5");
+        }
+        // Eén dienst tegelijk: eerder geopende vensters (Ziggo, YouTube, Netflix…) eerst sluiten
+        if (HomeBridge::closeOwnBrowserWindows() > 0) {
+            // Even wachten tot het profiel vrij is, anders gaat het nieuwe adres naar het sluitende venster
+            QTimer::singleShot(1200, this, [browser, args, url] {
+                if (QProcess::startDetached(browser, args)) {
+                    qInfo() << "Web tile" << url << "opened with" << browser;
+                }
+            });
+            return true;
         }
         if (QProcess::startDetached(browser, args)) {
             qInfo() << "Web tile" << url << "opened with" << browser;
