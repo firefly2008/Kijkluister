@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "updater.h"
+#include "paths.h"
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -18,9 +19,105 @@
 #define KIJKLUISTER_VERSION "0.0.0"
 #endif
 
+namespace {
+const QString taskName = QStringLiteral("Kijkluister bijwerken");
+QString dataFile(const QString &name)
+{
+    return appDataDir() + QLatin1Char('/') + name;
+}
+}
+
 Updater::Updater(QObject *parent)
     : QObject(parent)
 {
+    // Geplande taak aanwezig (installer 4.0 of nieuwer)? Dan kan bijwerken stil
+    QProcess query;
+    query.start(QStringLiteral("schtasks.exe"), {QStringLiteral("/Query"), QStringLiteral("/TN"), taskName});
+    m_silent = query.waitForFinished(5000) && query.exitStatus() == QProcess::NormalExit && query.exitCode() == 0;
+    qInfo() << "Update: silent task" << (m_silent ? "present" : "missing");
+    m_statusTimer = new QTimer(this);
+    m_statusTimer->setInterval(5000);
+    connect(m_statusTimer, &QTimer::timeout, this, &Updater::readTaskStatus);
+}
+
+void Updater::startAutomatic()
+{
+    m_checkTimer = new QTimer(this);
+    m_checkTimer->setInterval(6 * 60 * 60 * 1000);
+    connect(m_checkTimer, &QTimer::timeout, this, [this] { check(false); });
+    m_checkTimer->start();
+    QTimer::singleShot(60 * 1000, this, [this] { check(false); });
+    // Was er al een download klaar (bv. Kijkluister was even dicht)? Dan die oppakken
+    readTaskStatus();
+}
+
+void Updater::setPhase(const QString &phase)
+{
+    if (phase != m_phase) {
+        m_phase = phase;
+        qInfo() << "Update phase" << phase;
+        Q_EMIT changed();
+    }
+}
+
+void Updater::startSilentDownload()
+{
+    if (!m_phase.isEmpty()) {
+        return;
+    }
+    QFile::remove(dataFile(QStringLiteral("update-now")));
+    QFile::remove(dataFile(QStringLiteral("update-status.txt")));
+    if (!QProcess::startDetached(QStringLiteral("schtasks.exe"), {QStringLiteral("/Run"), QStringLiteral("/TN"), taskName})) {
+        qInfo() << "Update: could not start task";
+        return;
+    }
+    setPhase(QStringLiteral("downloading"));
+    m_statusTimer->start();
+}
+
+// Wat de geplande taak meldt (update-status.txt): downloading/ready/installing/current/error
+void Updater::readTaskStatus()
+{
+    QFile file(dataFile(QStringLiteral("update-status.txt")));
+    if (!file.open(QIODevice::ReadOnly)) {
+        return;
+    }
+    const QString text = QString::fromUtf8(file.readAll()).trimmed();
+    const QString word = text.section(QLatin1Char(' '), 0, 0).remove(QChar(0xFEFF));
+    const QString version = text.section(QLatin1Char(' '), 1, 1);
+    if (!version.isEmpty() && word != QLatin1String("error")) {
+        m_latest = version;
+    }
+    if (word == QLatin1String("downloading")) {
+        setPhase(QStringLiteral("downloading"));
+        m_statusTimer->start();
+    } else if (word == QLatin1String("ready") && compare(version, current()) > 0) {
+        setPhase(QStringLiteral("ready"));
+        m_statusTimer->start();
+    } else if (word == QLatin1String("error")) {
+        qInfo().noquote() << "Update task:" << text;
+        m_statusTimer->stop();
+        setPhase(QString());
+    } else if (word == QLatin1String("current") || word == QLatin1String("installed") || word == QLatin1String("ready")) {
+        m_statusTimer->stop();
+        setPhase(QString());
+    }
+}
+
+void Updater::installNow()
+{
+    if (m_phase != QLatin1String("ready")) {
+        return;
+    }
+    QFile flag(dataFile(QStringLiteral("update-now")));
+    if (flag.open(QIODevice::WriteOnly)) {
+        flag.write(m_latest.toUtf8());
+        flag.close();
+    }
+    setPhase(QStringLiteral("installing"));
+    setStatus(tr("Kijkluister %1 wordt geïnstalleerd en start zo opnieuw…").arg(m_latest), true);
+    qInfo() << "Update: install now" << m_latest;
+    QTimer::singleShot(2500, qApp, &QCoreApplication::quit);
 }
 
 QString Updater::current() const
@@ -63,17 +160,7 @@ void Updater::setStatus(const QString &status, bool busy)
 void Updater::check(bool manual)
 {
     const qint64 now = QDateTime::currentSecsSinceEpoch();
-    const qint64 last = m_settings.value(QStringLiteral("update/lastCheck")).toLongLong();
     if (m_busy) {
-        return;
-    }
-    if (!manual && last > 0 && now - last < 7 * 24 * 3600) {
-        // Wel de laatst gevonden versie onthouden, zodat de melding na een herstart blijft
-        m_latest = m_settings.value(QStringLiteral("update/latest")).toString();
-        m_asset = m_settings.value(QStringLiteral("update/asset")).toUrl();
-        m_notes = m_settings.value(QStringLiteral("update/notes")).toString();
-        Q_EMIT changed();
-        Q_EMIT checked(false);
         return;
     }
     setStatus(tr("Zoeken naar een nieuwe versie…"), true);
@@ -111,6 +198,9 @@ void Updater::check(bool manual)
         qInfo() << "Update check: current" << current() << "latest" << m_latest;
         setStatus(updateAvailable() ? tr("Kijkluister %1 is er.").arg(m_latest)
                                     : tr("Je hebt de nieuwste versie (%1).").arg(current()), false);
+        if (updateAvailable() && m_silent) {
+            startSilentDownload();   // geen vraag: op de achtergrond ophalen en installeren
+        }
         Q_EMIT checked(manual);
     });
 }

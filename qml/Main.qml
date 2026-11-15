@@ -1526,6 +1526,46 @@ Rectangle {
         id: pinPad
     }
 
+    // Stil bijwerken: klein bericht rechtsonder; installeren zodra er niets speelt
+    Rectangle {
+        id: updateBanner
+        readonly property bool shown: updater.phase !== "" && !iptvScreen.visible && !libraryScreen.visible && !frameScreen.visible
+                                      && !radioPlayer.visible && !picker.visible
+        anchors.right: parent.right
+        anchors.bottom: parent.bottom
+        anchors.rightMargin: root.unit * 2
+        anchors.bottomMargin: root.unit * 7
+        z: 40
+        width: updateText.implicitWidth + root.unit * 4
+        height: root.unit * 5
+        radius: height / 2
+        color: "#e61d2a40"
+        border.color: "#55ffffff"
+        border.width: 1
+        opacity: shown ? 1 : 0
+        visible: opacity > 0
+        Behavior on opacity { NumberAnimation { duration: 300 } }
+        Text {
+            id: updateText
+            anchors.centerIn: parent
+            color: "white"
+            font.pixelSize: root.unit * 2 * appModel.fontScale
+            text: updater.phase === "downloading" ? "⬇  Nieuwe versie " + updater.latest + " wordt op de achtergrond gedownload…"
+                : updater.phase === "ready" ? "✓  Kijkluister " + updater.latest + " wordt geïnstalleerd zodra er niets speelt"
+                : "⟳  Kijkluister " + updater.latest + " wordt geïnstalleerd en start zo opnieuw…"
+        }
+    }
+    Timer {
+        interval: 10000
+        repeat: true
+        running: updater.phase === "ready"
+        onTriggered: {
+            const idle = !radioPlayer.active && !iptvScreen.visible && !libraryScreen.visible && !mpc.running && !recorder.recording
+                         && !homeBridge.external && !menu.visible && !picker.visible && !pinPad.visible && !frameScreen.visible
+            if (idle) updater.installNow()
+        }
+    }
+
     // Zwevende Home-knop linksboven zolang een app of website voorop staat
     HomeButton {}
 
@@ -1569,7 +1609,9 @@ Rectangle {
     Connections {
         target: updater
         function onChecked(manual) {
-            if (updater.shouldOffer() || (manual && updater.updateAvailable)) {
+            if (updater.silent && updater.updateAvailable) {
+                if (manual) root.showToast("Kijkluister " + updater.latest + " wordt op de achtergrond opgehaald en geïnstalleerd", 6000)
+            } else if (updater.shouldOffer() || (manual && updater.updateAvailable)) {
                 menu.open("Kijkluister " + updater.latest + " is er", [
                     { label: "Nu bijwerken", action: "update-install" },
                     { label: "Later", action: "update-later" }
@@ -1583,7 +1625,7 @@ Rectangle {
     Connections {
         target: updater
         function onChanged() {
-            if (updater.busy && updater.status !== "") {
+            if (updater.phase === "" && updater.busy && updater.progress > 0 && updater.status !== "") {
                 root.showToast(updater.status + (updater.progress > 0 ? "  " + Math.round(updater.progress * 100) + "%" : ""), 60000)
             }
         }

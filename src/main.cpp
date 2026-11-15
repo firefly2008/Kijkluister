@@ -283,7 +283,7 @@ int main(int argc, char *argv[])
     QObject::connect(&cec, &Cec::button, &gamepad, &GamepadNavigator::handleButton);
     if (qEnvironmentVariable("BIGSCREEN_SELFTEST").isEmpty()) {
         QTimer::singleShot(4000, &weather, &Weather::refresh);
-        QTimer::singleShot(60000, &updater, [&updater] { updater.check(false); });
+        updater.startAutomatic();
         QTimer::singleShot(2000, &cec, &Cec::start);
     }
     // MPC-HC en ffmpeg op de achtergrond ophalen of bijwerken (niet tijdens de tests)

@@ -51,6 +51,9 @@ Type: files; Name: "{autoprograms}\Bigscreen Host.lnk"
 
 [Files]
 Source: "..\dist\*"; DestDir: "{app}"; Flags: recursesubdirs createallsubdirs ignoreversion
+; Automatisch bijwerken zonder Windows-melding (geplande taak met hoogste rechten)
+Source: "kijkluister-update.ps1"; DestDir: "{app}"; Flags: ignoreversion
+Source: "register-update-task.ps1"; DestDir: "{app}"; Flags: ignoreversion
 
 [Icons]
 Name: "{group}\{#AppName}"; Filename: "{app}\{#AppExe}"
@@ -58,10 +61,17 @@ Name: "{autodesktop}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: desktopico
 Name: "{userstartup}\{#AppName}"; Filename: "{app}\{#AppExe}"; Tasks: autostart
 
 [Run]
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{app}\register-update-task.ps1"" -AppDir ""{app}"""; StatusMsg: "Automatisch bijwerken instellen..."; Flags: runhidden waituntilterminated
 Filename: "{app}\vc_redist.x64.exe"; Parameters: "/install /quiet /norestart"; StatusMsg: "Microsoft Visual C++ runtime installeren..."; Flags: waituntilterminated skipifdoesntexist
 Filename: "{app}\{#AppExe}"; Description: "{#AppName} nu starten"; Flags: nowait postinstall skipifsilent unchecked
 ; Bijwerken vanuit Kijkluister zelf: na de stille installatie meteen weer starten
 Filename: "{app}\{#AppExe}"; Flags: nowait runasoriginaluser; Check: IsRelaunch
+
+[UninstallRun]
+Filename: "powershell.exe"; Parameters: "-NoProfile -ExecutionPolicy Bypass -WindowStyle Hidden -File ""{app}\register-update-task.ps1"" -Remove"; Flags: runhidden waituntilterminated; RunOnceId: "KijkluisterUpdateTask"
+
+[UninstallDelete]
+Type: filesandordirs; Name: "{app}\update"
 
 [Code]
 function IsRelaunch: Boolean;

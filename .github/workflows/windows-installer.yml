@@ -230,6 +230,23 @@ jobs:
           name: Kijkluister-setup
           path: out/*.exe
       # Een branch release/x.y.z wordt Release vx.y.z: die blijft bewaard naast de andere versies
+      - name: Installer testen (stil installeren, taak voor bijwerken)
+        shell: pwsh
+        run: |
+          $setup = (Get-ChildItem out/*.exe | Select-Object -First 1).FullName
+          $p = Start-Process $setup -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART' -Wait -PassThru
+          "Installer exit: $($p.ExitCode)"
+          if ($p.ExitCode -ne 0) { throw "Installer mislukt" }
+          schtasks /Query /TN "Kijkluister bijwerken" /V /FO LIST | Select-String "TaskName|Run As|Task To Run|Status"
+          if ($LASTEXITCODE -ne 0) { throw "Taak 'Kijkluister bijwerken' ontbreekt" }
+          # Taak eenmaal laten lopen (er is mogelijk nog geen openbare versie: dan staat er een fout in het log)
+          schtasks /Run /TN "Kijkluister bijwerken" | Out-Null
+          Start-Sleep 25
+          $app = "$env:ProgramFiles\Kijkluister"
+          if (Test-Path "$app\update\update.log") { Get-Content "$app\update\update.log" }
+          if (Test-Path "$env:LOCALAPPDATA\Kijkluister\update-status.txt") { "Status: " + (Get-Content "$env:LOCALAPPDATA\Kijkluister\update-status.txt") }
+          Get-Process Kijkluister -ErrorAction SilentlyContinue | Stop-Process -Force
+          exit 0
       - name: Oude release van dezelfde versie opruimen (opnieuw gepushte release-branch)
         if: startsWith(github.ref, 'refs/heads/release/')
         shell: pwsh

@@ -7,6 +7,7 @@
 #include <QObject>
 #include "paths.h"
 #include <QSettings>
+#include <QTimer>
 #include <QUrl>
 
 class QNetworkReply;
@@ -21,6 +22,9 @@ class Updater : public QObject
     Q_PROPERTY(double progress READ progress NOTIFY changed)
     Q_PROPERTY(QString status READ status NOTIFY changed)
     Q_PROPERTY(QString notes READ notes NOTIFY changed)
+    // Stil bijwerken via de geplande taak: "", "downloading", "ready", "installing"
+    Q_PROPERTY(QString phase READ phase NOTIFY changed)
+    Q_PROPERTY(bool silent READ silent NOTIFY changed)
 
 public:
     explicit Updater(QObject *parent = nullptr);
@@ -32,6 +36,12 @@ public:
     double progress() const { return m_progress; }
     QString status() const { return m_status; }
     QString notes() const { return m_notes; }
+    QString phase() const { return m_phase; }
+    bool silent() const { return m_silent; }
+    // Start de regelmatige controle (elke 6 uur, de eerste keer na een minuut)
+    Q_INVOKABLE void startAutomatic();
+    // Er speelt niets: geplande taak mag installeren (Kijkluister sluit en start daarna opnieuw)
+    Q_INVOKABLE void installNow();
 
     // Automatisch: hooguit eens per week. manual = altijd, met melding als er niets nieuws is.
     Q_INVOKABLE void check(bool manual = false);
@@ -48,6 +58,9 @@ Q_SIGNALS:
 
 private:
     void setStatus(const QString &status, bool busy);
+    void startSilentDownload();
+    void readTaskStatus();
+    void setPhase(const QString &phase);
     QString repo() const;
 
     QSettings m_settings{appSettingsFile(), QSettings::IniFormat};
@@ -58,4 +71,8 @@ private:
     bool m_busy = false;
     double m_progress = 0;
     QString m_status;
+    QString m_phase;
+    bool m_silent = false;
+    QTimer *m_checkTimer = nullptr;
+    QTimer *m_statusTimer = nullptr;
 };
