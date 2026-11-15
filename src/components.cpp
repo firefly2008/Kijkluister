@@ -213,6 +213,29 @@ void Components::fetchRelease()
         const QString version = kind == MpcHc ? tag : chosen;
         qInfo().noquote() << "Components:" << name(kind) << "latest" << tag << chosen
                           << "(have" << m_settings.value(key).toString() << ")";
+        if (url.isEmpty() && kind == MpcHc) {
+            // GitHub-API geweigerd: de gewone pagina "nieuwste uitgave" stuurt door naar .../tag/<versie>;
+            // daarmee de downloadlink MPC-HC.<versie>.x64.zip maken
+            qInfo() << "Components: API unavailable, finding MPC-HC version via release page";
+            QNetworkReply *page = get(QUrl(QStringLiteral("https://github.com/clsid2/mpc-hc/releases/latest")));
+            connect(page, &QNetworkReply::finished, this, [this, page, key] {
+                page->deleteLater();
+                const QString latest = page->url().path().section(QLatin1Char('/'), -1);
+                if (page->error() != QNetworkReply::NoError || latest.isEmpty() || latest == QLatin1String("latest")) {
+                    qWarning() << "Components: no package found" << page->errorString();
+                    finish(false);
+                    return;
+                }
+                const QString version = latest.startsWith(QLatin1Char('v')) ? latest.mid(1) : latest;
+                if (!executable(MpcHc).isEmpty() && m_settings.value(key).toString() == latest) {
+                    finish(true);
+                    return;
+                }
+                setStatus(tr("%1 wordt opgehaald…").arg(name(MpcHc)), 0);
+                download(QStringLiteral("https://github.com/clsid2/mpc-hc/releases/download/%1/MPC-HC.%2.x64.zip").arg(latest, version), latest);
+            });
+            return;
+        }
         if (url.isEmpty()) {
             qWarning() << "Components: no package found" << reply->errorString();
             finish(false);
