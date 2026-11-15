@@ -250,7 +250,7 @@ jobs:
           files: out/*.exe
           generate_release_notes: true
       # Openbare downloadplek voor "Zelf bijwerken" (de broncode blijft privé).
-      # Nodig: openbare repo firefly2008/kijkluister en geheim RELEASES_TOKEN
+      # Nodig: openbare repo firefly2008/kijkluister-releases en geheim RELEASES_TOKEN
       # (fine-grained token met Contents: Read and write op alleen die repo).
       - name: Installer in openbare repo zetten
         if: startsWith(github.ref, 'refs/heads/release/')
@@ -258,10 +258,17 @@ jobs:
         env:
           GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
         run: |
-          if (-not $env:GH_TOKEN) { "::warning::Geen RELEASES_TOKEN: installer niet in firefly2008/kijkluister gezet"; exit 0 }
+          if (-not $env:GH_TOKEN) { "::warning::Geen RELEASES_TOKEN: installer niet in firefly2008/kijkluister-releases gezet"; exit 0 }
           $tag = "v$env:BIGSCREEN_VERSION"
           $notes = "Kijkluister $env:BIGSCREEN_VERSION voor Windows 10/11 (x64). Download de installer hieronder; Kijkluister werkt zichzelf daarna bij."
-          gh release delete $tag -R firefly2008/kijkluister --yes --cleanup-tag 2>$null
-          gh release create $tag (Get-ChildItem out/*.exe).FullName -R firefly2008/kijkluister --title "Kijkluister $env:BIGSCREEN_VERSION" --notes $notes --latest
-          if ($LASTEXITCODE -ne 0) { "::warning::Publiceren in firefly2008/kijkluister mislukt"; exit 0 }
-          "Gepubliceerd: https://github.com/firefly2008/kijkluister/releases/tag/$tag"
+          # Lege repo: eerst een README, anders kan er geen release komen
+          gh api repos/firefly2008/kijkluister-releases/contents/README.md 2>$null | Out-Null
+          if ($LASTEXITCODE -ne 0) {
+            $readme = "# Kijkluister`n`nKijkluister voor Windows 10/11: tv-startscherm met apps, live tv, radio, films en series.`n`nDownload de nieuwste installer bij [Releases](https://github.com/firefly2008/kijkluister-releases/releases/latest).`n"
+            $b64 = [Convert]::ToBase64String([Text.Encoding]::UTF8.GetBytes($readme))
+            gh api -X PUT repos/firefly2008/kijkluister-releases/contents/README.md -f message="README" -f content=$b64 | Out-Null
+          }
+          gh release delete $tag -R firefly2008/kijkluister-releases --yes --cleanup-tag 2>$null
+          gh release create $tag (Get-ChildItem out/*.exe).FullName -R firefly2008/kijkluister-releases --title "Kijkluister $env:BIGSCREEN_VERSION" --notes $notes --latest
+          if ($LASTEXITCODE -ne 0) { "::warning::Publiceren in firefly2008/kijkluister-releases mislukt"; exit 0 }
+          "Gepubliceerd: https://github.com/firefly2008/kijkluister-releases/releases/tag/$tag"

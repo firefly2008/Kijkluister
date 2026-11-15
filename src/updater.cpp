@@ -30,7 +30,7 @@ QString Updater::current() const
 
 QString Updater::repo() const
 {
-    return m_settings.value(QStringLiteral("update/repo"), QStringLiteral("firefly2008/kijkluister")).toString();
+    return m_settings.value(QStringLiteral("update/repo"), QStringLiteral("firefly2008/kijkluister-releases")).toString();
 }
 
 int Updater::compare(const QString &a, const QString &b)
@@ -87,7 +87,7 @@ void Updater::check(bool manual)
         const QJsonObject o = QJsonDocument::fromJson(reply->readAll()).object();
         if (reply->error() != QNetworkReply::NoError || o.isEmpty()) {
             qInfo() << "Update check failed" << http << reply->errorString();
-            setStatus(http == 404 ? tr("Nog geen versie gevonden op de downloadplek (github.com/firefly2008/kijkluister).")
+            setStatus(http == 404 ? tr("Nog geen versie gevonden op de downloadplek (github.com/firefly2008/kijkluister-releases).")
                                   : tr("Zoeken naar een nieuwe versie lukte niet. Is er internet?"), false);
             Q_EMIT checked(manual);
             return;
