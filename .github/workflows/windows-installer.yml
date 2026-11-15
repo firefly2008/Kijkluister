@@ -95,7 +95,7 @@ jobs:
           $env:BIGSCREEN_TEST_M3U = "$tv\test.m3u"
           $env:BIGSCREEN_TEST_RECORD_DIR = "$env:RUNNER_TEMP\opnames"
           Get-Content "$tv\test.m3u"
-          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel', 'librarysetup', 'iptvsources', 'iptvfreeguide', 'mpcplay', 'resume', 'epgrecord', 'welcome', 'libraryunlock', 'radio', 'radiohome', 'search', 'radioadd', 'sleep', 'weather', 'update', 'cec', 'radiobg', 'cleanup', 'parental'
+          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel', 'librarysetup', 'iptvsources', 'iptvfreeguide', 'mpcplay', 'resume', 'epgrecord', 'welcome', 'libraryunlock', 'radio', 'radiohome', 'search', 'radioadd', 'sleep', 'weather', 'update', 'cec', 'radiobg', 'regional', 'nowplaying', 'sections', 'homekey', 'cleanup', 'parental'
           $manual = '${{ github.ref }}' -like 'refs/heads/screenshots/*'
           if ($manual) {
             # Schermafbeeldingen voor de handleiding, op Full HD
@@ -141,7 +141,7 @@ jobs:
               }
             }
             $p = Start-Process dist\Kijkluister.exe -PassThru
-            Start-Sleep $(if ($mode -eq 'u-guiderecord') { 13 } elseif ($mode -eq 'u-library') { 30 } elseif ($manual -or $mode -like 'frame*') { 20 } elseif ($mode -eq 'record') { 75 } elseif ($mode -eq 'iptvfreeguide' -or $mode -eq 'mpcplay') { 45 } elseif ($mode -eq 'epgrecord') { 30 } elseif ($mode -eq 'radio') { 75 } elseif ($mode -eq 'radioadd' -or $mode -eq 'sleep') { 22 } elseif ($mode -eq 'weather' -or $mode -eq 'search') { 16 } else { 14 })
+            Start-Sleep $(if ($mode -eq 'u-guiderecord') { 13 } elseif ($mode -eq 'u-library') { 30 } elseif ($manual -or $mode -like 'frame*') { 20 } elseif ($mode -eq 'record') { 75 } elseif ($mode -eq 'iptvfreeguide' -or $mode -eq 'mpcplay') { 45 } elseif ($mode -eq 'epgrecord') { 30 } elseif ($mode -eq 'radio') { 75 } elseif ($mode -eq 'radioadd' -or $mode -eq 'sleep') { 22 } elseif ($mode -eq 'weather' -or $mode -eq 'search') { 16 } elseif ($mode -eq 'regional') { 25 } else { 14 })
             if ($mode -like 'frame*esc') {
               # Echte toetsaanslag Esc naar het venster sturen (zoals toetsenbord of gamepad-B)
               Add-Type -ErrorAction SilentlyContinue @"
@@ -182,10 +182,11 @@ jobs:
             $checks = @{
               'search' = 'Search results'; 'radioadd' = 'Radio added'; 'sleep' = 'Sleep timer fired'; 'weather' = 'Weather:';
               'update' = 'Update check'; 'cec' = 'CEC key'; 'radiobg' = 'Radio in background'; 'cleanup' = 'Cleanup suggested';
-              'parental' = 'Parental: unlocked'
+              'parental' = 'Parental: unlocked'; 'regional' = 'IPTV playing:'; 'nowplaying' = 'Media first tile: Nu op de radio';
+              'sections' = 'Radio first tile: Radiozender toevoegen'; 'homekey' = 'Home screen'
             }
             if ($checks.ContainsKey($mode)) {
-              Select-String -Path $log -Pattern "Search|Radio|Sleep|Weather|Update|CEC|Cleanup|Parental|qml:.*(Error|TypeError|ReferenceError)" | ForEach-Object { $_.Line }
+              Select-String -Path $log -Pattern "Search|Radio|Sleep|Weather|Update|CEC|Cleanup|Parental|Regional|IPTV play|Media first|Section order|Home|TypeError|ReferenceError" | ForEach-Object { $_.Line }
               if (-not (Select-String -Path $log -Pattern $checks[$mode] -SimpleMatch -Quiet)) { throw "Rooktest mislukt: $mode ($($checks[$mode]) niet in het log)" }
               if ($mode -eq 'parental' -and -not (Select-String -Path $log -Pattern "Parental: wrong pin" -Quiet)) { throw "Rooktest mislukt: verkeerde pincode werd geaccepteerd" }
             }
@@ -248,3 +249,19 @@ jobs:
           target_commitish: ${{ github.sha }}
           files: out/*.exe
           generate_release_notes: true
+      # Openbare downloadplek voor "Zelf bijwerken" (de broncode blijft privé).
+      # Nodig: openbare repo firefly2008/kijkluister en geheim RELEASES_TOKEN
+      # (fine-grained token met Contents: Read and write op alleen die repo).
+      - name: Installer in openbare repo zetten
+        if: startsWith(github.ref, 'refs/heads/release/')
+        shell: pwsh
+        env:
+          GH_TOKEN: ${{ secrets.RELEASES_TOKEN }}
+        run: |
+          if (-not $env:GH_TOKEN) { "::warning::Geen RELEASES_TOKEN: installer niet in firefly2008/kijkluister gezet"; exit 0 }
+          $tag = "v$env:BIGSCREEN_VERSION"
+          $notes = "Kijkluister $env:BIGSCREEN_VERSION voor Windows 10/11 (x64). Download de installer hieronder; Kijkluister werkt zichzelf daarna bij."
+          gh release delete $tag -R firefly2008/kijkluister --yes --cleanup-tag 2>$null
+          gh release create $tag (Get-ChildItem out/*.exe).FullName -R firefly2008/kijkluister --title "Kijkluister $env:BIGSCREEN_VERSION" --notes $notes --latest
+          if ($LASTEXITCODE -ne 0) { "::warning::Publiceren in firefly2008/kijkluister mislukt"; exit 0 }
+          "Gepubliceerd: https://github.com/firefly2008/kijkluister/releases/tag/$tag"

@@ -11,7 +11,8 @@
 class RadioModel : public QAbstractListModel
 {
     Q_OBJECT
-    Q_PROPERTY(int count READ count NOTIFY countChanged)            // zenders (zonder de tegel "Zender toevoegen")
+    Q_PROPERTY(int count READ count NOTIFY countChanged)            // tegels, inclusief "Radiozender toevoegen"
+    Q_PROPERTY(int stationCount READ stationCount NOTIFY countChanged)
     Q_PROPERTY(int revision READ revision NOTIFY revisionChanged)
     Q_PROPERTY(QVariantList results READ results NOTIFY resultsChanged)
     Q_PROPERTY(bool searching READ searching NOTIFY resultsChanged)
@@ -26,6 +27,7 @@ public:
     QVariant data(const QModelIndex &index, int role) const override;
     QHash<int, QByteArray> roleNames() const override;
     int count() const { return int(m_visible.size()); }
+    int stationCount() const { return int(m_visible.size()) - 1; }
     QVariantList results() const { return m_results; }
     bool searching() const { return m_searching; }
     int hiddenCount() const;
@@ -37,10 +39,13 @@ public:
     Q_INVOKABLE QString subtitleAt(int row) const;
     Q_INVOKABLE QStringList streamsAt(int row) const;
     Q_INVOKABLE bool hasCustomIcon(int) const { return false; }
-    Q_INVOKABLE void move(int, int) {}
+    Q_INVOKABLE void move(int from, int to);
     // Vraagt de speler om deze zender te starten (playRequested); laatste tegel: addRequested
     Q_INVOKABLE bool launch(int row);
-    Q_INVOKABLE bool isAddTile(int row) const { return row == count(); }
+    Q_INVOKABLE bool isAddTile(int row) const { return row >= 0 && row < count() && m_visible.at(row) < 0; }
+    Q_INVOKABLE bool isStation(int row) const { return row >= 0 && row < count() && m_visible.at(row) >= 0; }
+    // Volgende/vorige zender (slaat de tegel "Radiozender toevoegen" over)
+    Q_INVOKABLE int nextStation(int row, int step) const;
     Q_INVOKABLE QString pathAt(int row) const;
     Q_INVOKABLE int rowOfName(const QString &name) const;
     // Zoeken in Radio Browser (radio-browser.info, ruim 40.000 zenders)
@@ -73,6 +78,7 @@ private:
     void fetchLogos();
     void loadCustom();
     void saveCustom() const;
+    void saveOrder() const;
     void rebuild();
 
     QString m_dataDir;

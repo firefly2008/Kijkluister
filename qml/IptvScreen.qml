@@ -29,11 +29,15 @@ FocusScope {
     visible: false
     z: 50
 
-    function open(focusItem) {
+    function open(focusItem, group) {
         returnFocusTo = focusItem
         visible = true
         grid.forceActiveFocus()
-        if (iptv.sources.length === 0) {
+        if (group) {
+            // Tegel Regionale tv: meteen die groep, ook zonder eigen bron
+            iptv.group = group
+            grid.currentIndex = 0
+        } else if (iptv.sources.length === 0) {
             sources.open()
         } else if (iptv.totalCount === 0 && !iptv.busy) {
             iptv.reload()

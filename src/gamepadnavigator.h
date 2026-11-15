@@ -26,6 +26,7 @@ public:
 Q_SIGNALS:
     void connectedCountChanged();
     void homeRequested();
+    void guidePressed();   // Home-knop: via HomeBridge (sluit eerst de app)
 
 private:
     void poll();

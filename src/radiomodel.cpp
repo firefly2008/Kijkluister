@@ -80,18 +80,67 @@ void RadioModel::saveCustom() const
 
 void RadioModel::rebuild()
 {
-    const QStringList hidden = QSettings(appSettingsFile(), QSettings::IniFormat).value(QStringLiteral("radio/hidden")).toStringList();
-    m_visible.clear();
+    QSettings settings(appSettingsFile(), QSettings::IniFormat);
+    const QStringList hidden = settings.value(QStringLiteral("radio/hidden")).toStringList();
+    const QStringList order = settings.value(QStringLiteral("radio/order")).toStringList();
+    QList<int> rows;
     for (int i = 0; i < m_stations.size(); ++i) {
         if (!hidden.contains(m_stations.at(i).name)) {
-            m_visible.append(i);
+            rows.append(i);
         }
     }
+    rows.append(-1);   // tegel "Radiozender toevoegen"
+    auto keyOf = [this](int i) { return i < 0 ? QStringLiteral("+add") : m_stations.at(i).name; };
+    // Opgeslagen volgorde; nieuwe zenders vóór de toevoegtegel als die achteraan stond
+    const int addPos = order.indexOf(QStringLiteral("+add"));
+    auto rank = [&](int i) -> double {
+        const int pos = order.indexOf(keyOf(i));
+        if (pos >= 0) return pos;
+        if (i < 0) return 100000;
+        return addPos >= 0 ? addPos - 0.5 : 99999;
+    };
+    std::stable_sort(rows.begin(), rows.end(), [&](int a, int b) { return rank(a) < rank(b); });
+    m_visible = rows;
+}
+
+void RadioModel::saveOrder() const
+{
+    QStringList order;
+    for (int i : m_visible) {
+        order << (i < 0 ? QStringLiteral("+add") : m_stations.at(i).name);
+    }
+    QSettings(appSettingsFile(), QSettings::IniFormat).setValue(QStringLiteral("radio/order"), order);
+}
+
+void RadioModel::move(int from, int to)
+{
+    if (from == to || from < 0 || to < 0 || from >= count() || to >= count()) {
+        return;
+    }
+    beginMoveRows({}, from, from, {}, to > from ? to + 1 : to);
+    m_visible.move(from, to);
+    endMoveRows();
+    saveOrder();
+}
+
+int RadioModel::nextStation(int row, int step) const
+{
+    if (stationCount() <= 0) {
+        return -1;
+    }
+    int r = row;
+    for (int i = 0; i < count(); ++i) {
+        r = (r + step + count()) % count();
+        if (isStation(r)) {
+            return r;
+        }
+    }
+    return row;
 }
 
 int RadioModel::hiddenCount() const
 {
-    return int(m_stations.size() - m_visible.size());
+    return int(m_stations.size() - stationCount());
 }
 
 QString RadioModel::pathAt(int row) const
@@ -102,7 +151,7 @@ QString RadioModel::pathAt(int row) const
 int RadioModel::rowOfName(const QString &name) const
 {
     for (int row = 0; row < count(); ++row) {
-        if (st(row).name.compare(name, Qt::CaseInsensitive) == 0) {
+        if (isStation(row) && st(row).name.compare(name, Qt::CaseInsensitive) == 0) {
             return row;
         }
     }
@@ -111,7 +160,7 @@ int RadioModel::rowOfName(const QString &name) const
 
 void RadioModel::remove(int row)
 {
-    if (row < 0 || row >= count()) {
+    if (!isStation(row)) {
         return;
     }
     beginResetModel();
@@ -238,18 +287,18 @@ bool RadioModel::addResult(int index)
 
 int RadioModel::rowCount(const QModelIndex &parent) const
 {
-    return parent.isValid() ? 0 : count() + 1;   // + tegel "Zender toevoegen"
+    return parent.isValid() ? 0 : count();   // inclusief tegel "Radiozender toevoegen"
 }
 
 QVariant RadioModel::data(const QModelIndex &index, int role) const
 {
     const int row = index.row();
-    if (!index.isValid() || row < 0 || row > count()) {
+    if (!index.isValid() || row < 0 || row >= count()) {
         return {};
     }
     switch (role) {
     case NameRole:
-        return isAddTile(row) ? tr("Zender toevoegen") : st(row).name;
+        return isAddTile(row) ? tr("Radiozender toevoegen") : st(row).name;
     case IconRole:
         return iconAt(row);
     case AccentRole:
@@ -268,9 +317,9 @@ QHash<int, QByteArray> RadioModel::roleNames() const
 QString RadioModel::nameAt(int row) const
 {
     if (isAddTile(row)) {
-        return tr("Zender toevoegen");
+        return tr("Radiozender toevoegen");
     }
-    return row >= 0 && row < count() ? st(row).name : QString();
+    return isStation(row) ? st(row).name : QString();
 }
 
 QString RadioModel::iconAt(int row) const
@@ -287,7 +336,7 @@ QString RadioModel::iconAt(int row) const
 
 QString RadioModel::accentAt(int row) const
 {
-    return row >= 0 && row < count() ? st(row).accent : QStringLiteral("#2b2e35");
+    return isStation(row) ? st(row).accent : QStringLiteral("#2b2e35");
 }
 
 QString RadioModel::subtitleAt(int row) const
@@ -295,12 +344,12 @@ QString RadioModel::subtitleAt(int row) const
     if (isAddTile(row)) {
         return tr("Zoek tussen ruim 40.000 zenders");
     }
-    return row >= 0 && row < count() ? st(row).slogan : QString();
+    return isStation(row) ? st(row).slogan : QString();
 }
 
 QStringList RadioModel::streamsAt(int row) const
 {
-    return row >= 0 && row < count() ? st(row).streams : QStringList();
+    return isStation(row) ? st(row).streams : QStringList();
 }
 
 bool RadioModel::launch(int row)
@@ -319,7 +368,7 @@ bool RadioModel::launch(int row)
 
 QString RadioModel::logoFile(int row) const
 {
-    if (row < 0 || row >= count()) {
+    if (!isStation(row)) {
         return {};
     }
     return logoFileFor(st(row));

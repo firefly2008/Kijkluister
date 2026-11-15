@@ -270,6 +270,12 @@ QVariant AppModel::data(const QModelIndex &index, int role) const
         if (app.path == QLatin1String("bigscreen:shows")) {
             return QStringLiteral("glyph:") + QChar(0xE7F4);
         }
+        if (app.path == QLatin1String("bigscreen:regional")) {
+            return QStringLiteral("glyph:") + QChar(0xE707);   // kaartspeld
+        }
+        if (app.path == QLatin1String("bigscreen:radio-now")) {
+            return m_nowPlayingIcon.isEmpty() ? QStringLiteral("glyph:") + QChar(0xE8D6) : m_nowPlayingIcon;
+        }
         if (m_kind == Web) {
             const QString file = faviconFile(app.path);
             return QFile::exists(file) ? QUrl::fromLocalFile(file).toString() : QString();
@@ -316,9 +322,9 @@ void AppModel::refresh()
     // toegevoegd. (Versie 3.0-3.5 had hier ook Muziek, Video's, Afbeeldingen en
     // MPC-HC; tot en met versie 2 alle programma's uit het Startmenu.)
     QList<App> apps = {
-        {QStringLiteral("Films"), QStringLiteral("bigscreen:movies"), false},
-        {QStringLiteral("Series"), QStringLiteral("bigscreen:shows"), false},
+        {QStringLiteral("Films & Series"), QStringLiteral("bigscreen:movies"), false},
         {QStringLiteral("Live tv"), QStringLiteral("bigscreen:iptv"), false},
+        {QStringLiteral("Regionale tv"), QStringLiteral("bigscreen:regional"), false},
         {QStringLiteral("Schilderij"), QStringLiteral("bigscreen:frame"), false},
     };
     apps.append(customTiles());
@@ -327,6 +333,9 @@ void AppModel::refresh()
     }), apps.end());
 
     applyOrder(apps);
+    if (!m_nowPlaying.isEmpty()) {
+        apps.prepend({tr("Nu op de radio: %1").arg(m_nowPlaying), QStringLiteral("bigscreen:radio-now"), false});
+    }
     beginResetModel();
     m_apps = apps;
     endResetModel();
@@ -380,6 +389,9 @@ QColor AppModel::accentAt(int row) const
 // gemaakt dat witte tekst erop leesbaar blijft. Toepassingen krijgen neutraal grijs.
 QColor AppModel::accentFor(const App &app) const
 {
+    if (app.path == QLatin1String("bigscreen:radio-now") && !m_nowPlayingAccent.isEmpty()) {
+        return QColor(m_nowPlayingAccent);
+    }
     if (m_kind != Web) {
         return QColor(QStringLiteral("#22252b"));
     }
@@ -519,7 +531,9 @@ void AppModel::saveOrder()
 {
     QStringList order;
     for (const App &tile : std::as_const(m_apps)) {
-        order << tile.path;
+        if (tile.path != QLatin1String("bigscreen:radio-now")) {
+            order << tile.path;
+        }
     }
     // Tegels van andere tabbladen houden hun plek in de opgeslagen volgorde
     const QStringList previous = m_settings.value(key("order")).toStringList();
@@ -626,4 +640,15 @@ void AppModel::clearBackground()
     m_background.clear();
     m_settings.setValue(QStringLiteral("background"), m_background);
     Q_EMIT backgroundChanged();
+}
+
+void AppModel::setNowPlaying(const QString &name, const QString &icon, const QString &accent)
+{
+    if (name == m_nowPlaying && icon == m_nowPlayingIcon) {
+        return;
+    }
+    m_nowPlaying = name;
+    m_nowPlayingIcon = icon;
+    m_nowPlayingAccent = accent;
+    refresh();
 }

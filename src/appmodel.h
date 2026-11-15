@@ -32,6 +32,8 @@ class AppModel : public QAbstractListModel
     // Welkomststap al gedaan? En is dit een nieuwe installatie (voor de voorkeuze van diensten)
     Q_PROPERTY(bool welcomeDone READ welcomeDone WRITE setWelcomeDone NOTIFY showHeroChanged)
     Q_PROPERTY(bool freshInstall READ freshInstall CONSTANT)
+    // Volgorde van de rijen op de startpagina (titels), zelf te verplaatsen
+    Q_PROPERTY(QStringList sectionOrder READ sectionOrder WRITE setSectionOrder NOTIFY sectionOrderChanged)
 
     // Web-tegels: welk tabblad zichtbaar is
     Q_PROPERTY(QString category READ category WRITE setCategory NOTIFY categoryChanged)
@@ -62,6 +64,14 @@ public:
     }
     bool showHero() const { return m_settings.value(QStringLiteral("showHero"), true).toBool(); }
     double fontScale() const { return m_settings.value(QStringLiteral("fontScale"), 1.0).toDouble(); }
+    QStringList sectionOrder() const { return m_settings.value(QStringLiteral("sectionOrder")).toStringList(); }
+    void setSectionOrder(const QStringList &order)
+    {
+        m_settings.setValue(QStringLiteral("sectionOrder"), order);
+        Q_EMIT sectionOrderChanged();
+    }
+    // Media-rij: tegel "Nu op de radio" zolang de radio op de achtergrond speelt (leeg = weg)
+    Q_INVOKABLE void setNowPlaying(const QString &name, const QString &icon, const QString &accent);
     void setFontScale(double scale)
     {
         m_settings.setValue(QStringLiteral("fontScale"), scale);
@@ -107,6 +117,7 @@ public:
     Q_INVOKABLE void clearBackground();
 
 Q_SIGNALS:
+    void sectionOrderChanged();
     void countChanged();
     void backgroundChanged();
     // Tegel die een scherm binnen Bigscreen opent (bigscreen:movies, bigscreen:shows)
@@ -134,6 +145,9 @@ private:
     void saveOrder();
 
     Kind m_kind;
+    QString m_nowPlaying;
+    QString m_nowPlayingIcon;
+    QString m_nowPlayingAccent;
     mutable QHash<QString, QColor> m_accentCache; // sleutel: pictogrambestand
     QNetworkAccessManager m_network;
     QString importImage(const QUrl &source, const QString &baseName);

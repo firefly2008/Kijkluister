@@ -88,10 +88,16 @@ FocusScope {
             anchors.left: parent.left
             anchors.right: parent.right
             anchors.margins: panel.unit * 3
-            height: count * panel.unit * 8
+            // Lange menu's: hooguit tien regels zichtbaar, de rest schuift mee
+            height: Math.min(count, 10) * panel.unit * 8
             model: overlay.entries
             focus: true
-            interactive: false
+            interactive: count > 10
+            clip: count > 10
+            highlightMoveDuration: 100
+            preferredHighlightBegin: panel.unit * 8
+            preferredHighlightEnd: height - panel.unit * 8
+            highlightRangeMode: count > 10 ? ListView.ApplyRange : ListView.NoHighlightRange
             keyNavigationEnabled: true
 
             delegate: Rectangle {

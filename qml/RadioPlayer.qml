@@ -81,7 +81,7 @@ FocusScope {
     }
 
     function tune(stationRow) {
-        row = (stationRow + radio.count) % radio.count
+        row = radio.isStation(stationRow) ? stationRow : radio.nextStation(stationRow, 1)
         streamIndex = 0
         playStream()
     }
@@ -158,8 +158,8 @@ FocusScope {
         onTriggered: if (radioPlayer.visible && radioPlayer.loading) radioPlayer.tryNext("timeout")
     }
 
-    Keys.onLeftPressed: tune(row - 1)
-    Keys.onRightPressed: tune(row + 1)
+    Keys.onLeftPressed: tune(radio.nextStation(row, -1))
+    Keys.onRightPressed: tune(radio.nextStation(row, 1))
     Keys.onUpPressed: changeVolume(0.05)
     Keys.onDownPressed: changeVolume(-0.05)
     Keys.onPressed: (event) => {
@@ -177,10 +177,10 @@ FocusScope {
             togglePause()
             event.accepted = true
         } else if (event.key === Qt.Key_MediaNext || event.key === Qt.Key_PageDown) {
-            tune(row + 1)
+            tune(radio.nextStation(row, 1))
             event.accepted = true
         } else if (event.key === Qt.Key_MediaPrevious || event.key === Qt.Key_PageUp) {
-            tune(row - 1)
+            tune(radio.nextStation(row, -1))
             event.accepted = true
         } else if (event.key === Qt.Key_VolumeUp) {
             changeVolume(0.05)
@@ -359,7 +359,8 @@ FocusScope {
                 readonly property string name: radio.nameAt(index)
                 readonly property string iconSource: radio.iconAt(index + radio.revision * 0)
                 readonly property bool current: index === radioPlayer.row
-                width: radioPlayer.unit * (current ? 10 : 8) * Math.min(1, 10 / Math.max(1, radio.count))
+                visible: radio.isStation(index + radio.revision * 0)
+                width: visible ? radioPlayer.unit * (current ? 10 : 8) * Math.min(1, 10 / Math.max(1, radio.stationCount)) : 0
                 height: width
                 radius: width * 0.16
                 anchors.verticalCenter: parent ? parent.verticalCenter : undefined

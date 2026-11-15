@@ -113,7 +113,7 @@ void GamepadNavigator::handleButton(int button, bool pressed)
         break;
     case SDL_GAMEPAD_BUTTON_GUIDE: // Home-knop: Bigscreen naar voren halen
         if (pressed) {
-            Q_EMIT homeRequested();
+            Q_EMIT guidePressed();
         }
         break;
     default:

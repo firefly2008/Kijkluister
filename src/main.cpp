@@ -37,6 +37,7 @@
 #include "weather.h"
 #include "updater.h"
 #include "cec.h"
+#include "homebridge.h"
 #include "resumemodel.h"
 #include "mpcplayer.h"
 #include "iptvmodel.h"
@@ -280,7 +281,6 @@ int main(int argc, char *argv[])
     Cec cec;
     view.rootContext()->setContextProperty(QStringLiteral("cec"), &cec);
     QObject::connect(&cec, &Cec::button, &gamepad, &GamepadNavigator::handleButton);
-    QObject::connect(&cec, &Cec::homeRequested, &gamepad, &GamepadNavigator::homeRequested);
     if (qEnvironmentVariable("BIGSCREEN_SELFTEST").isEmpty()) {
         QTimer::singleShot(4000, &weather, &Weather::refresh);
         QTimer::singleShot(60000, &updater, [&updater] { updater.check(false); });
@@ -306,6 +306,16 @@ int main(int argc, char *argv[])
     if (selfTestMode.isEmpty() || selfTestMode == QLatin1String("iptvfree")) {
         iptv.addFreeSourcesOnce();
     }
+    HomeBridge home(&view);
+    view.rootContext()->setContextProperty(QStringLiteral("homeBridge"), &home);
+    QObject::connect(&home, &HomeBridge::homeRequested, &gamepad, &GamepadNavigator::homeRequested);
+    QObject::connect(&gamepad, &GamepadNavigator::guidePressed, &home, &HomeBridge::goHome);
+    QObject::connect(&cec, &Cec::homeRequested, &home, &HomeBridge::goHome);
+    QObject::connect(&mpc, &MpcPlayer::runningChanged, &home, [&mpc, &home] {
+        if (mpc.running()) {
+            home.externalLaunched();
+        }
+    });
     QObject::connect(&gamepad, &GamepadNavigator::homeRequested, &view, [&view] {
         view.showFullScreen();
         view.raise();

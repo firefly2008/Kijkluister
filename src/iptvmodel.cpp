@@ -28,6 +28,7 @@ namespace {
 
 const QString favoritesGroup = QStringLiteral("Favorieten");
 const QString allGroup = QStringLiteral("Alle zenders");
+const QString regionalGroup = QStringLiteral("Regionale tv");
 const QString otherGroup = QStringLiteral("Overig");
 
 // Zelfde kenmerken als open-tv (src-tauri/src/m3u.rs)
@@ -239,8 +240,47 @@ void IptvModel::applyFilter()
     Q_EMIT countChanged();
 }
 
+namespace {
+// Regionale omroepen van Nederland (vrije streams van de omroepen zelf; lijst via iptv-org,
+// getest november 2026). Altijd aanwezig, ook zonder eigen IPTV-bron: tegel "Regionale tv".
+struct Regional {
+    const char *name;
+    const char *url;
+    const char *logo;
+    const char *epg;
+};
+const Regional regionals[] = {
+    {"NH", "https://takeoff.jetstre.am/?account=nhnieuws&file=live&output=playlist.m3u8&protocol=https&service=wowza&type=live", "https://i.imgur.com/SPkK4md.png", "NH.nl"},
+    {"AT5", "https://takeoff.jetstre.am/?account=atvijf&file=live&output=playlist.m3u8&protocol=https&service=wowza&type=live", "https://i.imgur.com/iAiSlEL.png", "AT5.nl"},
+    {"RTV Utrecht", "https://d18rwjdhpr8dcw.cloudfront.net/live/rtvutrecht/rtvutrecht/index.m3u8", "https://i.imgur.com/nrvs30l.png", "RTVUtrecht.nl"},
+    {"Omroep Gelderland", "https://d2od87akyl46nm.cloudfront.net/live/omroepgelderland/tvgelderland-hls/index.m3u8", "https://i.imgur.com/G08hKit.png", "OmroepGelderland.nl"},
+    {"Omroep Brabant", "https://d3slqp9xhts6qb.cloudfront.net/live/omroepbrabant/tv/index.m3u8", "https://i.imgur.com/KLYsKKC.png", "OmroepBrabant.nl"},
+    {"L1 (Limburg)", "https://d34pj260kw1xmk.cloudfront.net/live/l1/tv/index.m3u8", "https://i.imgur.com/SDD5KS5.png", "L1TV.nl"},
+    {"RTV Oost", "https://d34cg2bnc08ruf.cloudfront.net/live/rtvoost/tv/index.m3u8", "https://i.imgur.com/nTR6q9H.png", "RTVOost.nl"},
+    {"RTV Noord", "https://media.rtvnoord.nl/live/rtvnoord/tv/index.m3u8", "https://i.imgur.com/l92Cb6H.png", "RTVNoord.nl"},
+    {"Omrop Fryslân", "https://s-d15f8b0b.b.cdn.bluebillywig.com/live/omropfryslan/f8f68bd5/index.m3u8", "https://i.imgur.com/khacDTU.png", "OmropFryslan.nl"},
+    {"RTV Drenthe", "https://cdn.rtvdrenthe.nl/live/rtvdrenthe/tv/index.m3u8", "https://i.imgur.com/UBQCjnG.png", "RTVDrenthe.nl"},
+    {"Omroep Flevoland", "https://d5ms27yy6exnf.cloudfront.net/live/omroepflevoland/tv/index.m3u8", "https://i.imgur.com/rF4MTYD.png", "OmroepFlevoland.nl"},
+    {"Rijnmond", "https://dcur8bjarl5c2.cloudfront.net/live/rijnmond/tv/index.m3u8", "https://i.imgur.com/fJTs9xH.png", "RTVRijnmond.nl"},
+    {"Omroep West", "https://d1axml5ozykh3g.cloudfront.net/live/omroepwest/tv/index.m3u8", "https://i.imgur.com/5IDb9fk.png", "OmroepWest.nl"},
+    {"Omroep Zeeland", "https://d3isaxd2t6q8zm.cloudfront.net/live/omroepzeeland/tv/index.m3u8", "https://i.imgur.com/3c3QUSn.png", "OmroepZeeland.nl"},
+    {"Rijnmond Extra", "https://dcur8bjarl5c2.cloudfront.net/live/rijnmond/tv-extra/index.m3u8", "https://i.imgur.com/mlrd5ia.png", "RTVRijnmondExtra.nl"},
+    {"RTV Noord Extra", "https://media.rtvnoord.nl/live/rtvnoord/extra/index.m3u8", "https://i.imgur.com/T0UvltB.png", "RTVNoordExtra.nl"},
+    {"Omroep Brabant Radio (beeld)", "https://d3slqp9xhts6qb.cloudfront.net/live/omroepbrabant/visualradio/index.m3u8", "https://i.imgur.com/KLYsKKC.png", "OmroepBrabantRadio.nl"},
+};
+}
+
 void IptvModel::rebuildGroups()
 {
+    // Regionale zenders altijd vooraan in hun eigen groep
+    m_all.erase(std::remove_if(m_all.begin(), m_all.end(), [](const Channel &c) { return c.group == regionalGroup; }), m_all.end());
+    QList<Channel> regional;
+    for (const Regional &r : regionals) {
+        regional.append({QString::fromUtf8(r.name), QString::fromUtf8(r.logo), regionalGroup, QString::fromUtf8(r.url),
+                         QString::fromUtf8(r.epg), -1, QString()});
+    }
+    m_all = regional + m_all;
+
     QStringList groups{favoritesGroup, allGroup};
     QSet<QString> seen;
     for (const Channel &c : std::as_const(m_all)) {
@@ -249,6 +289,9 @@ void IptvModel::rebuildGroups()
             groups.append(c.group); // volgorde van de aanbieder aanhouden
         }
     }
+    // Regionale tv als eerste groep na Alle zenders
+    groups.removeAll(regionalGroup);
+    groups.insert(2, regionalGroup);
     m_groups = groups;
     // Zolang je zelf nog niets kiest: begin bij de Nederlandse zenders (niet bij ruim 1.000 zenders)
     if (!m_groupChosen && m_group == allGroup && m_groups.contains(QStringLiteral("Nederland"))) {
@@ -641,6 +684,9 @@ void IptvModel::saveCache() const
 {
     QJsonArray array;
     for (const Channel &c : m_all) {
+        if (c.group == regionalGroup) {
+            continue;
+        }
         array.append(QJsonArray{c.name, c.logo, c.group, c.url, c.epgId, c.xtreamSource, c.streamId});
     }
     QFile file(m_dataDir + QStringLiteral("/iptv-channels.json"));
