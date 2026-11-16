@@ -39,16 +39,16 @@ FocusScope {
         if (iptv.addSource(addType, nameField.text, urlField.text, userField.text, passwordField.text)) {
             close()
         } else {
-            warning.text = addType === "xtream" ? "Vul server, gebruikersnaam en wachtwoord in."
-                         : addType === "m3u-file" ? "Kies het bestand met de zenderlijst (eindigt meestal op .m3u)."
-                         : "Vul de link in die je van je tv-aanbieder kreeg (begint met http)."
+            warning.text = addType === "xtream" ? qsTr("Vul server, gebruikersnaam en wachtwoord in.")
+                         : addType === "m3u-file" ? qsTr("Kies het bestand met de zenderlijst (eindigt meestal op .m3u).")
+                         : qsTr("Vul de link in die je van je tv-aanbieder kreeg (begint met http).")
         }
     }
 
     // Voorbeeld voor de handleiding
     function demoXtream() {
         addType = "xtream"
-        nameField.text = "Mijn abonnement"
+        nameField.text = qsTr("Mijn abonnement")
         urlField.text = "http://voorbeeld.tv:8080"
         userField.text = "gebruiker"
         passwordField.text = "geheim123"
@@ -100,8 +100,8 @@ FocusScope {
 
     FileDialog {
         id: fileDialog
-        title: "M3U-afspeellijst kiezen"
-        nameFilters: ["Afspeellijsten (*.m3u *.m3u8)", "Alle bestanden (*)"]
+        title: qsTr("M3U-afspeellijst kiezen")
+        nameFilters: [qsTr("Afspeellijsten (*.m3u *.m3u8)"), qsTr("Alle bestanden (*)")]
         onAccepted: urlField.text = iptv.localPath(selectedFile)
     }
 
@@ -132,7 +132,7 @@ FocusScope {
                 color: "white"
                 font.pixelSize: (sources.unit * 4) * appModel.fontScale
                 font.weight: Font.DemiBold
-                text: "Bronnen voor live tv"
+                text: qsTr("Bronnen voor live tv")
             }
 
             // --- Bestaande bronnen ---
@@ -140,7 +140,7 @@ FocusScope {
                 visible: sourceList.count > 0
                 color: "#9fb4d0"
                 font.pixelSize: (sources.unit * 2.2) * appModel.fontScale
-                text: "Huidige bronnen (Enter om te verwijderen)"
+                text: qsTr("Huidige bronnen (Enter om te verwijderen)")
             }
             ListView {
                 id: sourceList
@@ -159,7 +159,7 @@ FocusScope {
                     unit: sources.unit
                     focus: ListView.isCurrentItem
                     text: sources.confirmRemove === index
-                          ? "Nogmaals Enter om " + modelData.name + " te verwijderen"
+                          ? qsTr("Nogmaals Enter om ") + modelData.name + qsTr(" te verwijderen")
                           : "✕   " + modelData.name + "   (" + (modelData.type === "xtream" ? "abonnement" : modelData.type === "m3u-file" ? "bestand" : "link") + ")"
                     onClicked: {
                         if (sources.confirmRemove === index) {
@@ -176,14 +176,14 @@ FocusScope {
             Text {
                 color: "#9fb4d0"
                 font.pixelSize: (sources.unit * 2.2) * appModel.fontScale
-                text: "Zenders toevoegen van je eigen tv-abonnement"
+                text: qsTr("Zenders toevoegen van je eigen tv-abonnement")
             }
             Row {
                 spacing: sources.unit * 1.2
                 FocusButton {
                     id: urlTab
                     unit: sources.unit
-                    text: "Link van je aanbieder"
+                    text: qsTr("Link van je aanbieder")
                     checked: sources.addType === "m3u-url"
                     onClicked: sources.addType = "m3u-url"
                     KeyNavigation.right: fileTab
@@ -193,7 +193,7 @@ FocusScope {
                 FocusButton {
                     id: fileTab
                     unit: sources.unit
-                    text: "Bestand op deze computer"
+                    text: qsTr("Bestand op deze computer")
                     checked: sources.addType === "m3u-file"
                     onClicked: sources.addType = "m3u-file"
                     KeyNavigation.left: urlTab
@@ -204,7 +204,7 @@ FocusScope {
                 FocusButton {
                     id: xtreamTab
                     unit: sources.unit
-                    text: "Inloggegevens van je abonnement"
+                    text: qsTr("Inloggegevens van je abonnement")
                     checked: sources.addType === "xtream"
                     onClicked: sources.addType = "xtream"
                     KeyNavigation.left: fileTab
@@ -217,7 +217,7 @@ FocusScope {
                 id: nameField
                 width: parent.width
                 unit: sources.unit
-                placeholder: "Naam (mag leeg blijven)"
+                placeholder: qsTr("Naam (mag leeg blijven)")
                 upItem: urlTab
                 downItem: urlField
             }
@@ -227,9 +227,9 @@ FocusScope {
                     id: urlField
                     width: content.width - (fileButton.visible ? fileButton.width + parent.spacing : 0)
                     unit: sources.unit
-                    placeholder: sources.addType === "xtream" ? "Serveradres uit de mail van je aanbieder, bijvoorbeeld http://voorbeeld.tv:8080"
-                               : sources.addType === "m3u-file" ? "Kies het bestand met de zenderlijst"
-                               : "Link van je aanbieder, bijvoorbeeld http://…  (M3U)"
+                    placeholder: sources.addType === "xtream" ? qsTr("Serveradres uit de mail van je aanbieder, bijvoorbeeld http://voorbeeld.tv:8080")
+                               : sources.addType === "m3u-file" ? qsTr("Kies het bestand met de zenderlijst")
+                               : qsTr("Link van je aanbieder, bijvoorbeeld http://…  (M3U)")
                     upItem: nameField
                     downItem: fileButton.visible ? fileButton : sources.addType === "xtream" ? userField : addButton
                 }
@@ -237,7 +237,7 @@ FocusScope {
                     id: fileButton
                     visible: sources.addType === "m3u-file"
                     unit: sources.unit
-                    text: "Bestand kiezen…"
+                    text: qsTr("Bestand kiezen…")
                     onClicked: fileDialog.open()
                     KeyNavigation.up: nameField
                     KeyNavigation.left: urlField
@@ -249,7 +249,7 @@ FocusScope {
                 visible: sources.addType === "xtream"
                 width: parent.width
                 unit: sources.unit
-                placeholder: "Gebruikersnaam"
+                placeholder: qsTr("Gebruikersnaam")
                 upItem: urlField
                 downItem: passwordField
             }
@@ -259,7 +259,7 @@ FocusScope {
                 width: parent.width
                 unit: sources.unit
                 secret: true
-                placeholder: "Wachtwoord"
+                placeholder: qsTr("Wachtwoord")
                 upItem: userField
                 downItem: addButton
             }
@@ -269,8 +269,8 @@ FocusScope {
                 wrapMode: Text.Wrap
                 color: "#9a9ea6"
                 font.pixelSize: (sources.unit * 1.9) * appModel.fontScale
-                text: "Gebruik alleen afspeellijsten waarvoor je een abonnement of toestemming hebt. "
-                      + "Gegevens worden alleen op deze pc bewaard."
+                text: qsTr("Gebruik alleen afspeellijsten waarvoor je een abonnement of toestemming hebt. ")
+                      + qsTr("Gegevens worden alleen op deze pc bewaard.")
             }
             Text {
                 id: warning
@@ -284,7 +284,7 @@ FocusScope {
                 FocusButton {
                     id: addButton
                     unit: sources.unit
-                    text: "Toevoegen en laden"
+                    text: qsTr("Toevoegen en laden")
                     onClicked: sources.add()
                     KeyNavigation.right: freeButton
                     KeyNavigation.up: sources.addType === "xtream" ? passwordField : sources.addType === "m3u-file" ? fileButton : urlField
@@ -293,10 +293,10 @@ FocusScope {
                 FocusButton {
                     id: freeButton
                     unit: sources.unit
-                    text: "Gratis zenders"
+                    text: qsTr("Gratis zenders")
                     onClicked: {
                         const n = iptv.addFreeSources(false)
-                        warning.text = n > 0 ? "Gratis Nederlandse en Belgische zenders toegevoegd." : "De gratis zenders staan er al."
+                        warning.text = n > 0 ? qsTr("Gratis Nederlandse en Belgische zenders toegevoegd.") : qsTr("De gratis zenders staan er al.")
                     }
                     KeyNavigation.left: addButton
                     KeyNavigation.right: newsButton
@@ -306,10 +306,10 @@ FocusScope {
                 FocusButton {
                     id: newsButton
                     unit: sources.unit
-                    text: "+ Internationaal nieuws"
+                    text: qsTr("+ Internationaal nieuws")
                     onClicked: {
                         const n = iptv.addFreeSources(true)
-                        warning.text = n > 0 ? "Ruim 1.000 nieuwszenders uit de hele wereld toegevoegd (groep Nieuws)." : "Het internationale nieuws staat er al."
+                        warning.text = n > 0 ? qsTr("Ruim 1.000 nieuwszenders uit de hele wereld toegevoegd (groep Nieuws).") : qsTr("Het internationale nieuws staat er al.")
                     }
                     KeyNavigation.left: freeButton
                     KeyNavigation.right: closeButton
@@ -319,7 +319,7 @@ FocusScope {
                 FocusButton {
                     id: closeButton
                     unit: sources.unit
-                    text: "Sluiten"
+                    text: qsTr("Sluiten")
                     onClicked: sources.close()
                     KeyNavigation.left: newsButton
                     KeyNavigation.up: addButton.KeyNavigation.up
@@ -331,7 +331,7 @@ FocusScope {
             Text {
                 color: "#9fb4d0"
                 font.pixelSize: (sources.unit * 2.2) * appModel.fontScale
-                text: "Tv-gids van je aanbieder (optioneel): link naar het gidsbestand (XMLTV); meerdere met een komma ertussen"
+                text: qsTr("Tv-gids van je aanbieder (optioneel): link naar het gidsbestand (XMLTV); meerdere met een komma ertussen")
             }
             Row {
                 spacing: sources.unit * 1.2
@@ -339,7 +339,7 @@ FocusScope {
                     id: epgField
                     width: content.width - epgSave.width - parent.spacing
                     unit: sources.unit
-                    placeholder: "Leeg laten: de gratis zenders krijgen de gids vanzelf"
+                    placeholder: qsTr("Leeg laten: de gratis zenders krijgen de gids vanzelf")
                     upItem: addButton
                     downItem: null
                     Keys.onReturnPressed: epgSave.clicked()
@@ -347,10 +347,10 @@ FocusScope {
                 FocusButton {
                     id: epgSave
                     unit: sources.unit
-                    text: "Gids opslaan"
+                    text: qsTr("Gids opslaan")
                     onClicked: {
                         iptv.extraEpgUrls = epgField.text.split(/[,\n]/).map(s => s.trim()).filter(s => s !== "")
-                        warning.text = "Gids wordt opnieuw opgehaald."
+                        warning.text = qsTr("Gids wordt opnieuw opgehaald.")
                     }
                     KeyNavigation.left: epgField
                     KeyNavigation.up: addButton
@@ -360,7 +360,7 @@ FocusScope {
                 color: "#a8acb3"
                 font.pixelSize: (sources.unit * 1.9) * appModel.fontScale
                 text: (iptv.epgStatus !== "" ? iptv.epgStatus + "   ·   " : "")
-                      + "De gratis Nederlandse en Belgische zenders krijgen elke nacht een nieuwe gids (tvgids.nl, Delta, VRT, VTM, Proximus Pickx)."
+                      + qsTr("De gratis Nederlandse en Belgische zenders krijgen elke nacht een nieuwe gids (tvgids.nl, Delta, VRT, VTM, Proximus Pickx).")
                 width: content.width
                 wrapMode: Text.Wrap
             }

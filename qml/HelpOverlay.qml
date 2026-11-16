@@ -8,21 +8,21 @@ FocusScope {
     readonly property real unit: height / 100
     property Item returnFocusTo: null
     readonly property var rows: [
-        { what: "Kiezen", pad: "Pijltjes / joystick", remote: "Pijltjes", key: "Pijltjes" },
-        { what: "Openen", pad: "A", remote: "OK", key: "Enter" },
-        { what: "Terug", pad: "B", remote: "Terug", key: "Esc" },
-        { what: "Opties van een tegel (verplaatsen, kinderslot, ...)", pad: "A vasthouden of ☰", remote: "Menu / blauw", key: "Enter vasthouden of F2" },
-        { what: "Naar het startscherm, vanuit elke app of website", pad: "Home / Xbox-knop", remote: "Home", key: "Esc 1 seconde vasthouden" },
-        { what: "Website: vorige pagina", pad: "B", remote: "Terug", key: "Alt + ←" },
-        { what: "Tegel 1 t/m 9 van de bovenste rij openen", pad: "—", remote: "Cijfers 1–9", key: "1–9" },
-        { what: "Live tv: zender kiezen op nummer", pad: "—", remote: "Cijfers", key: "Cijfers" },
-        { what: "Live tv: tv-gids / opnemen", pad: "Y / RB", remote: "Gids / rood", key: "I / R" },
-        { what: "Live tv: gids van alle zenders", pad: "—", remote: "—", key: "G" },
-        { what: "Live tv: vorige zender / zappen", pad: "—", remote: "0 / P+ P−", key: "0 / PgUp PgDn" },
-        { what: "Tv-gids: herinnering / serie opnemen", pad: "—", remote: "—", key: "H / S" },
-        { what: "Zoeken", pad: "Zoeken (bovenbalk)", remote: "Typen of 🎤", key: "Gewoon typen" },
-        { what: "Radio: andere zender / volume", pad: "◀ ▶ / ▲ ▼", remote: "◀ ▶ / ▲ ▼", key: "◀ ▶ / ▲ ▼" },
-        { what: "Slaaptimer", pad: "Y in de radio", remote: "Menu → Slaaptimer", key: "T in de radio" }
+        { what: qsTr("Kiezen"), pad: qsTr("Pijltjes / joystick"), remote: qsTr("Pijltjes"), key: qsTr("Pijltjes") },
+        { what: qsTr("Openen"), pad: "A", remote: "OK", key: qsTr("Enter") },
+        { what: qsTr("Terug"), pad: "B", remote: qsTr("Terug"), key: qsTr("Esc") },
+        { what: qsTr("Opties van een tegel (verplaatsen, kinderslot, ...)"), pad: qsTr("A vasthouden of ☰"), remote: qsTr("Menu / blauw"), key: qsTr("Enter vasthouden of F2") },
+        { what: qsTr("Naar het startscherm, vanuit elke app of website"), pad: qsTr("Home / Xbox-knop"), remote: qsTr("Home"), key: qsTr("Esc 1 seconde vasthouden") },
+        { what: qsTr("Website: vorige pagina"), pad: "B", remote: qsTr("Terug"), key: qsTr("Alt + ←") },
+        { what: qsTr("Tegel 1 t/m 9 van de bovenste rij openen"), pad: "—", remote: qsTr("Cijfers 1–9"), key: "1–9" },
+        { what: qsTr("Live tv: zender kiezen op nummer"), pad: "—", remote: qsTr("Cijfers"), key: qsTr("Cijfers") },
+        { what: qsTr("Live tv: tv-gids / opnemen"), pad: qsTr("Y / RB"), remote: qsTr("Gids / rood"), key: qsTr("I / R") },
+        { what: qsTr("Live tv: gids van alle zenders"), pad: "—", remote: "—", key: "G" },
+        { what: qsTr("Live tv: vorige zender / zappen"), pad: "—", remote: qsTr("0 / P+ P−"), key: qsTr("0 / PgUp PgDn") },
+        { what: qsTr("Tv-gids: herinnering / serie opnemen"), pad: "—", remote: "—", key: qsTr("H / S") },
+        { what: qsTr("Zoeken"), pad: qsTr("Zoeken (bovenbalk)"), remote: qsTr("Typen of 🎤"), key: qsTr("Gewoon typen") },
+        { what: qsTr("Radio: andere zender / volume"), pad: "◀ ▶ / ▲ ▼", remote: "◀ ▶ / ▲ ▼", key: "◀ ▶ / ▲ ▼" },
+        { what: qsTr("Slaaptimer"), pad: qsTr("Y in de radio"), remote: qsTr("Menu → Slaaptimer"), key: qsTr("T in de radio") }
     ]
 
     anchors.fill: parent
@@ -62,7 +62,7 @@ FocusScope {
         spacing: help.unit * 1.2
 
         Text {
-            text: "Hulp: welke knop doet wat?"
+            text: qsTr("Hulp: welke knop doet wat?")
             color: "white"
             font.pixelSize: help.unit * 4.2 * appModel.fontScale
             font.weight: Font.DemiBold
@@ -72,7 +72,7 @@ FocusScope {
         Row {
             width: parent.width
             Repeater {
-                model: ["", "🎮 Controller", "📺 Afstandsbediening", "⌨ Toetsenbord"]
+                model: ["", qsTr("🎮 Controller"), qsTr("📺 Afstandsbediening"), qsTr("⌨ Toetsenbord")]
                 Text {
                     required property string modelData
                     required property int index
@@ -117,7 +117,7 @@ FocusScope {
 
         Text {
             topPadding: help.unit * 1.5
-            text: "Druk op B, Esc of Enter om te sluiten."
+            text: qsTr("Druk op B, Esc of Enter om te sluiten.")
             color: "#a8acb3"
             font.pixelSize: help.unit * 2.2 * appModel.fontScale
         }

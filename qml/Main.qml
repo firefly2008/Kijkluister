@@ -31,7 +31,7 @@ Rectangle {
                             || resumeScreen.visible || releaseInfo.visible || helpOverlay.visible || remoteOverlay.visible || kidsLock.visible
         // F3 (of Zoeken op de telefoon): zoekscherm
         if (!overlayOpen && (event.key === Qt.Key_F3 || event.key === Qt.Key_Search)) {
-            root.openPicker("all", "Zoeken", root.currentSection ? root.currentSection.grid : quickRow)
+            root.openPicker("all", qsTr("Zoeken"), root.currentSection ? root.currentSection.grid : quickRow)
             event.accepted = true
             return
         }
@@ -47,7 +47,7 @@ Rectangle {
             return
         }
         if (!overlayOpen && event.text.length === 1 && /[a-zA-Z0]/.test(event.text) && !(event.modifiers & (Qt.ControlModifier | Qt.AltModifier))) {
-            root.openPicker("all", "Zoeken", root.currentSection ? root.currentSection.grid : quickRow, event.text)
+            root.openPicker("all", qsTr("Zoeken"), root.currentSection ? root.currentSection.grid : quickRow, event.text)
             event.accepted = true
         }
     }
@@ -56,14 +56,14 @@ Rectangle {
     // Rijen in de volgorde die je zelf kiest (Menu op een tegel: Rij omhoog/omlaag).
     // Standaard staat Verder kijken onder Media.
     readonly property var allSectionDefs: [
-        { title: "Vaak gebruikt", model: usage },
-        { title: "Nu op tv", model: nowTv },
-        { title: "Video", model: webVideo },
-        { title: "Muziek", model: webMusic },
-        { title: "Radio", model: radio },
-        { title: "Podcasts", model: webPodcasts },
-        { title: "Nieuws", model: webNews },
-        { title: "Media", model: appModel }
+        { title: "Vaak gebruikt", label: qsTr("Vaak gebruikt"), model: usage },
+        { title: "Nu op tv", label: qsTr("Nu op tv"), model: nowTv },
+        { title: "Video", label: qsTr("Video"), model: webVideo },
+        { title: "Muziek", label: qsTr("Muziek"), model: webMusic },
+        { title: "Radio", label: qsTr("Radio"), model: radio },
+        { title: "Podcasts", label: qsTr("Podcasts"), model: webPodcasts },
+        { title: "Nieuws", label: qsTr("Nieuws"), model: webNews },
+        { title: "Media", label: qsTr("Media"), model: appModel }
     ]
     readonly property var sectionDefs: {
         const order = appModel.sectionOrder
@@ -90,7 +90,7 @@ Rectangle {
         titles.splice(titles.indexOf(title), 1)
         titles.splice(titles.indexOf(target) + (step > 0 ? 1 : 0), 0, title)
         appModel.sectionOrder = titles
-        showToast("Rij " + title + (step < 0 ? " staat nu hoger" : " staat nu lager"))
+        showToast(qsTr("Rij ") + title + (step < 0 ? qsTr(" staat nu hoger") : qsTr(" staat nu lager")))
         Qt.callLater(() => { const sec = sectionFor(model); if (sec) sec.grid.forceActiveFocus() })
     }
     // Categorie van een rij (voor Vaak gebruikt en inklappen)
@@ -120,16 +120,16 @@ Rectangle {
         if (now) expanded.push(title); else manual.push(title)
         appModel.setSetting("collapsed", manual)
         appModel.setSetting("expanded", expanded)
-        showToast(now ? "Rij " + title + " staat weer open" : "Rij " + title + " is ingeklapt (kies hem om te openen)")
+        showToast(now ? qsTr("Rij ") + title + qsTr(" staat weer open") : qsTr("Rij ") + title + qsTr(" is ingeklapt (kies hem om te openen)"))
     }
     function sectionMoveEntries(model) {
         const visible = sectionDefs.map(d => d.model)
         const i = visible.indexOf(model)
         const entries = []
-        if (i > 0) entries.push({ label: "Rij omhoog verplaatsen", action: "section-up" })
-        if (i >= 0 && i < visible.length - 1) entries.push({ label: "Rij omlaag verplaatsen", action: "section-down" })
+        if (i > 0) entries.push({ label: qsTr("Rij omhoog verplaatsen"), action: "section-up" })
+        if (i >= 0 && i < visible.length - 1) entries.push({ label: qsTr("Rij omlaag verplaatsen"), action: "section-down" })
         const def = allSectionDefs.find(d => d.model === model)
-        if (def && model !== usage) entries.push({ label: isCollapsed(def.title, model) ? "Rij uitklappen" : "Rij inklappen", action: "section-collapse" })
+        if (def && model !== usage) entries.push({ label: isCollapsed(def.title, model) ? qsTr("Rij uitklappen") : qsTr("Rij inklappen"), action: "section-collapse" })
         return entries
     }
     readonly property var webModels: [webVideo, webMusic, webPodcasts, webNews]
@@ -246,7 +246,7 @@ Rectangle {
             if (row >= 0) iptvScreen.play(row)
         }
         if (parental.needsPin("bigscreen:iptv")) {
-            pinPad.ask("Live tv is vergrendeld", "Vul de pincode van het kinderslot in.", (pin) => { if (!parental.check(pin)) return false; playChannel(); return true }, back || quickRow)
+            pinPad.ask(qsTr("Live tv is vergrendeld"), qsTr("Vul de pincode van het kinderslot in."), (pin) => { if (!parental.check(pin)) return false; playChannel(); return true }, back || quickRow)
         } else {
             playChannel()
         }
@@ -318,7 +318,7 @@ Rectangle {
         const name = model.nameAt(row)
         // Kinderslot: eerst de pincode
         if (!pinOk && parental.needsPin(path)) {
-            pinPad.ask(name + " is vergrendeld", "Vul de pincode van het kinderslot in.",
+            pinPad.ask(name + qsTr(" is vergrendeld"), qsTr("Vul de pincode van het kinderslot in."),
                        (pin) => { if (!parental.check(pin)) return false; root.launch(model, row, true); return true },
                        currentSection ? currentSection.grid : quickRow)
             return
@@ -335,12 +335,12 @@ Rectangle {
             if (!path.startsWith("bigscreen:")) {
                 homeBridge.externalLaunched()
                 // Blijft staan tot het venster echt open is (Kijkluister gaat dan naar de achtergrond)
-                showToast(name + " wordt geopend…", 12000)
+                showToast(name + qsTr(" wordt geopend…"), 12000)
                 launchSlowTimer.name = name
                 launchSlowTimer.restart()
             }
         } else {
-            showToast(name + " kon niet worden geopend. Probeer het opnieuw.", 5000)
+            showToast(name + qsTr(" kon niet worden geopend. Probeer het opnieuw."), 5000)
         }
     }
 
@@ -356,7 +356,7 @@ Rectangle {
         property string name
         interval: 10000
         onTriggered: if (Qt.application.state === Qt.ApplicationActive)
-                         root.showToast(name + " opent nog niet. Duurt het lang? Kies de tegel nog een keer.", 6000)
+                         root.showToast(name + qsTr(" opent nog niet. Duurt het lang? Kies de tegel nog een keer."), 6000)
     }
     Connections {
         target: Qt.application
@@ -375,47 +375,47 @@ Rectangle {
         editModel = model
         editRow = row
         if (model === radio) {
-            const entries = [{ label: "Luisteren", action: "radio-play" }, { label: "Radiozender toevoegen…", action: "radio-add" }]
+            const entries = [{ label: qsTr("Luisteren"), action: "radio-play" }, { label: qsTr("Radiozender toevoegen…"), action: "radio-add" }]
             for (const dir of ["left", "right", "up", "down"]) {
-                if (root.moveLimit(model, row, dir) > 0) entries.push({ label: root.moveLabels[dir] + " verplaatsen…", action: "move-" + dir })
+                if (root.moveLimit(model, row, dir) > 0) entries.push({ label: root.moveLabels[dir] + qsTr(" verplaatsen…"), action: "move-" + dir })
             }
             entries.push(...sectionMoveEntries(model))
-            if (!radio.isAddTile(row)) entries.push({ label: "Van startpagina verwijderen", action: "radio-remove" })
+            if (!radio.isAddTile(row)) entries.push({ label: qsTr("Van startpagina verwijderen"), action: "radio-remove" })
             entries.push(...commonMenuEntries())
             menu.open(model.nameAt(row), entries, focusItem)
             return
         }
         if (model === usage) {
             menu.open(model.nameAt(row), [
-                { label: "Openen", action: "usage-open" },
-                { label: "Uit Vaak gebruikt halen", action: "usage-remove" }
+                { label: qsTr("Openen"), action: "usage-open" },
+                { label: qsTr("Uit Vaak gebruikt halen"), action: "usage-remove" }
             ].concat(sectionMoveEntries(model)).concat(commonMenuEntries()), focusItem)
             return
         }
         if (model === resume) {
             menu.open(model.nameAt(row), [
-                { label: "Verder kijken", action: "resume-play" },
-                { label: "Uit deze rij halen", action: "resume-remove" }
+                { label: qsTr("Verder kijken"), action: "resume-play" },
+                { label: qsTr("Uit deze rij halen"), action: "resume-remove" }
             ].concat(sectionMoveEntries(model)).concat(commonMenuEntries()), focusItem)
             return
         }
-        const entries = [{ label: "Pictogram wijzigen…", action: "icon" }]
+        const entries = [{ label: qsTr("Pictogram wijzigen…"), action: "icon" }]
         if (model.hasCustomIcon(row)) {
-            entries.push({ label: "Standaardpictogram herstellen", action: "icon-reset" })
+            entries.push({ label: qsTr("Standaardpictogram herstellen"), action: "icon-reset" })
         }
         for (const dir of ["left", "right", "up", "down"]) {
             if (root.moveLimit(model, row, dir) > 0) {
-                entries.push({ label: root.moveLabels[dir] + " verplaatsen…", action: "move-" + dir })
+                entries.push({ label: root.moveLabels[dir] + qsTr(" verplaatsen…"), action: "move-" + dir })
             }
         }
         if (parental.enabled && model.pathAt) {
             entries.push(parental.isLocked(model.pathAt(row))
-                         ? { label: "🔓 Kinderslot van deze tegel halen", action: "parental-unlock-tile" }
-                         : { label: "🔒 Kinderslot op deze tegel", action: "parental-lock-tile" })
+                         ? { label: qsTr("🔓 Kinderslot van deze tegel halen"), action: "parental-unlock-tile" }
+                         : { label: qsTr("🔒 Kinderslot op deze tegel"), action: "parental-lock-tile" })
         }
         entries.push(...sectionMoveEntries(model))
         if (model.pathAt && model.pathAt(row) !== "bigscreen:radio-now") {
-            entries.push({ label: "Van startpagina verwijderen", action: "hide" })
+            entries.push({ label: qsTr("Van startpagina verwijderen"), action: "hide" })
         }
         entries.push(...commonMenuEntries())
         menu.open(model.nameAt(row), entries, focusItem)
@@ -429,13 +429,13 @@ Rectangle {
 
     function commonMenuEntries() {
         return [
-            { label: "🌙  Slaaptimer…" + (sleepTimer.active ? "  (nog " + sleepTimer.remainingText + ")" : ""), action: "sleep-menu" },
-            { label: "⚙  Instellingen…", action: "personalize-menu" },
-            { label: "Annuleren", action: "" }
+            { label: qsTr("🌙  Slaaptimer…") + (sleepTimer.active ? qsTr("  (nog %1)").arg(sleepTimer.remainingText) : ""), action: "sleep-menu" },
+            { label: qsTr("⚙  Instellingen…"), action: "personalize-menu" },
+            { label: qsTr("Annuleren"), action: "" }
         ]
     }
 
-    readonly property var moveLabels: ({ left: "Naar links", right: "Naar rechts", up: "Naar boven", down: "Naar onder" })
+    readonly property var moveLabels: ({ left: qsTr("Naar links"), right: qsTr("Naar rechts"), up: qsTr("Naar boven"), down: qsTr("Naar onder") })
 
     // Hoeveel plaatsen een tegel maximaal kan schuiven (omhoog/omlaag: in rijen)
     function moveLimit(model, row, dir) {
@@ -462,12 +462,12 @@ Rectangle {
 
     function openPersonalizeMenu() {
         const entries = [
-            { label: "Tegel toevoegen…", action: "add" },
-            { label: "Achtergrond wijzigen…", action: "background-menu" },
-            { label: appModel.showHero ? "Grote naam en logo linksboven verbergen" : "Grote naam en logo linksboven tonen", action: "toggle-hero" },
-            { label: appModel.fontScale > 1 ? "Tekst normaal" : "Tekst groter (kijken op afstand)", action: "font-scale" },
-            { label: "Diensten kiezen…", action: "welcome" },
-            { label: "Meer instellingen…", action: "more" }
+            { label: qsTr("Tegel toevoegen…"), action: "add" },
+            { label: qsTr("Achtergrond wijzigen…"), action: "background-menu" },
+            { label: appModel.showHero ? qsTr("Grote naam en logo linksboven verbergen") : qsTr("Grote naam en logo linksboven tonen"), action: "toggle-hero" },
+            { label: appModel.fontScale > 1 ? qsTr("Tekst normaal") : qsTr("Tekst groter (kijken op afstand)"), action: "font-scale" },
+            { label: qsTr("Diensten kiezen…"), action: "welcome" },
+            { label: qsTr("Meer instellingen…"), action: "more" }
         ]
         let hidden = appModel.hiddenCount
         for (const m of webModels) {
@@ -475,108 +475,109 @@ Rectangle {
         }
         hidden += radio.hiddenCount
         if (hidden > 0) {
-            entries.push({ label: "Verwijderde tegels terugzetten (" + hidden + ")", action: "unhide" })
+            entries.push({ label: qsTr("Verwijderde tegels terugzetten (") + hidden + ")", action: "unhide" })
         }
-        entries.push({ label: "Release-info (versie " + updater.current + ")", action: "release-info" })
-        entries.push({ label: "Sluiten", action: "" })
-        menu.open("Instellingen", entries, root.menuFocus())
+        entries.push({ label: qsTr("Release-info (versie ") + updater.current + ")", action: "release-info" })
+        entries.push({ label: qsTr("Sluiten"), action: "" })
+        menu.open(qsTr("Instellingen"), entries, root.menuFocus())
     }
 
     // --- Meer instellingen: kinderslot, weer, opnames, tv-afstandsbediening, bijwerken ---
     function openMoreMenu() {
-        menu.open("Meer instellingen", [
-            { label: "Profielen…  (" + profiles.currentName + ")", action: "profiles" },
-            { label: "Kinderslot…  (" + (parental.enabled ? "aan" : "uit") + ")", action: "parental" },
-            { label: "Nachtmodus: " + nightModeLabel(), action: "night" },
-            { label: "Bij opstarten radio hervatten: " + (appModel.setting("resumeRadio", false) ? "aan" : "uit"), action: "resume-radio" },
-            { label: "Weinig gebruikte rijen inklappen: " + (appModel.setting("autoCollapse", true) ? "aan" : "uit"), action: "auto-collapse" },
-            { label: "Weer…  (" + (weather.enabled ? (weather.place || "aan") : "uit") + ")", action: "weather" },
-            { label: "Starten bij opstarten van Windows: " + (systemTools.autostart ? "aan" : "uit"), action: "autostart" },
-            { label: "Geluid via…  (" + (systemTools.audioOutputName() || "standaard") + ")", action: "audio" },
-            { label: "Telefoon als afstandsbediening…  (" + (remote.enabled ? "aan" : "uit") + ")", action: "remote" },
-            { label: "Sfeerstand (Schilderij als je niets doet): " + ambientLabel(), action: "ambient" },
-            { label: "Bij opstarten vragen wie er kijkt: " + (systemTools.globalSetting("askProfile", true) ? "aan" : "uit"), action: "ask-profile" },
-            { label: "Kijktijd per dag" + (profiles.kids ? "" : " (kinderprofiel)") + ": " + kidsLimitLabel(), action: "kids-limit" },
-            { label: "Back-up maken of terugzetten…", action: "backup" },
-            { label: "Logbestand delen (voor hulp)", action: "share-log" },
-            { label: "Opnames opruimen…", action: "cleanup-settings" },
-            { label: "Tv-afstandsbediening (HDMI-CEC)…", action: "cec" },
-            { label: "Windows: wifi, bluetooth, beeld en geluid…", action: "windows" },
-            { label: "Zoeken naar een nieuwe versie", action: "update-check" },
-            { label: "Sluiten", action: "" }
+        menu.open(qsTr("Meer instellingen"), [
+            { label: qsTr("Profielen…  (") + profiles.currentName + ")", action: "profiles" },
+            { label: qsTr("Kinderslot…  (") + (parental.enabled ? qsTr("aan") : qsTr("uit")) + ")", action: "parental" },
+            { label: qsTr("Nachtmodus: ") + nightModeLabel(), action: "night" },
+            { label: qsTr("Bij opstarten radio hervatten: ") + (appModel.setting("resumeRadio", false) ? qsTr("aan") : qsTr("uit")), action: "resume-radio" },
+            { label: qsTr("Weinig gebruikte rijen inklappen: ") + (appModel.setting("autoCollapse", true) ? qsTr("aan") : qsTr("uit")), action: "auto-collapse" },
+            { label: qsTr("Weer…  (") + (weather.enabled ? (weather.place || "aan") : qsTr("uit")) + ")", action: "weather" },
+            { label: "Taal / Language: " + (uiLanguage === "en" ? "English" : "Nederlands"), action: "language" },
+            { label: qsTr("Starten bij opstarten van Windows: ") + (systemTools.autostart ? qsTr("aan") : qsTr("uit")), action: "autostart" },
+            { label: qsTr("Geluid via…  (") + (systemTools.audioOutputName() || "standaard") + ")", action: "audio" },
+            { label: qsTr("Telefoon als afstandsbediening…  (") + (remote.enabled ? qsTr("aan") : qsTr("uit")) + ")", action: "remote" },
+            { label: qsTr("Sfeerstand (Schilderij als je niets doet): ") + ambientLabel(), action: "ambient" },
+            { label: qsTr("Bij opstarten vragen wie er kijkt: ") + (systemTools.globalSetting("askProfile", true) ? qsTr("aan") : qsTr("uit")), action: "ask-profile" },
+            { label: qsTr("Kijktijd per dag") + (profiles.kids ? "" : qsTr(" (kinderprofiel)")) + ": " + kidsLimitLabel(), action: "kids-limit" },
+            { label: qsTr("Back-up maken of terugzetten…"), action: "backup" },
+            { label: qsTr("Logbestand delen (voor hulp)"), action: "share-log" },
+            { label: qsTr("Opnames opruimen…"), action: "cleanup-settings" },
+            { label: qsTr("Tv-afstandsbediening (HDMI-CEC)…"), action: "cec" },
+            { label: qsTr("Windows: wifi, bluetooth, beeld en geluid…"), action: "windows" },
+            { label: qsTr("Zoeken naar een nieuwe versie"), action: "update-check" },
+            { label: qsTr("Sluiten"), action: "" }
         ], root.menuFocus(), "Kijkluister " + updater.current)
     }
 
     function ambientLabel() {
         const m = appModel.setting("ambientMinutes", 10)
-        return m === 0 ? "uit" : "na " + m + " minuten"
+        return m === 0 ? qsTr("uit") : qsTr("na ") + m + qsTr(" minuten")
     }
     function kidsLimitLabel() {
         const m = appModel.setting("kidsMinutes", 0)
-        return m === 0 ? "onbeperkt" : m < 60 ? m + " minuten" : (m / 60) + " uur"
+        return m === 0 ? qsTr("onbeperkt") : m < 60 ? m + qsTr(" minuten") : (m / 60) + qsTr(" uur")
     }
     function openAudioMenu(focusItem) {
         const outs = systemTools.audioOutputs()
         console.info("Audio outputs", outs.length, systemTools.audioOutputName())
         if (outs.length === 0) {
-            showToast("Geen geluidsuitgangen gevonden", 4000)
+            showToast(qsTr("Geen geluidsuitgangen gevonden"), 4000)
             return
         }
-        menu.open("Geluid via", outs.map(o => ({ label: (o.isDefault ? "✓  " : "      ") + o.name, action: o.isDefault ? "" : "audio-set:" + o.id }))
-                  .concat([{ label: "Windows-instellingen voor geluid…", action: "uri:ms-settings:sound" }, { label: "Sluiten", action: "" }]),
-                  focusItem, "Geldt voor alles: Kijkluister, Netflix, YouTube en de rest.")
+        menu.open(qsTr("Geluid via"), outs.map(o => ({ label: (o.isDefault ? "✓  " : "      ") + o.name, action: o.isDefault ? "" : "audio-set:" + o.id }))
+                  .concat([{ label: qsTr("Windows-instellingen voor geluid…"), action: "uri:ms-settings:sound" }, { label: qsTr("Sluiten"), action: "" }]),
+                  focusItem, qsTr("Geldt voor alles: Kijkluister, Netflix, YouTube en de rest."))
     }
 
     function nightModeLabel() {
         const m = appModel.setting("night", "auto")
-        return m === "on" ? "altijd aan" : m === "off" ? "uit" : "automatisch (22–7 uur)"
+        return m === "on" ? qsTr("altijd aan") : m === "off" ? qsTr("uit") : qsTr("automatisch (22–7 uur)")
     }
 
     // --- Profielen ---
     property bool pendingKidsProfile: false
     function openProfileMenu() {
         const entries = profiles.list.map(p => ({
-            label: (p.current ? "✓  " : "      ") + p.name + (p.kids ? "  (kind)" : ""),
+            label: (p.current ? "✓  " : "      ") + p.name + (p.kids ? qsTr("  (kind)") : ""),
             action: p.current ? "" : "profile-switch:" + p.id }))
         if (!profiles.kids) {
-            entries.push({ label: "Profiel toevoegen…", action: "profile-add" })
-            entries.push({ label: "Kinderprofiel toevoegen…", action: "profile-add-kids" })
+            entries.push({ label: qsTr("Profiel toevoegen…"), action: "profile-add" })
+            entries.push({ label: qsTr("Kinderprofiel toevoegen…"), action: "profile-add-kids" })
             for (const p of profiles.list) {
-                if (p.id !== "" && !p.current) entries.push({ label: "Profiel " + p.name + " verwijderen", action: "profile-remove:" + p.id })
+                if (p.id !== "" && !p.current) entries.push({ label: qsTr("Profiel %1 verwijderen").arg(p.name), action: "profile-remove:" + p.id })
             }
         }
-        entries.push({ label: "Sluiten", action: "" })
-        menu.open("Profielen", entries, root.menuFocus(),
-                  "Nu: " + profiles.currentName + ". Elk profiel heeft eigen tegels, rijen, radiozenders en Vaak gebruikt. Wisselen herstart Kijkluister.")
+        entries.push({ label: qsTr("Sluiten"), action: "" })
+        menu.open(qsTr("Profielen"), entries, root.menuFocus(),
+                  qsTr("Nu: ") + profiles.currentName + qsTr(". Elk profiel heeft eigen tegels, rijen, radiozenders en Vaak gebruikt. Wisselen herstart Kijkluister."))
     }
 
     function openParentalMenu() {
         if (!parental.enabled) {
-            menu.open("Kinderslot", [
-                { label: "Kinderslot aanzetten…", action: "parental-set" },
-                { label: "Sluiten", action: "" }
-            ], root.menuFocus(), "Met een eigen pincode vergrendel je Live tv, Films, Series en tegels die je kiest. Zenders voor volwassenen zijn dan altijd vergrendeld.")
+            menu.open(qsTr("Kinderslot"), [
+                { label: qsTr("Kinderslot aanzetten…"), action: "parental-set" },
+                { label: qsTr("Sluiten"), action: "" }
+            ], root.menuFocus(), qsTr("Met een eigen pincode vergrendel je Live tv, Films, Series en tegels die je kiest. Zenders voor volwassenen zijn dan altijd vergrendeld."))
             return
         }
-        menu.open("Kinderslot", [
-            { label: "Nu vergrendelen", action: "parental-lock-now" },
-            { label: "Pincode wijzigen…", action: "parental-change" },
-            { label: "Kinderslot uitzetten…", action: "parental-off" },
-            { label: "Sluiten", action: "" }
-        ], root.menuFocus(), (parental.unlocked ? "Nu ontgrendeld (een uur na de pincode). " : "")
-                     + "Vergrendelde tegels: kies een tegel, druk op Menu en kies Kinderslot.")
+        menu.open(qsTr("Kinderslot"), [
+            { label: qsTr("Nu vergrendelen"), action: "parental-lock-now" },
+            { label: qsTr("Pincode wijzigen…"), action: "parental-change" },
+            { label: qsTr("Kinderslot uitzetten…"), action: "parental-off" },
+            { label: qsTr("Sluiten"), action: "" }
+        ], root.menuFocus(), (parental.unlocked ? qsTr("Nu ontgrendeld (een uur na de pincode). ") : "")
+                     + qsTr("Vergrendelde tegels: kies een tegel, druk op Menu en kies Kinderslot."))
     }
 
     function askNewPin() {
-        pinPad.ask("Nieuwe pincode", "Kies vier cijfers die kinderen niet weten.", (first) => {
-            Qt.callLater(() => pinPad.ask("Pincode herhalen", "Vul dezelfde vier cijfers nog een keer in.", (second) => {
+        pinPad.ask(qsTr("Nieuwe pincode"), qsTr("Kies vier cijfers die kinderen niet weten."), (first) => {
+            Qt.callLater(() => pinPad.ask(qsTr("Pincode herhalen"), qsTr("Vul dezelfde vier cijfers nog een keer in."), (second) => {
                 if (second !== first) {
-                    root.showToast("De pincodes waren niet gelijk. Probeer het opnieuw.", 5000)
+                    root.showToast(qsTr("De pincodes waren niet gelijk. Probeer het opnieuw."), 5000)
                     return true
                 }
                 const wasOn = parental.enabled
                 parental.setPin(first)
-                root.showToast(wasOn ? "Nieuwe pincode ingesteld" : "Kinderslot staat aan: Live tv, Films en Series vragen nu om de pincode", 6000)
+                root.showToast(wasOn ? qsTr("Nieuwe pincode ingesteld") : qsTr("Kinderslot staat aan: Live tv, Films en Series vragen nu om de pincode"), 6000)
                 return true
             }, root.menuFocus()))
             return true
@@ -584,7 +585,7 @@ Rectangle {
     }
 
     function withPin(title, action) {
-        pinPad.ask(title, "Vul de pincode van het kinderslot in.", (pin) => {
+        pinPad.ask(title, qsTr("Vul de pincode van het kinderslot in."), (pin) => {
             if (!parental.check(pin)) return false
             action(pin)
             return true
@@ -594,69 +595,69 @@ Rectangle {
     function openCleanupMenu() {
         const days = recorder.keepDays
         const gb = recorder.minFreeGb
-        menu.open("Opnames opruimen", [
-            { label: "Bewaren: " + (days > 0 ? days + " dagen" : "altijd") + "  (wijzigen)", action: "cleanup-days" },
-            { label: "Ruimte vrijhouden: " + (gb > 0 ? gb + " GB" : "uit") + "  (wijzigen)", action: "cleanup-space" },
-            { label: "Nu opruimen…", action: "cleanup-now" },
-            { label: "Sluiten", action: "" }
-        ], root.menuFocus(), recorder.diskText + ". Kijkluister vraagt het altijd eerst voordat er iets wordt gewist.")
+        menu.open(qsTr("Opnames opruimen"), [
+            { label: qsTr("Bewaren: ") + (days > 0 ? days + qsTr(" dagen") : "altijd") + qsTr("  (wijzigen)"), action: "cleanup-days" },
+            { label: qsTr("Ruimte vrijhouden: ") + (gb > 0 ? gb + qsTr(" GB") : qsTr("uit")) + qsTr("  (wijzigen)"), action: "cleanup-space" },
+            { label: qsTr("Nu opruimen…"), action: "cleanup-now" },
+            { label: qsTr("Sluiten"), action: "" }
+        ], root.menuFocus(), recorder.diskText + qsTr(". Kijkluister vraagt het altijd eerst voordat er iets wordt gewist."))
     }
 
     function askCleanup(manual) {
         const list = recorder.cleanupCandidates()
         if (list.length === 0) {
-            if (manual) showToast("Er hoeft niets opgeruimd te worden", 4000)
+            if (manual) showToast(qsTr("Er hoeft niets opgeruimd te worden"), 4000)
             return
         }
         let bytes = 0
         for (const r of list) bytes += r.size
         cleanupPaths = list.map(r => r.path)
-        const sizeText = bytes >= 1e8 ? (bytes / 1e9).toFixed(1) + " GB" : Math.max(1, Math.round(bytes / 1e6)) + " MB"
+        const sizeText = bytes >= 1e8 ? (bytes / 1e9).toFixed(1) + qsTr(" GB") : Math.max(1, Math.round(bytes / 1e6)) + qsTr(" MB")
         const names = list.slice(0, 3).map(r => "• " + r.name + " (" + r.date + ")").join("\n")
-        menu.open(list.length === 1 ? "1 opname opruimen?" : list.length + " opnames opruimen?", [
-            { label: "Wissen (" + sizeText + ")", action: "cleanup-confirm" },
-            { label: "Laten staan", action: "" }
+        menu.open(list.length === 1 ? qsTr("1 opname opruimen?") : list.length + qsTr(" opnames opruimen?"), [
+            { label: qsTr("Wissen (") + sizeText + ")", action: "cleanup-confirm" },
+            { label: qsTr("Laten staan"), action: "" }
         ], currentSection ? currentSection.grid : quickRow,
-           "Reden: " + list[0].reason + ".\n" + names + (list.length > 3 ? "\n… en " + (list.length - 3) + " meer" : ""))
+           qsTr("Reden: ") + list[0].reason + ".\n" + names + (list.length > 3 ? qsTr("\n… en ") + (list.length - 3) + qsTr(" meer") : ""))
     }
     property var cleanupPaths: []
 
     function openCecMenu() {
         const entries = []
         if (!cec.installed) {
-            entries.push({ label: "libCEC ophalen en installeren", action: "cec-install" })
+            entries.push({ label: qsTr("libCEC ophalen en installeren"), action: "cec-install" })
         } else {
-            entries.push({ label: "Opnieuw verbinden", action: "cec-start" })
+            entries.push({ label: qsTr("Opnieuw verbinden"), action: "cec-start" })
         }
-        entries.push({ label: "Sluiten", action: "" })
-        menu.open("Tv-afstandsbediening", entries, root.menuFocus(),
+        entries.push({ label: qsTr("Sluiten"), action: "" })
+        menu.open(qsTr("Tv-afstandsbediening"), entries, root.menuFocus(),
                   (cec.installed ? cec.status + ". " : "")
-                  + "Bedien Kijkluister met de afstandsbediening van je tv. Nodig: een USB-CEC-adapter van Pulse-Eight tussen computer en tv (HDMI).")
+                  + qsTr("Bedien Kijkluister met de afstandsbediening van je tv. Nodig: een USB-CEC-adapter van Pulse-Eight tussen computer en tv (HDMI)."))
     }
 
     function openSleepMenu(focusItem) {
-        const entries = [15, 30, 45, 60, 90].map(m => ({ label: m + " minuten", action: "sleep-" + m }))
+        const entries = [15, 30, 45, 60, 90].map(m => ({ label: m + qsTr(" minuten"), action: "sleep-" + m }))
         if (sleepTimer.active) {
-            entries.unshift({ label: "Slaaptimer uitzetten", action: "sleep-0" })
+            entries.unshift({ label: qsTr("Slaaptimer uitzetten"), action: "sleep-0" })
         }
-        entries.push({ label: "Annuleren", action: "" })
-        menu.open("Slaaptimer", entries, focusItem || quickRow,
-                  sleepTimer.active ? "Nog " + sleepTimer.remainingText + ". Daarna stoppen radio, tv en films vanzelf."
-                                    : "Radio, tv en films stoppen vanzelf na de gekozen tijd.")
+        entries.push({ label: qsTr("Annuleren"), action: "" })
+        menu.open(qsTr("Slaaptimer"), entries, focusItem || quickRow,
+                  sleepTimer.active ? qsTr("Nog %1. Daarna stoppen radio, tv en films vanzelf.").arg(sleepTimer.remainingText)
+                                    : qsTr("Radio, tv en films stoppen vanzelf na de gekozen tijd."))
     }
 
     function handleMenuAction(action) {
         if (action === "background-menu") {
             const bg = [
-                { label: "Gratis foto zoeken…", action: "background-photo" },
-                { label: "Eigen afbeelding kiezen…", action: "background" }
+                { label: qsTr("Gratis foto zoeken…"), action: "background-photo" },
+                { label: qsTr("Eigen afbeelding kiezen…"), action: "background" }
             ]
-            if (appModel.background !== "") bg.push({ label: "Standaardachtergrond herstellen", action: "background-reset" })
-            bg.push({ label: "Annuleren", action: "" })
-            menu.open("Achtergrond wijzigen", bg, root.menuFocus(),
-                      photos.source === "Unsplash" ? "Gratis foto's van Unsplash." : "Gratis foto's met een vrije licentie (Openverse).")
+            if (appModel.background !== "") bg.push({ label: qsTr("Standaardachtergrond herstellen"), action: "background-reset" })
+            bg.push({ label: qsTr("Annuleren"), action: "" })
+            menu.open(qsTr("Achtergrond wijzigen"), bg, root.menuFocus(),
+                      photos.source === "Unsplash" ? qsTr("Gratis foto's van Unsplash.") : qsTr("Gratis foto's met een vrije licentie (Openverse)."))
         } else if (action === "background-photo") {
-            openPicker("photo", "Gratis foto als achtergrond", root.menuFocus(), "landschap")
+            openPicker("photo", qsTr("Gratis foto als achtergrond"), root.menuFocus(), "landschap")
         } else if (action === "release-info") {
             releaseInfo.open(root.menuFocus())
         } else if (action === "section-collapse") {
@@ -670,32 +671,41 @@ Rectangle {
         } else if (action.startsWith("profile-switch:")) {
             const id = action.substring(15)
             if (profiles.kids && parental.enabled) {
-                withPin("Ander profiel kiezen", () => profiles.switchTo(id))
+                withPin(qsTr("Ander profiel kiezen"), () => profiles.switchTo(id))
             } else {
                 profiles.switchTo(id)
             }
         } else if (action === "profile-add" || action === "profile-add-kids") {
             pendingKidsProfile = action === "profile-add-kids"
             if (pendingKidsProfile && !parental.enabled) {
-                showToast("Stel eerst een pincode in voor het kinderslot", 5000)
+                showToast(qsTr("Stel eerst een pincode in voor het kinderslot"), 5000)
                 askNewPin()
                 return
             }
-            openPicker("name", pendingKidsProfile ? "Naam van het kinderprofiel" : "Naam van het nieuwe profiel", root.menuFocus())
+            openPicker("name", pendingKidsProfile ? qsTr("Naam van het kinderprofiel") : qsTr("Naam van het nieuwe profiel"), root.menuFocus())
         } else if (action.startsWith("profile-remove:")) {
             const pid = action.substring(15)
             const pname = profiles.nameOf(pid)
             profiles.remove(pid)
-            showToast("Profiel " + pname + " verwijderd")
+            showToast(qsTr("Profiel %1 verwijderd").arg(pname))
+        } else if (action === "language") {
+            menu.open("Taal / Language", [
+                { label: (uiLanguage === "nl" ? "✓  " : "      ") + "Nederlands", action: uiLanguage === "nl" ? "" : "language-set:nl" },
+                { label: (uiLanguage === "en" ? "✓  " : "      ") + "English", action: uiLanguage === "en" ? "" : "language-set:en" }
+            ], root.menuFocus(), uiLanguage === "en" ? "Kijkluister restarts in the chosen language." : "Kijkluister start opnieuw in de gekozen taal.")
+        } else if (action.startsWith("language-set:")) {
+            systemTools.setGlobalSetting("language", action.substring(13))
+            console.info("Language set", action.substring(13))
+            systemTools.restart()
         } else if (action === "autostart") {
             systemTools.autostart = !systemTools.autostart
-            showToast(systemTools.autostart ? "Kijkluister start voortaan met Windows" : "Kijkluister start niet meer met Windows", 4000)
+            showToast(systemTools.autostart ? qsTr("Kijkluister start voortaan met Windows") : qsTr("Kijkluister start niet meer met Windows"), 4000)
             openMoreMenu()
         } else if (action === "audio") {
             openAudioMenu(root.menuFocus())
         } else if (action.startsWith("audio-set:")) {
             const ok = systemTools.setAudioOutput(action.substring(10))
-            showToast(ok ? "🔊 Geluid via " + systemTools.audioOutputName() : "Wisselen lukte niet; kies het in Windows-instellingen → Geluid", 4000)
+            showToast(ok ? qsTr("🔊 Geluid via ") + systemTools.audioOutputName() : qsTr("Wisselen lukte niet; kies het in Windows-instellingen → Geluid"), 4000)
         } else if (action === "remote") {
             remoteOverlay.open(root.menuFocus())
         } else if (action === "ambient") {
@@ -708,36 +718,36 @@ Rectangle {
             openMoreMenu()
         } else if (action === "kids-limit") {
             if (!profiles.kids) {
-                showToast("Stel dit in vanuit het kinderprofiel (met de pincode)", 5000)
+                showToast(qsTr("Stel dit in vanuit het kinderprofiel (met de pincode)"), 5000)
                 return
             }
-            withPin("Kijktijd instellen", () => Qt.callLater(() => menu.open("Kijktijd per dag", [0, 30, 60, 90, 120, 180].map(m => ({
-                label: (m === appModel.setting("kidsMinutes", 0) ? "✓  " : "      ") + (m === 0 ? "Onbeperkt" : m < 60 ? m + " minuten" : (m / 60) + " uur"),
-                action: "kids-limit-" + m })), root.menuFocus(), "Daarna vraagt Kijkluister de pincode.")))
+            withPin(qsTr("Kijktijd instellen"), () => Qt.callLater(() => menu.open(qsTr("Kijktijd per dag"), [0, 30, 60, 90, 120, 180].map(m => ({
+                label: (m === appModel.setting("kidsMinutes", 0) ? "✓  " : "      ") + (m === 0 ? qsTr("Onbeperkt") : m < 60 ? m + qsTr(" minuten") : (m / 60) + qsTr(" uur")),
+                action: "kids-limit-" + m })), root.menuFocus(), qsTr("Daarna vraagt Kijkluister de pincode."))))
         } else if (action.startsWith("kids-limit-")) {
             appModel.setSetting("kidsMinutes", parseInt(action.substring(11)))
             kidsTimer.check()
-            showToast("Kijktijd: " + kidsLimitLabel())
+            showToast(qsTr("Kijktijd: ") + kidsLimitLabel())
         } else if (action === "backup") {
             const files = systemTools.backups()
-            const entries = [{ label: "Back-up maken (op het bureaublad)", action: "backup-make" }]
-            for (const f of files.slice(0, 6)) entries.push({ label: "Terugzetten: " + f.replace("Kijkluister-backup ", "").replace(".ini", ""), action: "backup-restore:" + f })
-            entries.push({ label: "Sluiten", action: "" })
-            menu.open("Back-up", entries, root.menuFocus(), "Bevat zenders, profielen, tegels en instellingen, ook inloggegevens van je tv-aanbieder. Bewaar hem goed.")
+            const entries = [{ label: qsTr("Back-up maken (op het bureaublad)"), action: "backup-make" }]
+            for (const f of files.slice(0, 6)) entries.push({ label: qsTr("Terugzetten: ") + f.replace(qsTr("Kijkluister-backup "), "").replace(".ini", ""), action: "backup-restore:" + f })
+            entries.push({ label: qsTr("Sluiten"), action: "" })
+            menu.open(qsTr("Back-up"), entries, root.menuFocus(), qsTr("Bevat zenders, profielen, tegels en instellingen, ook inloggegevens van je tv-aanbieder. Bewaar hem goed."))
         } else if (action === "backup-make") {
             const name = systemTools.makeBackup()
-            showToast(name ? "Back-up op het bureaublad: " + name : "Back-up maken lukte niet", 6000)
+            showToast(name ? qsTr("Back-up op het bureaublad: ") + name : qsTr("Back-up maken lukte niet"), 6000)
         } else if (action.startsWith("backup-restore:")) {
             const f = action.substring(15)
-            menu.open("Back-up terugzetten?", [
-                { label: "Terugzetten en opnieuw starten", action: "backup-restore-yes:" + f },
-                { label: "Annuleren", action: "" }
-            ], root.menuFocus(), "De huidige instellingen worden vervangen door " + f + ".")
+            menu.open(qsTr("Back-up terugzetten?"), [
+                { label: qsTr("Terugzetten en opnieuw starten"), action: "backup-restore-yes:" + f },
+                { label: qsTr("Annuleren"), action: "" }
+            ], root.menuFocus(), qsTr("De huidige instellingen worden vervangen door ") + f + ".")
         } else if (action.startsWith("backup-restore-yes:")) {
-            if (!systemTools.restoreBackup(action.substring(19))) showToast("Dit bestand is geen geldige back-up", 5000)
+            if (!systemTools.restoreBackup(action.substring(19))) showToast(qsTr("Dit bestand is geen geldige back-up"), 5000)
         } else if (action === "share-log") {
             const name = systemTools.shareLog()
-            showToast(name ? "Logbestand op het bureaublad: " + name : "Logbestand maken lukte niet", 6000)
+            showToast(name ? qsTr("Logbestand op het bureaublad: ") + name : qsTr("Logbestand maken lukte niet"), 6000)
         } else if (action === "night") {
             const order = ["auto", "on", "off"]
             appModel.setSetting("night", order[(order.indexOf(appModel.setting("night", "auto")) + 1) % 3])
@@ -755,13 +765,13 @@ Rectangle {
         } else if (action === "personalize-menu") {
             openPersonalizeMenu()
         } else if (action === "windows") {
-            menu.open("Windows-instellingen", [
-                { label: "Wifi", action: "uri:ms-settings:network-wifi" },
-                { label: "Bluetooth (koptelefoon, controller, afstandsbediening)", action: "uri:ms-settings:bluetooth" },
-                { label: "Beeldscherm", action: "uri:ms-settings:display" },
-                { label: "Geluid", action: "uri:ms-settings:sound" },
-                { label: "Alle instellingen", action: "uri:ms-settings:" },
-                { label: "Sluiten", action: "" }
+            menu.open(qsTr("Windows-instellingen"), [
+                { label: qsTr("Wifi"), action: "uri:ms-settings:network-wifi" },
+                { label: qsTr("Bluetooth (koptelefoon, controller, afstandsbediening)"), action: "uri:ms-settings:bluetooth" },
+                { label: qsTr("Beeldscherm"), action: "uri:ms-settings:display" },
+                { label: qsTr("Geluid"), action: "uri:ms-settings:sound" },
+                { label: qsTr("Alle instellingen"), action: "uri:ms-settings:" },
+                { label: qsTr("Sluiten"), action: "" }
             ], root.menuFocus())
         } else if (action.startsWith("uri:")) {
             appModel.openUri(action.substring(4))
@@ -772,38 +782,38 @@ Rectangle {
         } else if (action === "parental-set") {
             askNewPin()
         } else if (action === "parental-change") {
-            withPin("Pincode wijzigen", () => Qt.callLater(askNewPin))
+            withPin(qsTr("Pincode wijzigen"), () => Qt.callLater(askNewPin))
         } else if (action === "parental-off") {
-            withPin("Kinderslot uitzetten", (pin) => { parental.disable(pin); root.showToast("Kinderslot staat uit") })
+            withPin(qsTr("Kinderslot uitzetten"), (pin) => { parental.disable(pin); root.showToast(qsTr("Kinderslot staat uit")) })
         } else if (action === "parental-lock-now") {
             parental.lockNow()
-            showToast("Vergrendeld")
+            showToast(qsTr("Vergrendeld"))
         } else if (action === "parental-lock-tile") {
             parental.setLocked(editModel.pathAt(editRow), true)
-            showToast("🔒 " + editModel.nameAt(editRow) + " vraagt nu om de pincode")
+            showToast("🔒 " + editModel.nameAt(editRow) + qsTr(" vraagt nu om de pincode"))
         } else if (action === "parental-unlock-tile") {
             const m = editModel, r = editRow
-            withPin("Kinderslot van " + m.nameAt(r) + " halen", () => { parental.setLocked(m.pathAt(r), false); root.showToast(m.nameAt(r) + " is niet meer vergrendeld") })
+            withPin(qsTr("Kinderslot van %1 halen").arg(m.nameAt(r)), () => { parental.setLocked(m.pathAt(r), false); root.showToast(m.nameAt(r) + qsTr(" is niet meer vergrendeld")) })
         } else if (action === "weather") {
-            menu.open("Weer", [
-                { label: "Plaats kiezen…", action: "weather-place" },
-                { label: weather.enabled ? "Weer niet tonen" : "Weer tonen", action: "weather-toggle" },
-                { label: "Sluiten", action: "" }
-            ], root.menuFocus(), weather.available ? weather.place + ": " + weather.summary + " (Open-Meteo)" : "Het weer staat naast de klok (Open-Meteo).")
+            menu.open(qsTr("Weer"), [
+                { label: qsTr("Plaats kiezen…"), action: "weather-place" },
+                { label: weather.enabled ? qsTr("Weer niet tonen") : qsTr("Weer tonen"), action: "weather-toggle" },
+                { label: qsTr("Sluiten"), action: "" }
+            ], root.menuFocus(), weather.available ? weather.place + ": " + weather.summary + " (Open-Meteo)" : qsTr("Het weer staat naast de klok (Open-Meteo)."))
         } else if (action === "weather-place") {
-            openPicker("place", "Plaats voor het weer", root.menuFocus())
+            openPicker("place", qsTr("Plaats voor het weer"), root.menuFocus())
         } else if (action === "weather-toggle") {
             weather.enabled = !weather.enabled
         } else if (action === "cleanup-settings") {
             openCleanupMenu()
         } else if (action === "cleanup-days") {
-            menu.open("Opnames bewaren", [0, 7, 14, 30, 60, 90].map(d => ({ label: d === 0 ? "Altijd" : d + " dagen", action: "cleanup-days-" + d })), root.menuFocus())
+            menu.open(qsTr("Opnames bewaren"), [0, 7, 14, 30, 60, 90].map(d => ({ label: d === 0 ? qsTr("Altijd") : d + qsTr(" dagen"), action: "cleanup-days-" + d })), root.menuFocus())
         } else if (action.startsWith("cleanup-days-")) {
             recorder.keepDays = parseInt(action.substring(13))
             openCleanupMenu()
         } else if (action === "cleanup-space") {
-            menu.open("Ruimte vrijhouden op de schijf", [0, 5, 10, 25, 50].map(g => ({ label: g === 0 ? "Uit" : g + " GB", action: "cleanup-space-" + g })), quickRow,
-                      "Is de schijf voller, dan stelt Kijkluister voor de oudste opnames te wissen.")
+            menu.open(qsTr("Ruimte vrijhouden op de schijf"), [0, 5, 10, 25, 50].map(g => ({ label: g === 0 ? qsTr("Uit") : g + qsTr(" GB"), action: "cleanup-space-" + g })), quickRow,
+                      qsTr("Is de schijf voller, dan stelt Kijkluister voor de oudste opnames te wissen."))
         } else if (action.startsWith("cleanup-space-")) {
             recorder.minFreeGb = parseInt(action.substring(14))
             openCleanupMenu()
@@ -811,17 +821,17 @@ Rectangle {
             askCleanup(true)
         } else if (action === "cleanup-confirm") {
             const n = recorder.cleanup(cleanupPaths)
-            showToast(n === 1 ? "1 opname gewist" : n + " opnames gewist")
+            showToast(n === 1 ? qsTr("1 opname gewist") : n + qsTr(" opnames gewist"))
         } else if (action === "cec") {
             openCecMenu()
         } else if (action === "cec-install") {
             cec.install()
-            showToast("libCEC wordt opgehaald…", 5000)
+            showToast(qsTr("libCEC wordt opgehaald…"), 5000)
         } else if (action === "cec-start") {
             cec.start()
         } else if (action === "update-check") {
             updater.check(true)
-            showToast("Zoeken naar een nieuwe versie…")
+            showToast(qsTr("Zoeken naar een nieuwe versie…"))
         } else if (action === "update-install") {
             updater.install()
         } else if (action === "update-later") {
@@ -834,7 +844,7 @@ Rectangle {
             const name = radio.nameAt(editRow)
             if (radioPlayer.row === editRow) radioPlayer.stopPlayback()
             radio.remove(editRow)
-            showToast(name + " verwijderd")
+            showToast(name + qsTr(" verwijderd"))
         } else if (action === "quit") {
             Qt.quit()
         } else if (action === "resume-play") {
@@ -845,7 +855,7 @@ Rectangle {
             resume.remove(editRow)
         } else if (action === "icon") {
             imageDialog.purpose = "icon"
-            imageDialog.title = "Pictogram kiezen voor " + editModel.nameAt(editRow)
+            imageDialog.title = qsTr("Pictogram kiezen voor ") + editModel.nameAt(editRow)
             imageDialog.open()
         } else if (action === "icon-reset") {
             editModel.clearCustomIcon(editRow)
@@ -861,7 +871,7 @@ Rectangle {
             placesPicker.direction = dir
         } else if (action === "font-scale") {
             appModel.fontScale = appModel.fontScale > 1 ? 1.0 : 1.25
-            showToast(appModel.fontScale > 1 ? "Tekst is nu groter" : "Tekst is weer normaal")
+            showToast(appModel.fontScale > 1 ? qsTr("Tekst is nu groter") : qsTr("Tekst is weer normaal"))
         } else if (action === "welcome") {
             welcomeOverlay.open(root.menuFocus())
         } else if (action === "toggle-hero") {
@@ -869,12 +879,12 @@ Rectangle {
         } else if (action === "hide") {
             const name = editModel.nameAt(editRow)
             editModel.hide(editRow)
-            showToast(name + " verwijderd")
+            showToast(name + qsTr(" verwijderd"))
         } else if (action === "add") {
             addOverlay.open(root.menuFocus())
         } else if (action === "background") {
             imageDialog.purpose = "background"
-            imageDialog.title = "Achtergrond kiezen"
+            imageDialog.title = qsTr("Achtergrond kiezen")
             imageDialog.open()
         } else if (action === "background-reset") {
             appModel.clearBackground()
@@ -884,7 +894,7 @@ Rectangle {
             for (const m of webModels) {
                 m.restoreHidden()
             }
-            showToast("Alle tegels staan weer op de startpagina")
+            showToast(qsTr("Alle tegels staan weer op de startpagina"))
         }
     }
 
@@ -956,9 +966,9 @@ Rectangle {
         const webTarget = currentSection && currentSection.model !== appModel ? currentSection.model : webVideo
         const ok = isFile ? appModel.addTile(name, target) : webTarget.addTile(name, target)
         if (!ok) {
-            showToast("Toevoegen mislukt: controleer het adres of pad (of de tegel bestaat al)")
+            showToast(qsTr("Toevoegen mislukt: controleer het adres of pad (of de tegel bestaat al)"))
         } else {
-            showToast("Tegel toegevoegd")
+            showToast(qsTr("Tegel toegevoegd"))
         }
     }
 
@@ -1058,7 +1068,7 @@ Rectangle {
             radioPlayer.open(0, mediaGrid())
             radioTestTimer.start()
         } else if (selfTest === "search") {
-            Qt.callLater(() => root.openPicker("all", "Zoeken", quickRow, "npo"))
+            Qt.callLater(() => root.openPicker("all", qsTr("Zoeken"), quickRow, "npo"))
             testStep.run(2500, () => { if (picker.results.length > 0) console.info("Search results", picker.results.length) })
         } else if (selfTest === "radioadd") {
             Qt.callLater(() => { root.openRadioSearch(); picker.text = "gelderland" })
@@ -1133,7 +1143,7 @@ Rectangle {
         } else if (selfTest === "news") {
             Qt.callLater(() => focusSection(sectionDefs.findIndex(d => d.model === webNews), 0, false))
         } else if (selfTest === "photo") {
-            Qt.callLater(() => root.openPicker("photo", "Gratis foto als achtergrond", quickRow, "bos"))
+            Qt.callLater(() => root.openPicker("photo", qsTr("Gratis foto als achtergrond"), quickRow, "bos"))
         } else if (selfTest === "settingsmenu") {
             Qt.callLater(() => root.openPersonalizeMenu())
         } else if (selfTest === "usage") {
@@ -1151,11 +1161,14 @@ Rectangle {
             const pid = profiles.add("Petra", false)
             console.info("Profiles count", profiles.count, profiles.nameOf(pid))
             Qt.callLater(() => openProfileMenu())
+        } else if (selfTest === "english") {
+            console.info("English check:", qsTr("Instellingen"), "/", qsTr("Nu op tv"), "/", appModel.nameAt(0))
+            Qt.callLater(() => openMoreMenu())
         } else if (selfTest === "libraryesc") {
             // Test: Films & Series openen; de test stuurt een echte Esc (terug naar het startscherm)
             libraryScreen.open("movies", mediaGrid())
         } else if (selfTest === "okkey") {
-            openPicker("name", "Naam van het nieuwe profiel", quickRow, "Kees")
+            openPicker("name", qsTr("Naam van het nieuwe profiel"), quickRow, qsTr("Kees"))
             testStep.run(2500, () => picker.pressOk())
         } else if (selfTest === "nowtv" || selfTest === "guidegrid" || selfTest === "reminder" || selfTest === "series" || selfTest === "prevchannel") {
             iptv.group = "Alle zenders"
@@ -1223,7 +1236,7 @@ Rectangle {
             console.info("Autostart on:", systemTools.autostart)
             systemTools.autostart = false
             console.info("Autostart off:", systemTools.autostart)
-            Qt.callLater(() => { menu.open("Back-up", [{ label: "Back-up maken", action: "" }].concat(systemTools.backups().map(f => ({ label: "Terugzetten: " + f, action: "" }))), quickRow) })
+            Qt.callLater(() => { menu.open(qsTr("Back-up"), [{ label: qsTr("Back-up maken"), action: "" }].concat(systemTools.backups().map(f => ({ label: qsTr("Terugzetten: ") + f, action: "" }))), quickRow) })
         } else if (selfTest === "collapse") {
             appModel.setSetting("collapsed", ["Podcasts"])
             console.info("Collapsed Podcasts:", isCollapsed("Podcasts", webPodcasts))
@@ -1291,11 +1304,11 @@ Rectangle {
 
     ListModel {
         id: quickModel
-        ListElement { label: "Zoeken"; code: 0xE721; uri: "search"; about: "Zoek apps, zenders, programma's, films en radio" }
-        ListElement { label: "Hulp"; code: 0xE897; uri: "help"; about: "Welke knop doet wat?" }
-        ListElement { label: "Geluid"; code: 0xE767; uri: "audio"; about: "Tv, soundbar of koptelefoon" }
-        ListElement { label: "Instellingen"; code: 0xE713; uri: "personalize"; about: "Tegels, achtergrond, kinderslot en meer" }
-        ListElement { label: "Sluiten"; code: 0xE711; uri: ""; about: "Kijkluister sluiten (de computer blijft aan)" }
+        ListElement { label: qsTr("Zoeken"); code: 0xE721; uri: "search"; about: qsTr("Zoek apps, zenders, programma's, films en radio") }
+        ListElement { label: qsTr("Hulp"); code: 0xE897; uri: "help"; about: qsTr("Welke knop doet wat?") }
+        ListElement { label: qsTr("Geluid"); code: 0xE767; uri: "audio"; about: qsTr("Tv, soundbar of koptelefoon") }
+        ListElement { label: qsTr("Instellingen"); code: 0xE713; uri: "personalize"; about: qsTr("Tegels, achtergrond, kinderslot en meer") }
+        ListElement { label: qsTr("Sluiten"); code: 0xE711; uri: ""; about: qsTr("Kijkluister sluiten (de computer blijft aan)") }
     }
 
     // --- Bovenbalk: naam links, snelknoppen in het midden, klok rechts ---
@@ -1325,7 +1338,7 @@ Rectangle {
             color: "white"
             font.pixelSize: (root.unit * 3.2) * appModel.fontScale
             font.weight: Font.DemiBold
-            text: "Kijkluister"
+            text: qsTr("Kijkluister")
         }
 
         Text {
@@ -1376,8 +1389,8 @@ Rectangle {
         interval: 1000; running: true; repeat: true; triggeredOnStart: true
         onTriggered: {
             const now = new Date()
-            clock.text = Qt.formatTime(now, "HH:mm")
-            dateLabel.text = now.toLocaleDateString(Qt.locale("nl_NL"), "dddd d MMMM")
+            clock.text = Qt.formatTime(now, qsTr("HH:mm"))
+            dateLabel.text = now.toLocaleDateString(Qt.locale(qsTr("nl_NL")), qsTr("dddd d MMMM"))
         }
     }
 
@@ -1400,12 +1413,12 @@ Rectangle {
             const item = quickModel.get(index)
             if (item.uri === "") {
                 // Eerst vragen: de computer blijft aan, geplande opnames gaan niet door
-                menu.open("Kijkluister sluiten?", [
-                    { label: "Sluiten", action: "quit" },
-                    { label: "Annuleren", action: "" }
+                menu.open(qsTr("Kijkluister sluiten?"), [
+                    { label: qsTr("Sluiten"), action: "quit" },
+                    { label: qsTr("Annuleren"), action: "" }
                 ], root.menuFocus(), recorder.schedule.length > 0
-                    ? "Je computer blijft aan. Geplande opnames gaan niet door zolang Kijkluister dicht is."
-                    : "Je computer blijft aan.")
+                    ? qsTr("Je computer blijft aan. Geplande opnames gaan niet door zolang Kijkluister dicht is.")
+                    : qsTr("Je computer blijft aan."))
             } else if (item.uri === "personalize") {
                 root.openPersonalizeMenu()
             } else if (item.uri === "help") {
@@ -1417,14 +1430,14 @@ Rectangle {
             } else if (item.uri === "sleep") {
                 root.openSleepMenu(quickRow)
             } else if (item.uri === "search") {
-                root.openPicker("all", "Zoeken", root.menuFocus())
+                root.openPicker("all", qsTr("Zoeken"), root.menuFocus())
             } else if (item.uri === "sleep") {
                 root.openSleepMenu(quickRow)
             } else if (item.uri === "radio") {
                 radioPlayer.show(quickRow)
             } else {
                 appModel.openUri(item.uri)
-                root.showToast(item.label + " openen…")
+                root.showToast(item.label + qsTr(" openen…"))
             }
         }
 
@@ -1529,7 +1542,7 @@ Rectangle {
                     required property int index
                     required property var modelData
                     width: sectionColumn.width
-                    title: modelData.title
+                    title: modelData.label || modelData.title
                     model: modelData.model
                     collapsed: root.isCollapsed(modelData.title, modelData.model)
                     columns: root.columns
@@ -1555,10 +1568,10 @@ Rectangle {
         anchors.bottomMargin: root.unit * 1.5
         unit: root.unit
         items: [
-            { pad: "✛", key: "Pijltjes", label: "Kiezen" },
-            { pad: "A", key: "Enter", label: "Openen" },
-            { pad: "X", key: "Menu", label: "Opties" },
-            { pad: "", key: "Rechtermuisknop", label: "Opties" }
+            { pad: "✛", key: qsTr("Pijltjes"), label: qsTr("Kiezen") },
+            { pad: "A", key: qsTr("Enter"), label: qsTr("Openen") },
+            { pad: "X", key: qsTr("Menu"), label: qsTr("Opties") },
+            { pad: "", key: qsTr("Rechtermuisknop"), label: qsTr("Opties") }
         ]
     }
 
@@ -1592,7 +1605,7 @@ Rectangle {
         running: selfTest === "" && appModel.welcomeDone && !appModel.tipShown("hold")
         onTriggered: {
             appModel.markTipShown("hold")
-            root.showToast("Tip: houd " + (gamepad.connectedCount > 0 ? "Ⓐ" : "Enter") + " ingedrukt om een tegel te verplaatsen of te verwijderen", 7000)
+            root.showToast(qsTr("Tip: houd ") + (gamepad.connectedCount > 0 ? "Ⓐ" : "Enter") + qsTr(" ingedrukt om een tegel te verplaatsen of te verwijderen"), 7000)
         }
     }
 
@@ -1600,20 +1613,20 @@ Rectangle {
     FileDialog {
         id: imageDialog
         property string purpose
-        nameFilters: ["Afbeeldingen (*.png *.jpg *.jpeg *.bmp *.gif *.webp *.ico *.svg)"]
+        nameFilters: [qsTr("Afbeeldingen (*.png *.jpg *.jpeg *.bmp *.gif *.webp *.ico *.svg)")]
         onAccepted: {
             const ok = purpose === "icon" ? root.editModel.setCustomIcon(root.editRow, selectedFile)
                                           : appModel.setBackground(selectedFile)
             if (!ok) {
-                root.showToast("Deze afbeelding kon niet gebruikt worden")
+                root.showToast(qsTr("Deze afbeelding kon niet gebruikt worden"))
             }
         }
     }
 
     FileDialog {
         id: programDialog
-        title: "Programma kiezen"
-        nameFilters: ["Programma's en snelkoppelingen (*.exe *.lnk *.bat *.cmd *.url)", "Alle bestanden (*)"]
+        title: qsTr("Programma kiezen")
+        nameFilters: [qsTr("Programma's en snelkoppelingen (*.exe *.lnk *.bat *.cmd *.url)"), qsTr("Alle bestanden (*)")]
         onAccepted: addOverlay.targetText = selectedFile.toString()
     }
 
@@ -1638,7 +1651,7 @@ Rectangle {
 
     // Live tv: zenderlijst en speler
     IptvScreen {
-        onPinRequired: (row) => pinPad.ask(iptv.channelAt(row).name + " is vergrendeld", "Zender voor volwassenen. Vul de pincode van het kinderslot in.",
+        onPinRequired: (row) => pinPad.ask(iptv.channelAt(row).name + qsTr(" is vergrendeld"), qsTr("Zender voor volwassenen. Vul de pincode van het kinderslot in."),
                                            (pin) => { if (!parental.check(pin)) return false; iptvScreen.play(row); return true }, iptvScreen)
         id: iptvScreen
     }
@@ -1651,7 +1664,7 @@ Rectangle {
     // Welkomststap: welke diensten gebruik je
     WelcomeOverlay {
         id: welcomeOverlay
-        onDone: root.showToast("Klaar! Kies een tegel en druk op " + (gamepad.connectedCount > 0 ? "Ⓐ" : "Enter") + " om te beginnen")
+        onDone: root.showToast(qsTr("Klaar! Kies een tegel en druk op ") + (gamepad.connectedCount > 0 ? "Ⓐ" : "Enter") + qsTr(" om te beginnen"))
     }
 
     // Melding als Kijkluister MPC-HC of ffmpeg ophaalt (op de achtergrond): bovenaan, uit de weg
@@ -1698,7 +1711,7 @@ Rectangle {
         id: radioPlayer
         sleepText: sleepTimer.active ? sleepTimer.remainingText : ""
         onSleepRequested: root.openSleepMenu(radioPlayer)
-        // Speelt hij op de achtergrond: knop "Radio" in de bovenbalk
+        // Speelt hij op de achtergrond: knop qsTr("Radio") in de bovenbalk
         onInBackgroundChanged: root.syncRadioButton()
         onRowChanged: root.syncRadioButton()
     }
@@ -1725,11 +1738,11 @@ Rectangle {
         property double now: Date.now()
         readonly property bool active: endAt > 0
         readonly property int remainingMinutes: active ? Math.max(0, Math.ceil((endAt - now) / 60000)) : 0
-        readonly property string remainingText: remainingMinutes + " min"
+        readonly property string remainingText: remainingMinutes + qsTr(" min")
 
         function set(minutes) {
             setSeconds(minutes * 60)
-            root.showToast(minutes > 0 ? "Slaaptimer: over " + minutes + " minuten stopt alles" : "Slaaptimer staat uit")
+            root.showToast(minutes > 0 ? qsTr("Slaaptimer: over ") + minutes + qsTr(" minuten stopt alles") : qsTr("Slaaptimer staat uit"))
         }
         function setSeconds(seconds) {
             endAt = seconds > 0 ? Date.now() + seconds * 1000 : 0
@@ -1748,7 +1761,7 @@ Rectangle {
                 const left = sleepTimer.endAt - sleepTimer.now
                 if (!sleepTimer.warned && left < 60000 && left > 5000) {
                     sleepTimer.warned = true
-                    root.showToast("Slaaptimer: over een minuut stopt alles", 8000)
+                    root.showToast(qsTr("Slaaptimer: over een minuut stopt alles"), 8000)
                 }
                 if (left <= 0) {
                     sleepTimer.endAt = 0
@@ -1763,7 +1776,7 @@ Rectangle {
         radioPlayer.stopPlayback()
         if (iptvScreen.visible) iptvScreen.close()
         mpc.stop()
-        showToast("Slaaptimer: alles is gestopt. Welterusten!", 10000)
+        showToast(qsTr("Slaaptimer: alles is gestopt. Welterusten!"), 10000)
     }
 
     // --- Zoeken (alles, radiozenders, plaats voor het weer) ---
@@ -1774,18 +1787,18 @@ Rectangle {
         pickerMode = mode
         picker.iconScale = mode === "photo" ? 2 : 1
         picker.voice = mode === "all" || mode === "radio" || mode === "photo"
-        picker.placeholder = mode === "radio" ? "Naam van de zender, bv. Omroep Gelderland"
-                           : mode === "photo" ? "Waar wil je een foto van? Bv. bos, zee, bergen"
-                           : mode === "place" ? "Naam van je woonplaats"
-                           : "Zoek een app, zender, programma, film of radiozender"
-        picker.pickLabel = mode === "radio" ? "Toevoegen" : mode === "place" || mode === "photo" ? "Kiezen" : "Openen"
-        picker.emptyText = mode === "radio" ? "Geen zender gevonden. Probeer een ander woord." : "Niets gevonden"
+        picker.placeholder = mode === "radio" ? qsTr("Naam van de zender, bv. Omroep Gelderland")
+                           : mode === "photo" ? qsTr("Waar wil je een foto van? Bv. bos, zee, bergen")
+                           : mode === "place" ? qsTr("Naam van je woonplaats")
+                           : qsTr("Zoek een app, zender, programma, film of radiozender")
+        picker.pickLabel = mode === "radio" ? qsTr("Toevoegen") : mode === "place" || mode === "photo" ? qsTr("Kiezen") : qsTr("Openen")
+        picker.emptyText = mode === "radio" ? qsTr("Geen zender gevonden. Probeer een ander woord.") : qsTr("Niets gevonden")
         picker.open(title, focusItem, startText)
     }
 
     function openRadioSearch() {
         const section = sectionFor(radio)
-        openPicker("radio", "Radiozender toevoegen", section ? section.grid : quickRow)
+        openPicker("radio", qsTr("Radiozender toevoegen"), section ? section.grid : quickRow)
     }
 
     function searchAll(q) {
@@ -1798,21 +1811,21 @@ Rectangle {
                 const name = m.nameAt(r)
                 if (name.toLowerCase().indexOf(lower) >= 0) {
                     const icon = m.iconAt(r)
-                    items.push({ name: name, detail: "", icon: icon.startsWith("glyph:") ? icon : icon, section: "Apps en diensten",
+                    items.push({ name: name, detail: "", icon: icon.startsWith("glyph:") ? icon : icon, section: qsTr("Apps en diensten"),
                                  kind: "app", model: m, row: r, badge: parental.enabled && parental.isLocked(m.pathAt(r)) ? "🔒" : "" })
                 }
             }
         }
         for (let r = 0; r < radio.count; ++r) {
             if (radio.isStation(r) && radio.nameAt(r).toLowerCase().indexOf(lower) >= 0) {
-                items.push({ name: radio.nameAt(r), detail: radio.subtitleAt(r), icon: radio.iconAt(r), section: "Radio", kind: "radio", row: r })
+                items.push({ name: radio.nameAt(r), detail: radio.subtitleAt(r), icon: radio.iconAt(r), section: qsTr("Radio"), kind: "radio", row: r })
             }
         }
         const lib = []
         for (const item of library.movies.concat(library.shows)) {
             if ((item.title || "").toLowerCase().indexOf(lower) >= 0) {
-                lib.push({ name: item.title, detail: (item.kind === "show" ? "Serie" : "Film") + (item.year ? " · " + item.year : ""),
-                           icon: item.localPoster || item.poster || "glyph:\uE8B2", section: "Films en series", kind: "library", item: item })
+                lib.push({ name: item.title, detail: (item.kind === "show" ? qsTr("Serie") : qsTr("Film")) + (item.year ? " · " + item.year : ""),
+                           icon: item.localPoster || item.poster || "glyph:\uE8B2", section: qsTr("Films en series"), kind: "library", item: item })
             }
         }
         items.push(...lib.slice(0, 20))
@@ -1820,8 +1833,8 @@ Rectangle {
             const programme = r.kind === "programme"
             const scheduled = programme && recorder.isScheduled(r.url, r.startSecs)
             items.push({ name: r.name, detail: r.detail, icon: r.icon || "glyph:\uE7F4",
-                         section: programme ? "Tv-gids" : "Live tv", kind: r.kind, data: r,
-                         badge: programme ? (r.isNow ? "Nu op tv" : scheduled ? "● Opname gepland" : "Menu: opnemen") : "" })
+                         section: programme ? qsTr("Tv-gids") : qsTr("Live tv"), kind: r.kind, data: r,
+                         badge: programme ? (r.isNow ? qsTr("Nu op tv") : scheduled ? qsTr("● Opname gepland") : qsTr("Menu: opnemen")) : "" })
         }
         return items
     }
@@ -1834,7 +1847,7 @@ Rectangle {
             } else if (root.pickerMode === "photo") {
                 photos.search(q)
             } else if (root.pickerMode === "name") {
-                picker.results = q.length > 0 ? [{ name: "Opslaan als “" + q + "”", detail: "Enter om het profiel te maken", icon: "glyph:\uE77B" }] : []
+                picker.results = q.length > 0 ? [{ name: qsTr("Opslaan als “") + q + "”", detail: qsTr("Enter om het profiel te maken"), icon: "glyph:\uE77B" }] : []
             } else if (root.pickerMode === "place") {
                 if (q.length >= 2) weather.searchPlaces(q)
             } else {
@@ -1852,7 +1865,7 @@ Rectangle {
             if (root.pickerMode !== "radio") return
             picker.busy = radio.searching
             picker.results = radio.results.map((r, i) => ({ name: r.name, detail: r.detail, icon: r.logo,
-                                                             badge: radio.hasResult(i) ? "✓ Toegevoegd" : "" }))
+                                                             badge: radio.hasResult(i) ? qsTr("✓ Toegevoegd") : "" }))
         }
     }
     Connections {
@@ -1865,7 +1878,7 @@ Rectangle {
         function onDownloaded(file, credit) {
             if (appModel.setBackground(file)) {
                 picker.close()
-                root.showToast("Nieuwe achtergrond. " + credit, 6000)
+                root.showToast(qsTr("Nieuwe achtergrond. ") + credit, 6000)
             }
         }
         function onFailed(message) { root.showToast(message, 5000) }
@@ -1882,11 +1895,11 @@ Rectangle {
         if (index < 0) return
         if (pickerMode === "radio") {
             if (radio.addResult(index)) {
-                showToast(picker.nameAt(index) + " staat nu in de rij Radio")
+                showToast(picker.nameAt(index) + qsTr(" staat nu in de rij Radio"))
                 picker.results = radio.results.map((r, i) => ({ name: r.name, detail: r.detail, icon: r.logo,
-                                                                 badge: radio.hasResult(i) ? "✓ Toegevoegd" : "" }))
+                                                                 badge: radio.hasResult(i) ? qsTr("✓ Toegevoegd") : "" }))
             } else {
-                showToast(picker.nameAt(index) + " staat al in de rij Radio")
+                showToast(picker.nameAt(index) + qsTr(" staat al in de rij Radio"))
             }
             return
         }
@@ -1895,21 +1908,21 @@ Rectangle {
             if (name === "") return
             const id = profiles.add(name, pendingKidsProfile)
             picker.close()
-            menu.open("Profiel " + name + " is gemaakt", [
-                { label: "Nu naar " + name + " wisselen", action: "profile-switch:" + id },
-                { label: "Later", action: "" }
+            menu.open(qsTr("Profiel %1 is gemaakt").arg(name), [
+                { label: qsTr("Nu naar ") + name + qsTr(" wisselen"), action: "profile-switch:" + id },
+                { label: qsTr("Later"), action: "" }
             ], root.menuFocus())
             return
         }
         if (pickerMode === "photo") {
-            showToast("Foto wordt opgehaald…", 20000)
+            showToast(qsTr("Foto wordt opgehaald…"), 20000)
             photos.download(index)
             return
         }
         if (pickerMode === "place") {
             weather.choosePlace(index)
             picker.close()
-            showToast("Weer voor " + picker.nameAt(index))
+            showToast(qsTr("Weer voor ") + picker.nameAt(index))
             return
         }
         const it = pickerItems[index]
@@ -1919,8 +1932,8 @@ Rectangle {
             const d = it.data
             recorder.toggleSchedule(d.channel, d.url, d.name, d.startSecs, d.stopSecs)
             const on = recorder.isScheduled(d.url, d.startSecs)
-            showToast(on ? "● Wordt opgenomen: " + d.name : "Opname geannuleerd: " + d.name, 5000)
-            pickerItems[index].badge = on ? "● Opname gepland" : "Menu: opnemen"
+            showToast(on ? qsTr("● Wordt opgenomen: ") + d.name : qsTr("Opname geannuleerd: ") + d.name, 5000)
+            pickerItems[index].badge = on ? qsTr("● Opname gepland") : qsTr("Menu: opnemen")
             picker.results = pickerItems
             return
         }
@@ -1938,7 +1951,7 @@ Rectangle {
             }
             const path = "bigscreen:movies"
             if (parental.needsPin(path)) {
-                pinPad.ask(it.name + " is vergrendeld", "Vul de pincode van het kinderslot in.", (pin) => { if (!parental.check(pin)) return false; open(); return true }, back || quickRow)
+                pinPad.ask(it.name + qsTr(" is vergrendeld"), qsTr("Vul de pincode van het kinderslot in."), (pin) => { if (!parental.check(pin)) return false; open(); return true }, back || quickRow)
             } else {
                 open()
             }
@@ -1950,7 +1963,7 @@ Rectangle {
                 if (row >= 0) iptvScreen.play(row)
             }
             if (parental.needsPin("bigscreen:iptv")) {
-                pinPad.ask("Live tv is vergrendeld", "Vul de pincode van het kinderslot in.", (pin) => { if (!parental.check(pin)) return false; playChannel(); return true }, back || quickRow)
+                pinPad.ask(qsTr("Live tv is vergrendeld"), qsTr("Vul de pincode van het kinderslot in."), (pin) => { if (!parental.check(pin)) return false; playChannel(); return true }, back || quickRow)
             } else {
                 playChannel()
             }
@@ -2000,7 +2013,7 @@ Rectangle {
                 width: parent.width
                 color: "#ffb74d"
                 font.pixelSize: root.unit * 2.2 * appModel.fontScale
-                text: root.reminderData ? "🔔  Om " + root.reminderData.time + " op " + root.reminderData.channel : ""
+                text: root.reminderData ? qsTr("🔔  Om ") + root.reminderData.time + qsTr(" op ") + root.reminderData.channel : ""
             }
             Text {
                 width: parent.width
@@ -2015,7 +2028,7 @@ Rectangle {
                 FocusButton {
                     id: reminderWatch
                     unit: root.unit
-                    text: "Kijken"
+                    text: qsTr("Kijken")
                     onClicked: {
                         const r = root.reminderData
                         root.reminderData = null
@@ -2030,7 +2043,7 @@ Rectangle {
                 FocusButton {
                     id: reminderLater
                     unit: root.unit
-                    text: "Sluiten"
+                    text: qsTr("Sluiten")
                     onClicked: { root.reminderData = null; root.menuFocus().forceActiveFocus() }
                     KeyNavigation.left: reminderWatch
                     Keys.onEscapePressed: clicked()
@@ -2074,7 +2087,7 @@ Rectangle {
             if (left <= 5 && left > 0 && !warned) {
                 warned = true
                 if (homeBridge.external) homeBridge.raiseWindow()
-                root.showToast("Nog " + left + " minuten kijktijd voor vandaag", 8000)
+                root.showToast(qsTr("Nog %1 minuten kijktijd voor vandaag").arg(left), 8000)
             }
             if (left <= 0 && !kidsLock.visible) {
                 console.info("Kids limit reached", used(), limit)
@@ -2108,13 +2121,13 @@ Rectangle {
                 color: "white"
                 font.pixelSize: root.unit * 5 * appModel.fontScale
                 font.weight: Font.DemiBold
-                text: "De kijktijd voor vandaag is op"
+                text: qsTr("De kijktijd voor vandaag is op")
             }
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
                 color: "#c9ccd1"
                 font.pixelSize: root.unit * 2.6 * appModel.fontScale
-                text: "Morgen kan " + profiles.currentName + " weer kijken. Met de pincode kan het nog een half uur."
+                text: qsTr("Morgen kan ") + profiles.currentName + qsTr(" weer kijken. Met de pincode kan het nog een half uur.")
             }
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -2122,8 +2135,8 @@ Rectangle {
                 FocusButton {
                     id: kidsLockButton
                     unit: root.unit
-                    text: "Pincode: half uur erbij"
-                    onClicked: pinPad.ask("Nog een half uur", "Vul de pincode van het kinderslot in.", (pin) => {
+                    text: qsTr("Pincode: half uur erbij")
+                    onClicked: pinPad.ask(qsTr("Nog een half uur"), qsTr("Vul de pincode van het kinderslot in."), (pin) => {
                         if (!parental.check(pin)) return false
                         appModel.setSetting("kidsExtra/" + kidsTimer.today(), appModel.setting("kidsExtra/" + kidsTimer.today(), 0) + 30)
                         kidsTimer.warned = false
@@ -2137,7 +2150,7 @@ Rectangle {
                     id: kidsSwitchButton
                     visible: profiles.count > 1
                     unit: root.unit
-                    text: "Ander profiel"
+                    text: qsTr("Ander profiel")
                     onClicked: root.openProfileMenu()
                     KeyNavigation.left: kidsLockButton
                 }
@@ -2148,9 +2161,9 @@ Rectangle {
 
     // --- Bij opstarten: wie kijkt er? ---
     function askWhoIsWatching() {
-        const entries = profiles.list.map(p => ({ label: p.name + (p.kids ? "  (kind)" : "") + (p.current ? "   ✓" : ""),
+        const entries = profiles.list.map(p => ({ label: p.name + (p.kids ? qsTr("  (kind)") : "") + (p.current ? "   ✓" : ""),
                                                   action: p.current ? "" : "profile-switch:" + p.id }))
-        menu.open("Wie kijkt er?", entries, root.menuFocus(), "Uitzetten kan in Instellingen → Meer instellingen.")
+        menu.open(qsTr("Wie kijkt er?"), entries, root.menuFocus(), qsTr("Uitzetten kan in Instellingen → Meer instellingen."))
         console.info("Who is watching:", profiles.count)
     }
 
@@ -2182,7 +2195,7 @@ Rectangle {
         let index = -1
         for (let i = 0; i < quickModel.count; ++i) if (quickModel.get(i).uri === "sleep") index = i
         if (nightActive && index < 0) {
-            quickModel.insert(1, { label: "Slaaptimer", code: 0xE708, uri: "sleep", about: "Radio, tv en films stoppen vanzelf" })
+            quickModel.insert(1, { label: qsTr("Slaaptimer"), code: 0xE708, uri: "sleep", about: qsTr("Radio, tv en films stoppen vanzelf") })
         } else if (!nightActive && index >= 0) {
             quickModel.remove(index)
         }
@@ -2205,7 +2218,7 @@ Rectangle {
         let index = -1
         for (let i = 0; i < quickModel.count; ++i) if (quickModel.get(i).uri === "profile") index = i
         if (profiles.count > 1 && index < 0) {
-            quickModel.insert(0, { label: profiles.currentName, code: 0xE77B, uri: "profile", about: "Ander profiel kiezen" })
+            quickModel.insert(0, { label: profiles.currentName, code: 0xE77B, uri: "profile", about: qsTr("Ander profiel kiezen") })
         } else if (profiles.count <= 1 && index >= 0) {
             quickModel.remove(index)
         }
@@ -2247,9 +2260,9 @@ Rectangle {
             editModel = resume
             editRow = row
             menu.open(resume.nameAt(row), [
-                { label: "Verder kijken", action: "resume-play" },
-                { label: "Uit de lijst halen", action: "resume-remove" },
-                { label: "Annuleren", action: "" }
+                { label: qsTr("Verder kijken"), action: "resume-play" },
+                { label: qsTr("Uit de lijst halen"), action: "resume-remove" },
+                { label: qsTr("Annuleren"), action: "" }
             ], resumeScreen)
         }
     }
@@ -2283,9 +2296,9 @@ Rectangle {
             anchors.centerIn: parent
             color: "white"
             font.pixelSize: root.unit * 2 * appModel.fontScale
-            text: updater.phase === "downloading" ? "⬇  Nieuwe versie " + updater.latest + " wordt op de achtergrond gedownload…"
-                : updater.phase === "ready" ? "✓  Kijkluister " + updater.latest + " wordt geïnstalleerd zodra er niets speelt"
-                : "⟳  Kijkluister " + updater.latest + " wordt geïnstalleerd en start zo opnieuw…"
+            text: updater.phase === "downloading" ? qsTr("⬇  Nieuwe versie ") + updater.latest + qsTr(" wordt op de achtergrond gedownload…")
+                : updater.phase === "ready" ? qsTr("✓  Kijkluister ") + updater.latest + qsTr(" wordt geïnstalleerd zodra er niets speelt")
+                : qsTr("⟳  Kijkluister ") + updater.latest + qsTr(" wordt geïnstalleerd en start zo opnieuw…")
         }
     }
     Timer {
@@ -2345,13 +2358,13 @@ Rectangle {
         target: updater
         function onChecked(manual) {
             if (updater.silent && updater.updateAvailable) {
-                if (manual) root.showToast("Kijkluister " + updater.latest + " wordt op de achtergrond opgehaald en geïnstalleerd", 6000)
+                if (manual) root.showToast(qsTr("Kijkluister ") + updater.latest + qsTr(" wordt op de achtergrond opgehaald en geïnstalleerd"), 6000)
             } else if (updater.shouldOffer() || (manual && updater.updateAvailable)) {
-                menu.open("Kijkluister " + updater.latest + " is er", [
-                    { label: "Nu bijwerken", action: "update-install" },
-                    { label: "Later", action: "update-later" }
+                menu.open(qsTr("Kijkluister ") + updater.latest + qsTr(" is er"), [
+                    { label: qsTr("Nu bijwerken"), action: "update-install" },
+                    { label: qsTr("Later"), action: "update-later" }
                 ], root.currentSection ? root.currentSection.grid : quickRow,
-                   "Je hebt nu " + updater.current + ". Bijwerken duurt ongeveer een minuut; daarna start Kijkluister vanzelf weer.")
+                   qsTr("Je hebt nu ") + updater.current + qsTr(". Bijwerken duurt ongeveer een minuut; daarna start Kijkluister vanzelf weer."))
             } else if (manual) {
                 root.showToast(updater.status, 6000)
             }
@@ -2368,7 +2381,7 @@ Rectangle {
     Connections {
         target: cec
         function onChanged() {
-            if (cec.connected) root.showToast("📺 Tv-afstandsbediening verbonden", 4000)
+            if (cec.connected) root.showToast(qsTr("📺 Tv-afstandsbediening verbonden"), 4000)
         }
     }
     // Test: volgende zender zodra deze speelt of echt niet lukt (reserve-adressen krijgen de tijd)

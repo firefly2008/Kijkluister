@@ -45,7 +45,7 @@ FocusScope {
         id: title
         x: screen.unit * 5
         y: screen.unit * 4
-        text: "Verder kijken"
+        text: qsTr("Verder kijken")
         color: "white"
         font.pixelSize: screen.unit * 4.5 * appModel.fontScale
         font.weight: Font.DemiBold
@@ -56,7 +56,7 @@ FocusScope {
         anchors.top: title.bottom
         anchors.topMargin: screen.unit * 3
         visible: resume.count === 0
-        text: "Nog niets om verder te kijken."
+        text: qsTr("Nog niets om verder te kijken.")
         color: "#a8acb3"
         font.pixelSize: screen.unit * 2.8 * appModel.fontScale
     }
@@ -88,7 +88,9 @@ FocusScope {
             readonly property bool selected: grid.activeFocus && grid.currentIndex === index
             readonly property string sub: resume.subtitleAt(index + resume.revision * 0)
             // "S02E01 · Aflevering 1 · nog 41 min" → resterende tijd op een eigen regel
-            readonly property int split: sub.lastIndexOf(" · nog ")
+            // Laatste deel met de resterende tijd ("nog 3 min" / "3 min left") op een eigen regel
+            readonly property var parts: sub.match(/^(.*?)\s+·\s+([^·]*\bmin\b[^·]*)$/)
+            readonly property int split: parts ? 1 : -1
             z: selected ? 2 : 0
 
             Rectangle {
@@ -135,7 +137,7 @@ FocusScope {
                     }
                     Text {
                         width: parent.width
-                        text: cell.split >= 0 ? cell.sub.slice(0, cell.split) : cell.sub
+                        text: cell.parts ? cell.parts[1] : cell.sub
                         color: "#d4d7dc"
                         elide: Text.ElideRight
                         font.pixelSize: screen.unit * 1.8 * appModel.fontScale
@@ -143,7 +145,7 @@ FocusScope {
                     Text {
                         width: parent.width
                         visible: cell.split >= 0
-                        text: cell.split >= 0 ? cell.sub.slice(cell.split + 3) : ""
+                        text: cell.parts ? cell.parts[2] : ""
                         color: "#a8acb3"
                         font.pixelSize: screen.unit * 1.7 * appModel.fontScale
                     }
@@ -212,7 +214,7 @@ FocusScope {
         anchors.bottom: parent.bottom
         anchors.bottomMargin: screen.unit * 3
         unit: screen.unit
-        items: [{ pad: "A", key: "Enter", label: "Verder kijken" }, { pad: "X", key: "Menu", label: "Uit de lijst" },
-                { pad: "B", key: "Esc", label: "Terug" }]
+        items: [{ pad: "A", key: qsTr("Enter"), label: qsTr("Verder kijken") }, { pad: "X", key: qsTr("Menu"), label: qsTr("Uit de lijst") },
+                { pad: "B", key: qsTr("Esc"), label: qsTr("Terug") }]
     }
 }

@@ -18,6 +18,9 @@
 #include <QDir>
 #include <QGuiApplication>
 #include <QIcon>
+#include <QLocale>
+#include <QSettings>
+#include <QTranslator>
 #include <QQuickView>
 #include <QQuickWindow>
 #include <QScreen>
@@ -222,6 +225,21 @@ int main(int argc, char *argv[])
     QGuiApplication::setWindowIcon(QIcon(QStringLiteral(":/assets/kijkluister-256.png")));
     QGuiApplication::setOrganizationName(QStringLiteral("KDE"));
 
+    // Taal: Nederlands (standaard) of Engels (Instellingen → Meer instellingen → Taal / Language)
+    // (BIGSCREEN_LANGUAGE: voor de rooktest)
+    const QString uiLanguage = qEnvironmentVariableIsSet("BIGSCREEN_LANGUAGE")
+                                   ? qEnvironmentVariable("BIGSCREEN_LANGUAGE")
+                                   : QSettings(appSettingsFile(), QSettings::IniFormat)
+                                         .value(QStringLiteral("global/language"), QStringLiteral("nl")).toString();
+    static QTranslator translator;
+    if (uiLanguage == QLatin1String("en") && translator.load(QStringLiteral(":/i18n/kijkluister_en.qm"))) {
+        QCoreApplication::installTranslator(&translator);
+        qInfo() << "Translator loaded: en";
+        QLocale::setDefault(QLocale(QLocale::English, QLocale::UnitedKingdom));
+    } else {
+        QLocale::setDefault(QLocale(QLocale::Dutch, QLocale::Netherlands));
+    }
+
     qInfo() << "QGuiApplication created; platform" << QGuiApplication::platformName();
 
     QCommandLineParser parser;
@@ -234,6 +252,10 @@ int main(int argc, char *argv[])
         QStringLiteral("index"),
         QStringLiteral("-1"));
     parser.addOption(screenOption);
+    // Gebruikt door "Starten met Windows" en het wisselen van profiel (zonder deze stopte Kijkluister met
+    // "Unknown option" in 4.4.0)
+    parser.addOption(QCommandLineOption(QStringLiteral("autostart"), QStringLiteral("Gestart door Windows bij het aanmelden.")));
+    parser.addOption(QCommandLineOption(QStringLiteral("profile-chosen"), QStringLiteral("Profiel is al gekozen; niet opnieuw vragen.")));
     parser.process(app);
 
     // Gamepad-navigatie (SDL3) en de lijst met toepassingen voor de startpagina
@@ -308,6 +330,7 @@ int main(int argc, char *argv[])
     view.engine()->setNetworkAccessManagerFactory(new CachingNetworkFactory(appDataDir() + QStringLiteral("/imagecache")));
     view.rootContext()->setContextProperty(QStringLiteral("gamepad"), &gamepad);
     // Alleen voor de geautomatiseerde test: opent bij het starten een menu
+    view.rootContext()->setContextProperty(QStringLiteral("uiLanguage"), uiLanguage == QLatin1String("en") ? QStringLiteral("en") : QStringLiteral("nl"));
     view.rootContext()->setContextProperty(QStringLiteral("selfTest"), qEnvironmentVariable("BIGSCREEN_SELFTEST"));
     view.rootContext()->setContextProperty(QStringLiteral("selfTestM3u"), qEnvironmentVariable("BIGSCREEN_TEST_M3U"));
     view.rootContext()->setContextProperty(QStringLiteral("selfTestRecordDir"), qEnvironmentVariable("BIGSCREEN_TEST_RECORD_DIR"));

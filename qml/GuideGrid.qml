@@ -101,8 +101,8 @@ FocusScope {
         if (!p || !ch || p.startSecs <= nowSecs()) return
         iptv.toggleReminder(ch.name, ch.url, ch.logo, p.title, p.startSecs)
         revision++
-        toastText.text = iptv.isReminder(ch.url, p.startSecs) ? "🔔 Herinnering: " + p.title + " om " + p.start
-                                                               : "Herinnering weg: " + p.title
+        toastText.text = iptv.isReminder(ch.url, p.startSecs) ? qsTr("🔔 Herinnering: ") + p.title + qsTr(" om ") + p.start
+                                                               : qsTr("Herinnering weg: ") + p.title
         toastTimer.restart()
     }
     function record() {
@@ -110,7 +110,7 @@ FocusScope {
         if (!p || !ch) return
         recorder.toggleSchedule(ch.name, ch.url, p.title, p.startSecs, p.stopSecs)
         revision++
-        toastText.text = recorder.isScheduled(ch.url, p.startSecs) ? "● Wordt opgenomen: " + p.title : "Opname geannuleerd: " + p.title
+        toastText.text = recorder.isScheduled(ch.url, p.startSecs) ? qsTr("● Wordt opgenomen: ") + p.title : qsTr("Opname geannuleerd: ") + p.title
         toastTimer.restart()
     }
 
@@ -140,7 +140,7 @@ FocusScope {
         width: parent.width - x * 2
         spacing: gg.unit * 0.8
         Text {
-            text: "Gids  ·  " + (iptv.group || "Alle zenders")
+            text: qsTr("Gids  ·  ") + qsTr(iptv.group || "Alle zenders")
             color: "#a8acb3"
             font.pixelSize: gg.unit * 2.2 * appModel.fontScale
         }
@@ -158,9 +158,9 @@ FocusScope {
             color: "#ffb74d"
             font.pixelSize: gg.unit * 2.2 * appModel.fontScale
             text: gg.selected ? gg.selected.start + " – " + gg.selected.stop + "  ·  " + (gg.selectedChannel ? gg.selectedChannel.name : "")
-                                + (gg.revision >= 0 && gg.selectedChannel && recorder.isScheduled(gg.selectedChannel.url, gg.selected.startSecs) ? "  ·  ● opname gepland" : "")
-                                + (gg.revision >= 0 && gg.selectedChannel && iptv.isReminder(gg.selectedChannel.url, gg.selected.startSecs) ? "  ·  🔔 herinnering" : "")
-                              : "Geen gidsinformatie"
+                                + (gg.revision >= 0 && gg.selectedChannel && recorder.isScheduled(gg.selectedChannel.url, gg.selected.startSecs) ? qsTr("  ·  ● opname gepland") : "")
+                                + (gg.revision >= 0 && gg.selectedChannel && iptv.isReminder(gg.selectedChannel.url, gg.selected.startSecs) ? qsTr("  ·  🔔 herinnering") : "")
+                              : qsTr("Geen gidsinformatie")
         }
         Text {
             width: parent.width
@@ -193,7 +193,7 @@ FocusScope {
                 x: index * gg.timelineWidth / 6
                 color: "#a8acb3"
                 font.pixelSize: gg.unit * 2 * appModel.fontScale
-                text: { const d = new Date((gg.windowStart + index * 1800) * 1000); return Qt.formatTime(d, "HH:mm") }
+                text: { const d = new Date((gg.windowStart + index * 1800) * 1000); return Qt.formatTime(d, qsTr("HH:mm")) }
             }
         }
     }
@@ -262,7 +262,7 @@ FocusScope {
                             x: gg.unit * 1.2
                             color: rowItem.current ? "#111318" : "#80848b"
                             font.pixelSize: gg.unit * 2 * appModel.fontScale
-                            text: "Geen gidsinformatie"
+                            text: qsTr("Geen gidsinformatie")
                         }
                     }
                     Repeater {
@@ -318,8 +318,8 @@ FocusScope {
         anchors.bottom: parent.bottom
         anchors.bottomMargin: gg.unit * 2.5
         unit: gg.unit
-        items: [{ pad: "✛", key: "↑ ↓ ← →", label: "Kiezen" }, { pad: "A", key: "Enter", label: "Kijken / herinneren" },
-                { pad: "RB", key: "R", label: "Opnemen" }, { pad: "", key: "H", label: "Herinnering" }, { pad: "B", key: "Esc", label: "Terug" }]
+        items: [{ pad: "✛", key: "↑ ↓ ← →", label: qsTr("Kiezen") }, { pad: "A", key: qsTr("Enter"), label: qsTr("Kijken / herinneren") },
+                { pad: qsTr("RB"), key: "R", label: qsTr("Opnemen") }, { pad: "", key: "H", label: qsTr("Herinnering") }, { pad: "B", key: qsTr("Esc"), label: qsTr("Terug") }]
     }
 
     Rectangle {

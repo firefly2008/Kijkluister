@@ -91,7 +91,7 @@ FocusScope {
     }
 
     function play(path) {
-        message.text = library.play(path) ? "Afspelen…" : "Bestand niet gevonden"
+        message.text = library.play(path) ? qsTr("Afspelen…") : qsTr("Bestand niet gevonden")
         messageTimer.restart()
     }
 
@@ -102,7 +102,7 @@ FocusScope {
         for (let i = Math.max(0, index); i < eps.length; ++i) {
             paths.push(eps[i].path)
         }
-        message.text = paths.length > 0 && library.playEpisodes(paths) ? "Afspelen…" : "Bestand niet gevonden"
+        message.text = paths.length > 0 && library.playEpisodes(paths) ? qsTr("Afspelen…") : qsTr("Bestand niet gevonden")
         messageTimer.restart()
     }
 
@@ -130,7 +130,7 @@ FocusScope {
             parts.push(formatRuntime(item.runtime))
         }
         if (item.kind === "show" && item.episodes) {
-            parts.push(item.episodes.length + (item.episodes.length === 1 ? " aflevering" : " afleveringen"))
+            parts.push(item.episodes.length + (item.episodes.length === 1 ? qsTr(" aflevering") : qsTr(" afleveringen")))
         }
         if (item.genres) {
             parts.push(item.genres)
@@ -236,7 +236,7 @@ FocusScope {
                 color: "white"
                 font.pixelSize: (lib.unit * 3.6) * appModel.fontScale
                 font.weight: Font.DemiBold
-                text: "Bibliotheek"
+                text: qsTr("Bibliotheek")
             }
 
             ListView {
@@ -251,11 +251,11 @@ FocusScope {
                 interactive: false
                 keyNavigationEnabled: true
                 model: [
-                    { label: "Films", glyph: "", action: "movies" },
-                    { label: "Series", glyph: "", action: "shows" },
-                    { label: "Bijwerken", glyph: "", action: "scan" },
-                    { label: "Mappen kiezen", glyph: "", action: "setup" },
-                    { label: "Terug", glyph: "", action: "back" }
+                    { label: qsTr("Films"), glyph: "", action: "movies" },
+                    { label: qsTr("Series"), glyph: "", action: "shows" },
+                    { label: qsTr("Bijwerken"), glyph: "", action: "scan" },
+                    { label: qsTr("Mappen kiezen"), glyph: "", action: "setup" },
+                    { label: qsTr("Terug"), glyph: "", action: "back" }
                 ]
 
                 function trigger(index) {
@@ -326,7 +326,7 @@ FocusScope {
                 wrapMode: Text.Wrap
                 color: "#6f737a"
                 font.pixelSize: (lib.unit * 1.6) * appModel.fontScale
-                text: "Gegevens: TMDB en TVmaze. Dit product gebruikt de TMDB API, maar is niet door TMDB goedgekeurd of gecertificeerd."
+                text: qsTr("Gegevens: TMDB en TVmaze. Dit product gebruikt de TMDB API, maar is niet door TMDB goedgekeurd of gecertificeerd.")
             }
         }
 
@@ -386,7 +386,7 @@ FocusScope {
             color: "white"
             font.pixelSize: (lib.unit * 2.8) * appModel.fontScale
             font.weight: Font.DemiBold
-            text: lib.section === "movies" ? "Films" : "Series"
+            text: lib.section === "movies" ? qsTr("Films") : qsTr("Series")
         }
 
         // --- Posters ---
@@ -453,10 +453,10 @@ FocusScope {
                 visible: lib.items.length === 0
                 color: "#9fb4d0"
                 font.pixelSize: (lib.unit * 2.6) * appModel.fontScale
-                text: library.busy ? "Bezig met zoeken…"
+                text: library.busy ? qsTr("Bezig met zoeken…")
                       : lib.section === "movies"
-                        ? (library.moviesFolder !== "" ? "Geen films gevonden in " + library.moviesFolders.join(", ") : "Nog geen map met films gekozen: kies \"Mappen kiezen\"")
-                        : (library.showsFolder !== "" ? "Geen series gevonden in " + library.showsFolders.join(", ") : "Nog geen map met series gekozen: kies \"Mappen kiezen\"")
+                        ? (library.moviesFolder !== "" ? qsTr("Geen films gevonden in ") + library.moviesFolders.join(", ") : qsTr("Nog geen map met films gekozen: kies \"Mappen kiezen\""))
+                        : (library.showsFolder !== "" ? qsTr("Geen series gevonden in ") + library.showsFolders.join(", ") : qsTr("Nog geen map met series gekozen: kies \"Mappen kiezen\""))
             }
         }
     }
@@ -539,7 +539,7 @@ FocusScope {
                 color: "#e8eaed"
                 font.pixelSize: (lib.unit * 2.3) * appModel.fontScale
                 lineHeight: 1.15
-                text: lib.detail ? (lib.detail.overview || "Geen beschrijving gevonden.") : ""
+                text: lib.detail ? (lib.detail.overview || qsTr("Geen beschrijving gevonden.")) : ""
             }
             Item { width: 1; height: lib.unit * 0.5 }
             Row {
@@ -547,7 +547,7 @@ FocusScope {
                 FocusButton {
                     id: playButton
                     unit: lib.unit
-                    text: lib.detail && lib.detail.kind === "show" ? "Eerste aflevering afspelen" : "Afspelen"
+                    text: lib.detail && lib.detail.kind === "show" ? qsTr("Eerste aflevering afspelen") : qsTr("Afspelen")
                     onClicked: {
                         if (!lib.detail) {
                             return
@@ -566,7 +566,7 @@ FocusScope {
                 FocusButton {
                     id: backButton
                     unit: lib.unit
-                    text: "Terug"
+                    text: qsTr("Terug")
                     onClicked: lib.hideDetail()
                     KeyNavigation.left: playButton
                     KeyNavigation.down: episodeList.visible ? episodeList : null
@@ -615,7 +615,7 @@ FocusScope {
                         elide: Text.ElideRight
                         color: episodeRow.focused ? "#111318" : "white"
                         font.pixelSize: (lib.unit * 2.2) * appModel.fontScale
-                        text: episodeRow.modelData.title || "Aflevering " + episodeRow.modelData.episode
+                        text: episodeRow.modelData.title || qsTr("Aflevering ") + episodeRow.modelData.episode
                     }
                 }
                 MouseArea {
@@ -649,7 +649,7 @@ FocusScope {
             color: "white"
             font.pixelSize: (lib.unit * 2.6) * appModel.fontScale
             font.weight: Font.DemiBold
-            text: "Cast"
+            text: qsTr("Cast")
         }
         ListView {
             id: castList

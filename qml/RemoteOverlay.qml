@@ -54,7 +54,7 @@ FocusScope {
                 wrapMode: Text.Wrap
                 color: "#a8acb3"
                 font.pixelSize: ro.unit * 2.4 * appModel.fontScale
-                text: "Zet de afstandsbediening aan; dan verschijnt hier een QR-code."
+                text: qsTr("Zet de afstandsbediening aan; dan verschijnt hier een QR-code.")
             }
         }
 
@@ -66,7 +66,7 @@ FocusScope {
                 color: "white"
                 font.pixelSize: ro.unit * 4.5 * appModel.fontScale
                 font.weight: Font.DemiBold
-                text: "Telefoon als afstandsbediening"
+                text: qsTr("Telefoon als afstandsbediening")
             }
             Text {
                 width: parent.width
@@ -75,8 +75,8 @@ FocusScope {
                 lineHeight: 1.25
                 font.pixelSize: ro.unit * 2.4 * appModel.fontScale
                 text: remote.listening
-                      ? "1. Zorg dat je telefoon op hetzelfde wifi-netwerk zit.\n2. Scan de QR-code met de camera van je telefoon.\n3. Bedien Kijkluister met de pijltjes, OK, Terug en Home, en typ met het toetsenbord van je telefoon.\n\nTip: zet de pagina op je beginscherm (Delen → Zet op beginscherm)."
-                      : "Bedien Kijkluister met je telefoon: pijltjes, OK, Terug, Home, volume en typen. Werkt alleen op je eigen wifi en alleen met de code."
+                      ? qsTr("1. Zorg dat je telefoon op hetzelfde wifi-netwerk zit.\n2. Scan de QR-code met de camera van je telefoon.\n3. Bedien Kijkluister met de pijltjes, OK, Terug en Home, en typ met het toetsenbord van je telefoon.\n\nTip: zet de pagina op je beginscherm (Delen → Zet op beginscherm).")
+                      : qsTr("Bedien Kijkluister met je telefoon: pijltjes, OK, Terug, Home, volume en typen. Werkt alleen op je eigen wifi en alleen met de code.")
             }
             Column {
                 visible: remote.listening
@@ -84,7 +84,7 @@ FocusScope {
                 Text {
                     color: "#a8acb3"
                     font.pixelSize: ro.unit * 2 * appModel.fontScale
-                    text: "Of typ dit adres in de browser van je telefoon:"
+                    text: qsTr("Of typ dit adres in de browser van je telefoon:")
                 }
                 Text {
                     color: "#ffb74d"
@@ -95,8 +95,8 @@ FocusScope {
                 Text {
                     color: "#a8acb3"
                     font.pixelSize: ro.unit * 2 * appModel.fontScale
-                    text: remote.clients > 0 ? "📱 Verbonden met " + remote.clients + (remote.clients === 1 ? " telefoon" : " telefoons")
-                                             : "Nog geen telefoon verbonden"
+                    text: remote.clients > 0 ? qsTr("📱 Verbonden met ") + remote.clients + (remote.clients === 1 ? qsTr(" telefoon") : qsTr(" telefoons"))
+                                             : qsTr("Nog geen telefoon verbonden")
                 }
             }
             Row {
@@ -104,7 +104,7 @@ FocusScope {
                 FocusButton {
                     id: toggleButton
                     unit: ro.unit
-                    text: remote.enabled ? "Uitzetten" : "Aanzetten"
+                    text: remote.enabled ? qsTr("Uitzetten") : qsTr("Aanzetten")
                     onClicked: remote.enabled = !remote.enabled
                     KeyNavigation.right: codeButton.visible ? codeButton : closeButton
                 }
@@ -112,7 +112,7 @@ FocusScope {
                     id: codeButton
                     visible: remote.listening
                     unit: ro.unit
-                    text: "Nieuwe code"
+                    text: qsTr("Nieuwe code")
                     onClicked: remote.newCode()
                     KeyNavigation.left: toggleButton
                     KeyNavigation.right: closeButton
@@ -120,7 +120,7 @@ FocusScope {
                 FocusButton {
                     id: closeButton
                     unit: ro.unit
-                    text: "Sluiten"
+                    text: qsTr("Sluiten")
                     onClicked: ro.close()
                     KeyNavigation.left: codeButton.visible ? codeButton : toggleButton
                 }
@@ -131,7 +131,7 @@ FocusScope {
                 wrapMode: Text.Wrap
                 color: "#80848b"
                 font.pixelSize: ro.unit * 1.8 * appModel.fontScale
-                text: "Nieuwe code: telefoons die eerder verbonden waren werken dan niet meer tot je opnieuw scant."
+                text: qsTr("Nieuwe code: telefoons die eerder verbonden waren werken dan niet meer tot je opnieuw scant.")
             }
         }
     }

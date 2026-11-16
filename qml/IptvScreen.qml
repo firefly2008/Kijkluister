@@ -118,7 +118,7 @@ FocusScope {
     property string previousUrl: ""
     function previousChannel() {
         if (previousUrl === "") {
-            toast("Nog geen vorige zender")
+            toast(qsTr("Nog geen vorige zender"))
             return
         }
         let row = iptv.rowOf(previousUrl)
@@ -267,7 +267,7 @@ FocusScope {
         }
         const name = iptv.channelAt(row).name
         iptv.toggleFavorite(row)
-        toast(iptv.isFavorite(row) ? name + " toegevoegd aan Favorieten" : name + " uit Favorieten gehaald")
+        toast(iptv.isFavorite(row) ? name + qsTr(" toegevoegd aan Favorieten") : name + qsTr(" uit Favorieten gehaald"))
     }
 
     Keys.onEscapePressed: close()
@@ -314,7 +314,7 @@ FocusScope {
                 color: "white"
                 font.pixelSize: (tv.unit * 3.6) * appModel.fontScale
                 font.weight: Font.DemiBold
-                text: "Live tv"
+                text: qsTr("Live tv")
             }
 
             // Zoeken
@@ -369,7 +369,7 @@ FocusScope {
                         visible: searchField.text === "" && !searchField.activeFocus
                         color: "#a8acb3"
                         font.pixelSize: (tv.unit * 2.3) * appModel.fontScale
-                        text: "Zender zoeken"
+                        text: qsTr("Zender zoeken")
                     }
                 }
                 Timer {
@@ -415,7 +415,7 @@ FocusScope {
                         color: groupRow.focused ? "#111318" : "white"
                         font.pixelSize: (tv.unit * 2.3) * appModel.fontScale
                         font.weight: groupRow.chosen ? Font.DemiBold : Font.Normal
-                        text: (groupRow.index === 0 ? "★  " : "") + groupRow.modelData
+                        text: (groupRow.index === 0 ? "★  " : "") + qsTr(groupRow.modelData)
                     }
                     MouseArea {
                         anchors.fill: parent
@@ -457,7 +457,7 @@ FocusScope {
             FocusButton {
                 id: gridButton
                 unit: tv.unit
-                text: "Gids"
+                text: qsTr("Gids")
                 onClicked: tv.openGrid()
                 KeyNavigation.right: recordingsButton
                 KeyNavigation.down: grid
@@ -465,7 +465,7 @@ FocusScope {
             FocusButton {
                 id: recordingsButton
                 unit: tv.unit
-                text: recorder.recording ? "●  Opnames" : "Opnames"
+                text: recorder.recording ? qsTr("●  Opnames") : qsTr("Opnames")
                 onClicked: recordPanel.open(iptv.channelAt(Math.max(0, grid.currentIndex)), recordingsButton)
                 KeyNavigation.left: gridButton
                 KeyNavigation.right: sourcesButton
@@ -474,7 +474,7 @@ FocusScope {
             FocusButton {
                 id: sourcesButton
                 unit: tv.unit
-                text: "Bronnen"
+                text: qsTr("Bronnen")
                 onClicked: sources.open()
                 KeyNavigation.left: recordingsButton
                 KeyNavigation.right: reloadButton
@@ -483,7 +483,7 @@ FocusScope {
             FocusButton {
                 id: reloadButton
                 unit: tv.unit
-                text: "Vernieuwen"
+                text: qsTr("Vernieuwen")
                 onClicked: iptv.reload()
                 KeyNavigation.left: sourcesButton
                 KeyNavigation.right: backButton
@@ -492,7 +492,7 @@ FocusScope {
             FocusButton {
                 id: backButton
                 unit: tv.unit
-                text: "Terug"
+                text: qsTr("Terug")
                 onClicked: tv.close()
                 KeyNavigation.left: reloadButton
                 KeyNavigation.down: grid
@@ -509,7 +509,7 @@ FocusScope {
             color: "white"
             font.pixelSize: (tv.unit * 3.4) * appModel.fontScale
             font.weight: Font.DemiBold
-            text: iptv.search !== "" ? "Zoeken: " + iptv.search : iptv.group
+            text: iptv.search !== "" ? qsTr("Zoeken: ") + iptv.search : qsTr(iptv.group)
         }
         Text {
             id: statusLine
@@ -520,8 +520,8 @@ FocusScope {
             elide: Text.ElideRight
             color: "#9fb4d0"
             font.pixelSize: (tv.unit * 2) * appModel.fontScale
-            text: iptv.status + (iptv.count > 0 ? "  ·  " + iptv.count + " zenders" : "")
-                  + (gamepad.connectedCount > 0 ? "  ·  Ⓧ favoriet  ·  Ⓨ tv-gids  ·  RB opnemen" : "  ·  F2 of rechtermuisknop: favoriet  ·  I: tv-gids  ·  G: gids alle zenders  ·  R: opnemen")
+            text: iptv.status + (iptv.count > 0 ? "  ·  " + iptv.count + qsTr(" zenders") : "")
+                  + (gamepad.connectedCount > 0 ? qsTr("  ·  Ⓧ favoriet  ·  Ⓨ tv-gids  ·  RB opnemen") : qsTr("  ·  F2 of rechtermuisknop: favoriet  ·  I: tv-gids  ·  G: gids alle zenders  ·  R: opnemen"))
         }
 
         GridView {
@@ -611,11 +611,11 @@ FocusScope {
                 visible: iptv.count === 0
                 color: "#9fb4d0"
                 font.pixelSize: (tv.unit * 2.6) * appModel.fontScale
-                text: iptv.busy ? "Zenders laden…"
-                      : iptv.sources.length === 0 ? "Nog geen bron: kies Bronnen om een M3U-lijst of Xtream-account toe te voegen"
-                      : iptv.search !== "" ? "Geen zender gevonden"
-                      : iptv.group === "Favorieten" ? "Nog geen favorieten: druk F2 of X op een zender"
-                      : "Geen zenders in deze groep"
+                text: iptv.busy ? qsTr("Zenders laden…")
+                      : iptv.sources.length === 0 ? qsTr("Nog geen bron: kies Bronnen om een M3U-lijst of Xtream-account toe te voegen")
+                      : iptv.search !== "" ? qsTr("Geen zender gevonden")
+                      : iptv.group === "Favorieten" ? qsTr("Nog geen favorieten: druk F2 of X op een zender")
+                      : qsTr("Geen zenders in deze groep")
             }
         }
     }
@@ -644,7 +644,7 @@ FocusScope {
                     audioOutput: AudioOutput {}
                     videoOutput: video
                     onErrorOccurred: (error, errorString) => {
-                        tv.errorText = errorString !== "" ? errorString : "Deze zender kan niet worden afgespeeld"
+                        tv.errorText = errorString !== "" ? errorString : qsTr("Deze zender kan niet worden afgespeeld")
                         console.warn("IPTV play error:", errorString, tv.channel.url)
                         // Meteen een uitweg aanbieden: knop "Volgende zender" krijgt focus
                         if (tv.playing) errorNext.forceActiveFocus()
@@ -675,7 +675,7 @@ FocusScope {
                 color: "white"
                 font.pixelSize: (tv.unit * 3.4) * appModel.fontScale
                 font.weight: Font.DemiBold
-                text: tv.errorText !== "" ? "Deze zender is nu niet te zien" : "Laden…"
+                text: tv.errorText !== "" ? qsTr("Deze zender is nu niet te zien") : qsTr("Laden…")
             }
             Text {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -685,7 +685,7 @@ FocusScope {
                 visible: tv.errorText !== ""
                 color: "#d5d8dc"
                 font.pixelSize: (tv.unit * 2.4) * appModel.fontScale
-                text: "Soms zendt een zender even niet uit, of is hij alleen in een ander land te zien."
+                text: qsTr("Soms zendt een zender even niet uit, of is hij alleen in een ander land te zien.")
             }
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -694,14 +694,14 @@ FocusScope {
                 FocusButton {
                     id: errorNext
                     unit: tv.unit
-                    text: "Volgende zender"
+                    text: qsTr("Volgende zender")
                     onClicked: tv.zap(1)
                     KeyNavigation.right: errorExternal
                 }
                 FocusButton {
                     id: errorExternal
                     unit: tv.unit
-                    text: "Probeer in andere speler"
+                    text: qsTr("Probeer in andere speler")
                     onClicked: if (iptv.openExternal(tv.playingRow)) tv.stop()
                     KeyNavigation.left: errorNext
                 }
@@ -711,7 +711,7 @@ FocusScope {
                 visible: tv.errorText !== ""
                 color: "#a8acb3"
                 font.pixelSize: (tv.unit * 1.7) * appModel.fontScale
-                text: "Technische melding: " + tv.errorText
+                text: qsTr("Technische melding: ") + tv.errorText
             }
         }
 
@@ -768,7 +768,7 @@ FocusScope {
                             color: "#ffb74d"
                             font.pixelSize: (tv.unit * 2.4) * appModel.fontScale
                             font.weight: Font.DemiBold
-                            text: "NU"
+                            text: qsTr("NU")
                         }
                         Text {
                             color: "white"
@@ -797,24 +797,24 @@ FocusScope {
                         font.pixelSize: (tv.unit * 2.2) * appModel.fontScale
                         elide: Text.ElideRight
                         width: Math.min(implicitWidth, tv.width * 0.6)
-                        text: "Straks  " + (tv.nowNext.nextTime || "") + "   " + (tv.nowNext.nextTitle || "")
+                        text: qsTr("Straks  ") + (tv.nowNext.nextTime || "") + "   " + (tv.nowNext.nextTitle || "")
                     }
                     Text {
                         visible: !tv.nowNext.nowTitle && !tv.nowNext.nextTitle
                         color: "#a8acb3"
                         font.pixelSize: (tv.unit * 2.2) * appModel.fontScale
-                        text: iptv.epgStatus === "Gids laden…" ? "Gids laden…" : "Geen gidsinformatie voor deze zender"
+                        text: iptv.epgStatus === qsTr("Gids laden…") ? qsTr("Gids laden…") : qsTr("Geen gidsinformatie voor deze zender")
                     }
                     HintBar {
                         unit: tv.unit * 0.85
                         items: [
-                            { pad: "✛", key: "↑ ↓", label: "Andere zender" },
-                            { pad: "A", key: "Enter", label: "Tv-gids" },
-                            { pad: "RB", key: "R", label: "Opnemen" },
-                            { pad: "X", key: "F2", label: "Favoriet" },
-                            { pad: "", key: "0", label: "Vorige zender" },
-                            { pad: "", key: "G", label: "Gids" },
-                            { pad: "B", key: "Esc", label: "Terug" }
+                            { pad: "✛", key: "↑ ↓", label: qsTr("Andere zender") },
+                            { pad: "A", key: qsTr("Enter"), label: qsTr("Tv-gids") },
+                            { pad: qsTr("RB"), key: "R", label: qsTr("Opnemen") },
+                            { pad: "X", key: "F2", label: qsTr("Favoriet") },
+                            { pad: "", key: "0", label: qsTr("Vorige zender") },
+                            { pad: "", key: "G", label: qsTr("Gids") },
+                            { pad: "B", key: qsTr("Esc"), label: qsTr("Terug") }
                         ]
                     }
                 }
@@ -948,7 +948,7 @@ FocusScope {
                 id: recText
                 color: "white"
                 font.pixelSize: (tv.unit * 2.3) * appModel.fontScale
-                text: "REC  " + recorder.channel + "  " + recordPanel.fmtTime(recorder.elapsedSeconds)
+                text: qsTr("REC  ") + recorder.channel + "  " + recordPanel.fmtTime(recorder.elapsedSeconds)
             }
             // Stopknop: wit vierkantje; muis erop = "Opname stoppen"
             Rectangle {
@@ -983,7 +983,7 @@ FocusScope {
             Text {
                 id: tipText
                 anchors.centerIn: parent
-                text: "Opname stoppen"
+                text: qsTr("Opname stoppen")
                 color: "white"
                 font.pixelSize: (tv.unit * 2) * appModel.fontScale
             }

@@ -1,6 +1,6 @@
 // Pincode invoeren (kinderslot): vier cijfers met een cijferblok voor controller en afstandsbediening.
 // Cijfertoetsen op het toetsenbord werken ook. ask(...) roept onDone(pin) aan; geeft die false terug,
-// dan blijft het venster open met de melding "Onjuiste pincode".
+// dan blijft het venster open met de melding qsTr("Onjuiste pincode").
 // SPDX-License-Identifier: GPL-2.0-or-later
 import QtQuick
 
@@ -55,7 +55,7 @@ FocusScope {
 
     function submit() {
         if (pin.length !== 4) {
-            error = "Vul vier cijfers in"
+            error = qsTr("Vul vier cijfers in")
             return
         }
         const done = onDone
@@ -71,7 +71,7 @@ FocusScope {
             returnFocusTo = focusBack
             onDone = done
             pin = ""
-            error = "Onjuiste pincode"
+            error = qsTr("Onjuiste pincode")
             visible = true
             grid.forceActiveFocus()
             shake.restart()

@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "radiomodel.h"
+
+#include <QCoreApplication>
 #include "paths.h"
 
 #include <QCryptographicHash>
@@ -472,7 +474,8 @@ QString RadioModel::subtitleAt(int row) const
     if (isAddTile(row)) {
         return tr("Zoek tussen ruim 40.000 zenders");
     }
-    return isStation(row) ? st(row).slogan : QString();
+    // Slogans staan in het Nederlands in de lijst; in het Engels via de vertaling (context RadioSlogans)
+    return isStation(row) ? QCoreApplication::translate("RadioSlogans", st(row).slogan.toUtf8().constData()) : QString();
 }
 
 QStringList RadioModel::streamsAt(int row) const

@@ -296,7 +296,18 @@ void RemoteServer::handle(QTcpSocket *socket)
     const QString code = QUrlQuery(url).queryItemValue(QStringLiteral("c"));
 
     if (method == "GET" && (path == QLatin1String("/") || path == QLatin1String("/index.html"))) {
-        respond(socket, 200, "text/html; charset=utf-8", QByteArray(page));
+        QByteArray html(page);
+        if (QSettings(appSettingsFile(), QSettings::IniFormat).value(QStringLiteral("global/language")).toString() == QLatin1String("en")) {
+            const QList<QPair<QByteArray, QByteArray>> english = {
+                {"lang=\"nl\"", "lang=\"en\""}, {"↩ Terug", "↩ Back"}, {"🔍 Zoek", "🔍 Search"},
+                {"Typen…", "Type…"}, {">Stuur<", ">Send<"},
+                {"Code klopt niet: scan de QR-code opnieuw", "Wrong code: scan the QR code again"},
+                {"Geen verbinding met Kijkluister", "No connection to Kijkluister"}};
+            for (const auto &pair : english) {
+                html.replace(pair.first, pair.second);
+            }
+        }
+        respond(socket, 200, "text/html; charset=utf-8", html);
         return;
     }
     if (method != "POST" || (path != QLatin1String("/k") && path != QLatin1String("/t"))) {

@@ -97,7 +97,7 @@ void Weather::fetch()
             const QDate date = QDate::fromString(dates.at(i).toString(), Qt::ISODate);
             const int dcode = daily.value(QStringLiteral("weather_code")).toArray().at(i).toInt();
             m_days.append(QVariantMap{
-                {QStringLiteral("day"), i == 0 ? tr("Vandaag") : i == 1 ? tr("Morgen") : QLocale(QLocale::Dutch).toString(date, QStringLiteral("dddd"))},
+                {QStringLiteral("day"), i == 0 ? tr("Vandaag") : i == 1 ? tr("Morgen") : QLocale().toString(date, QStringLiteral("dddd"))},
                 {QStringLiteral("icon"), iconFor(dcode, true)},
                 {QStringLiteral("text"), describe(dcode)},
                 {QStringLiteral("max"), qRound(daily.value(QStringLiteral("temperature_2m_max")).toArray().at(i).toDouble())},

@@ -105,7 +105,7 @@ FocusScope {
             Text {
                 color: "#9fb4d0"
                 font.pixelSize: (picker.unit * 2.3) * appModel.fontScale
-                text: "Hoeveel " + picker.unitName + "? (1 tot " + picker.maximum + ")"
+                text: qsTr("Hoeveel ") + picker.unitName + qsTr("? (1 tot ") + picker.maximum + ")"
             }
 
             Row {
@@ -142,13 +142,13 @@ FocusScope {
                 spacing: picker.unit * 1.5
                 FocusButton {
                     unit: picker.unit
-                    text: "Verplaatsen"
+                    text: qsTr("Verplaatsen")
                     checked: true
                     onClicked: picker.confirm()
                 }
                 FocusButton {
                     unit: picker.unit
-                    text: "Annuleren"
+                    text: qsTr("Annuleren")
                     onClicked: picker.close()
                 }
             }
@@ -157,8 +157,8 @@ FocusScope {
                 anchors.horizontalCenter: parent.horizontalCenter
                 color: "#a8acb3"
                 font.pixelSize: (picker.unit * 1.9) * appModel.fontScale
-                text: gamepad.connectedCount > 0 ? "◀ ▶ aantal kiezen   ·   Ⓐ verplaatsen   ·   Ⓑ annuleren"
-                                                 : "← → aantal kiezen   ·   Enter: verplaatsen   ·   Esc: annuleren"
+                text: gamepad.connectedCount > 0 ? qsTr("◀ ▶ aantal kiezen   ·   Ⓐ verplaatsen   ·   Ⓑ annuleren")
+                                                 : qsTr("← → aantal kiezen   ·   Enter: verplaatsen   ·   Esc: annuleren")
             }
         }
     }

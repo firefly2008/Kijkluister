@@ -170,8 +170,8 @@ FocusScope {
                 color: "#9a9ea6"
                 font.pixelSize: (frameScreen.unit * 1.8) * appModel.fontScale
                 text: (frameScreen.shownItem ? frameScreen.shownItem.credit : "")
-                      + (gamepad.connectedCount > 0 ? "    ·    ◀ ▶ bladeren   ·   Ⓐ instellingen   ·   Ⓑ stoppen"
-                                                    : "    ·    ← → bladeren   ·   Enter: instellingen   ·   Esc of rechtermuisknop: stoppen")
+                      + (gamepad.connectedCount > 0 ? qsTr("    ·    ◀ ▶ bladeren   ·   Ⓐ instellingen   ·   Ⓑ stoppen")
+                                                    : qsTr("    ·    ← → bladeren   ·   Enter: instellingen   ·   Esc of rechtermuisknop: stoppen"))
             }
         }
     }
@@ -182,7 +182,7 @@ FocusScope {
         visible: !frameScreen.shownItem
         color: "#b0b4bb"
         font.pixelSize: (frameScreen.unit * 3) * appModel.fontScale
-        text: frame.status !== "" ? frame.status : "Afbeeldingen zoeken…"
+        text: frame.status !== "" ? frame.status : qsTr("Afbeeldingen zoeken…")
     }
 
     MouseArea {
@@ -219,7 +219,7 @@ FocusScope {
         visible: false
         z: 10
 
-        readonly property var sourceLabels: ["Schilderijen", "Topstukken (The Met)", "Natuurfoto's", "Natuurfoto's (Unsplash)", "Afwisselend"]
+        readonly property var sourceLabels: [qsTr("Schilderijen"), qsTr("Topstukken (The Met)"), qsTr("Natuurfoto's"), qsTr("Natuurfoto's (Unsplash)"), qsTr("Afwisselend")]
         readonly property var intervals: [1, 5, 15, 30, 60]
 
         function open() {
@@ -306,9 +306,9 @@ FocusScope {
                     color: "white"
                     font.pixelSize: (frameScreen.unit * 4) * appModel.fontScale
                     font.weight: Font.DemiBold
-                    text: "Schilderij"
+                    text: qsTr("Schilderij")
                 }
-                Label { text: "Wat wil je zien?" }
+                Label { text: qsTr("Wat wil je zien?") }
                 OptionRow {
                     id: sourceRow
                     labels: settings.sourceLabels
@@ -316,28 +316,28 @@ FocusScope {
                     onPicked: (i) => frame.source = i
                     KeyNavigation.down: intervalRow
                 }
-                Label { text: "Wisselen elke" }
+                Label { text: qsTr("Wisselen elke") }
                 OptionRow {
                     id: intervalRow
-                    labels: settings.intervals.map(m => m + " min")
+                    labels: settings.intervals.map(m => m + qsTr(" min"))
                     chosen: settings.intervals.indexOf(frame.interval)
                     onPicked: (i) => frame.interval = settings.intervals[i]
                     KeyNavigation.up: sourceRow
                     KeyNavigation.down: styleRow
                 }
-                Label { text: "Weergave" }
+                Label { text: qsTr("Weergave") }
                 OptionRow {
                     id: styleRow
-                    labels: ["Schermvullend", "Als schilderij in een lijst"]
+                    labels: [qsTr("Schermvullend"), qsTr("Als schilderij in een lijst")]
                     chosen: frame.fill ? 0 : 1
                     onPicked: (i) => frame.fill = i === 0
                     KeyNavigation.up: intervalRow
                     KeyNavigation.down: infoRow
                 }
-                Label { text: "Titel en maker tonen" }
+                Label { text: qsTr("Titel en maker tonen") }
                 OptionRow {
                     id: infoRow
-                    labels: ["Bij elke nieuwe afbeelding", "Alleen als ik op een knop druk"]
+                    labels: [qsTr("Bij elke nieuwe afbeelding"), qsTr("Alleen als ik op een knop druk")]
                     chosen: frame.showInfo ? 0 : 1
                     onPicked: (i) => frame.showInfo = i === 0
                     KeyNavigation.up: styleRow
@@ -372,7 +372,7 @@ FocusScope {
                     FocusButton {
                         id: closeButton
                         unit: frameScreen.unit
-                        text: "Klaar"
+                        text: qsTr("Klaar")
                         onClicked: settings.close()
                         KeyNavigation.up: infoRow
                         KeyNavigation.right: stopButton
@@ -380,7 +380,7 @@ FocusScope {
                     FocusButton {
                         id: stopButton
                         unit: frameScreen.unit
-                        text: "Schilderij stoppen"
+                        text: qsTr("Schilderij stoppen")
                         onClicked: frameScreen.close()
                         KeyNavigation.up: infoRow
                         KeyNavigation.left: closeButton

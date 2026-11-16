@@ -8,11 +8,11 @@ FocusScope {
     id: picker
 
     property string title
-    property string placeholder: "Typ om te zoeken"
+    property string placeholder: qsTr("Typ om te zoeken")
     property var results: []
     property bool busy: false
-    property string emptyText: "Niets gevonden"
-    property string pickLabel: "Openen"
+    property string emptyText: qsTr("Niets gevonden")
+    property string pickLabel: qsTr("Openen")
     property real iconScale: 1      // foto's: grotere voorbeelden
     property bool voice: false      // microfoonknop (Windows-dicteren)
 
@@ -137,7 +137,7 @@ FocusScope {
             color: field.activeFocus ? "#e53935" : micMouse.containsMouse ? "#3d6fb4" : "#2a2f38"
             Text {
                 anchors.centerIn: parent
-                text: "\uE720"   // microfoon
+                text: qsTr("\uE720")   // microfoon
                 font.family: "Segoe MDL2 Assets"
                 font.pixelSize: picker.unit * 2.6
                 color: "white"
@@ -215,7 +215,7 @@ FocusScope {
         visible: list.count === 0
         color: "#a8acb3"
         font.pixelSize: picker.unit * 2.8 * appModel.fontScale
-        text: picker.busy ? "Zoeken…" : field.text.trim().length < 2 ? "Typ minstens twee letters." : picker.emptyText
+        text: picker.busy ? qsTr("Zoeken…") : field.text.trim().length < 2 ? qsTr("Typ minstens twee letters.") : picker.emptyText
     }
 
     ListView {
@@ -358,8 +358,8 @@ FocusScope {
         anchors.bottomMargin: picker.unit * 3
         unit: picker.unit
         items: list.activeFocus
-               ? [{ pad: "A", key: "Enter", label: picker.pickLabel }, { pad: "◀", key: "◀", label: "Toetsenbord" }, { pad: "B", key: "Esc", label: "Terug" }]
-               : [{ pad: "A", key: "Typen", label: "Letter kiezen" }, { pad: "▶", key: "▶", label: "Naar de resultaten" }, { pad: "OK", key: "OK", label: "Bevestigen" }]
-                 .concat(picker.voice ? [{ pad: "Y", key: "F4", label: "Spreken" }] : []).concat([{ pad: "B", key: "Esc", label: "Terug" }])
+               ? [{ pad: "A", key: qsTr("Enter"), label: picker.pickLabel }, { pad: "◀", key: "◀", label: qsTr("Toetsenbord") }, { pad: "B", key: qsTr("Esc"), label: qsTr("Terug") }]
+               : [{ pad: "A", key: qsTr("Typen"), label: qsTr("Letter kiezen") }, { pad: "▶", key: "▶", label: qsTr("Naar de resultaten") }, { pad: qsTr("OK"), key: qsTr("OK"), label: qsTr("Bevestigen") }]
+                 .concat(picker.voice ? [{ pad: "Y", key: "F4", label: qsTr("Spreken") }] : []).concat([{ pad: "B", key: qsTr("Esc"), label: qsTr("Terug") }])
     }
 }

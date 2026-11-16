@@ -1062,7 +1062,7 @@ QVariantList IptvModel::guide(int row) const
         const QDateTime start = QDateTime::fromSecsSinceEpoch(p.start).toLocalTime();
         const QDateTime stop = QDateTime::fromSecsSinceEpoch(p.stop).toLocalTime();
         const qint64 days = today.daysTo(start.date());
-        QString day = days == 0 ? tr("Vandaag") : days == 1 ? tr("Morgen") : QLocale(QLocale::Dutch).toString(start.date(), QStringLiteral("dddd d MMMM"));
+        QString day = days == 0 ? tr("Vandaag") : days == 1 ? tr("Morgen") : QLocale().toString(start.date(), QStringLiteral("dddd d MMMM"));
         result.append(QVariantMap{
             {QStringLiteral("title"), p.title},
             {QStringLiteral("description"), p.description},
@@ -1227,7 +1227,7 @@ QVariantList IptvModel::searchAll(const QString &query, int limit) const
                 const QDateTime start = QDateTime::fromSecsSinceEpoch(p.start).toLocalTime();
                 const qint64 days = QDate::currentDate().daysTo(start.date());
                 const QString day = p.start <= now ? tr("Nu") : days == 0 ? tr("Vandaag") : days == 1 ? tr("Morgen")
-                                  : QLocale(QLocale::Dutch).toString(start.date(), QStringLiteral("dddd"));
+                                  : QLocale().toString(start.date(), QStringLiteral("dddd"));
                 programmes.append(QVariantMap{{QStringLiteral("kind"), QStringLiteral("programme")}, {QStringLiteral("name"), p.title},
                                               {QStringLiteral("detail"), QStringLiteral("%1 · %2 %3").arg(c.name, day, start.toString(QStringLiteral("HH:mm")))},
                                               {QStringLiteral("icon"), c.logo}, {QStringLiteral("url"), c.url},

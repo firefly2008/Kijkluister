@@ -70,13 +70,13 @@ FocusScope {
             Text {
                 color: "white"
                 font.pixelSize: (panel.unit * 3.4) * appModel.fontScale
-                text: "Tegel toevoegen"
+                text: qsTr("Tegel toevoegen")
             }
 
             Text {
                 color: "#9fb4d0"
                 font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
-                text: "Naam"
+                text: qsTr("Naam")
             }
             Rectangle {
                 width: parent.width
@@ -103,7 +103,7 @@ FocusScope {
             Text {
                 color: "#9fb4d0"
                 font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
-                text: "Webadres (bijv. netflix.com) of pad naar een programma"
+                text: qsTr("Webadres (bijv. netflix.com) of pad naar een programma")
             }
             Rectangle {
                 width: parent.width
@@ -137,7 +137,7 @@ FocusScope {
                 spacing: panel.unit * 1.5
                 interactive: false
                 keyNavigationEnabled: true
-                model: ["Toevoegen", "Programma zoeken…", "Annuleren"]
+                model: [qsTr("Toevoegen"), qsTr("Programma zoeken…"), qsTr("Annuleren")]
                 KeyNavigation.up: targetField
                 KeyNavigation.backtab: targetField
 

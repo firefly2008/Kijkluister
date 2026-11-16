@@ -391,10 +391,10 @@ void AppModel::refresh()
     // toegevoegd. (Versie 3.0-3.5 had hier ook Muziek, Video's, Afbeeldingen en
     // MPC-HC; tot en met versie 2 alle programma's uit het Startmenu.)
     QList<App> apps = {
-        {QStringLiteral("Films & Series"), QStringLiteral("bigscreen:movies"), false},
-        {QStringLiteral("Live tv"), QStringLiteral("bigscreen:iptv"), false},
-        {QStringLiteral("Regionale tv"), QStringLiteral("bigscreen:regional"), false},
-        {QStringLiteral("Schilderij"), QStringLiteral("bigscreen:frame"), false},
+        {tr("Films & Series"), QStringLiteral("bigscreen:movies"), false},
+        {tr("Live tv"), QStringLiteral("bigscreen:iptv"), false},
+        {tr("Regionale tv"), QStringLiteral("bigscreen:regional"), false},
+        {tr("Schilderij"), QStringLiteral("bigscreen:frame"), false},
     };
     // Verder kijken: tegel naast Schilderij zolang er iets verder te kijken is
     if (m_resumeCount > 0) {

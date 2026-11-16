@@ -86,9 +86,9 @@ FocusScope {
         }
         iptv.toggleReminder(channel.name, channel.url, channel.logo || "", p.title, p.startSecs)
         const on = iptv.isReminder(channel.url, p.startSecs)
-        recordToastTitle.text = on ? "🔔 Herinnering: " + p.title : "Herinnering weg: " + p.title
+        recordToastTitle.text = on ? qsTr("🔔 Herinnering: ") + p.title : qsTr("Herinnering weg: ") + p.title
         recordToastText.text = on ? p.day.toLowerCase() + " " + p.start + " · " + channel.name
-                                    + "\nTwee minuten van tevoren krijg je een melding, ook als je iets anders kijkt." : ""
+                                    + qsTr("\nTwee minuten van tevoren krijg je een melding, ook als je iets anders kijkt.") : ""
         recordToastTimer.restart()
     }
     function toggleSeries(index) {
@@ -98,8 +98,8 @@ FocusScope {
         }
         iptv.toggleSeries(channel.name, channel.url, p.title)
         const on = iptv.isSeries(channel.url, p.title)
-        recordToastTitle.text = on ? "● Serie wordt opgenomen: " + p.title : "Serie-opname gestopt: " + p.title
-        recordToastText.text = on ? "Elke uitzending van \u201c" + p.title + "\u201d op " + channel.name + " wordt opgenomen.\nLaat Kijkluister aan staan." : ""
+        recordToastTitle.text = on ? qsTr("● Serie wordt opgenomen: ") + p.title : qsTr("Serie-opname gestopt: ") + p.title
+        recordToastText.text = on ? qsTr("Elke uitzending van \u201c") + p.title + qsTr("\u201d op ") + channel.name + qsTr(" wordt opgenomen.\nLaat Kijkluister aan staan.") : ""
         recordToastTimer.restart()
     }
 
@@ -119,9 +119,9 @@ FocusScope {
         }
         const was = isPlanned(p)
         recorder.toggleSchedule(channel.name, channel.url, p.title, p.startSecs, p.stopSecs)
-        recordToastTitle.text = was ? "Opname geannuleerd: " + p.title : "Wordt opgenomen: " + p.title
+        recordToastTitle.text = was ? qsTr("Opname geannuleerd: ") + p.title : qsTr("Wordt opgenomen: ") + p.title
         recordToastText.text = was ? "" : p.day.toLowerCase() + " " + p.start + " – " + p.stop + " · " + channel.name
-                                         + "\nLaat Kijkluister aan staan. Je vindt de opname straks bij Live tv → Opnemen."
+                                         + qsTr("\nLaat Kijkluister aan staan. Je vindt de opname straks bij Live tv → Opnemen.")
         recordToastTimer.restart()
     }
 
@@ -156,16 +156,16 @@ FocusScope {
                 color: "white"
                 font.pixelSize: (panel.unit * 4) * appModel.fontScale
                 font.weight: Font.DemiBold
-                text: "Tv-gids  ·  " + (panel.channel.name || "")
+                text: qsTr("Tv-gids  ·  ") + (panel.channel.name || "")
             }
             HintBar {
                 unit: panel.unit * 0.9
                 items: [
-                    { pad: "✛", key: "↑ ↓", label: "Programma kiezen" },
-                    { pad: "RB", key: "R", label: "Opnemen" },
-                    { pad: "", key: "H", label: "Herinnering" },
-                    { pad: "", key: "S", label: "Serie" },
-                    { pad: "B", key: "Esc", label: "Sluiten" }
+                    { pad: "✛", key: "↑ ↓", label: qsTr("Programma kiezen") },
+                    { pad: qsTr("RB"), key: "R", label: qsTr("Opnemen") },
+                    { pad: "", key: "H", label: qsTr("Herinnering") },
+                    { pad: "", key: "S", label: qsTr("Serie") },
+                    { pad: "B", key: qsTr("Esc"), label: qsTr("Sluiten") }
                 ]
             }
         }
@@ -176,7 +176,7 @@ FocusScope {
         visible: panel.programmes.length === 0
         color: "#b0b4bb"
         font.pixelSize: (panel.unit * 3) * appModel.fontScale
-        text: iptv.epgStatus === "Gids laden…" ? "Gids laden…" : "Geen gidsinformatie voor deze zender"
+        text: iptv.epgStatus === qsTr("Gids laden…") ? qsTr("Gids laden…") : qsTr("Geen gidsinformatie voor deze zender")
     }
 
     // Programmalijst
@@ -279,7 +279,7 @@ FocusScope {
                 color: "#ffb74d"
                 font.pixelSize: (panel.unit * 2.4) * appModel.fontScale
                 text: details.p ? details.p.day + "   " + details.p.start + " – " + details.p.stop
-                                  + "   ·   " + details.p.duration + " min"
+                                  + "   ·   " + details.p.duration + qsTr(" min")
                                   + (details.p.category ? "   ·   " + details.p.category : "") : ""
             }
             Rectangle {
@@ -301,8 +301,8 @@ FocusScope {
                     id: recordButton
                     unit: panel.unit
                     text: details.p && panel.isPlanned(details.p)
-                          ? (details.p.isNow ? "■  Opname stoppen" : "Opname annuleren")
-                          : "●  Dit programma opnemen"
+                          ? (details.p.isNow ? qsTr("■  Opname stoppen") : qsTr("Opname annuleren"))
+                          : qsTr("●  Dit programma opnemen")
                     onClicked: panel.toggleRecord(list.currentIndex)
                     KeyNavigation.right: remindButton
                 }
@@ -310,7 +310,7 @@ FocusScope {
                     id: remindButton
                     visible: details.p && !details.p.isNow
                     unit: panel.unit
-                    text: details.p && panel.hasReminder(details.p) ? "Herinnering weg" : "🔔  Herinner me"
+                    text: details.p && panel.hasReminder(details.p) ? qsTr("Herinnering weg") : qsTr("🔔  Herinner me")
                     onClicked: panel.toggleReminder(list.currentIndex)
                     KeyNavigation.left: recordButton
                     KeyNavigation.right: seriesButton
@@ -318,7 +318,7 @@ FocusScope {
                 FocusButton {
                     id: seriesButton
                     unit: panel.unit
-                    text: details.p && panel.isSeries(details.p) ? "Serie-opname stoppen" : "Serie opnemen"
+                    text: details.p && panel.isSeries(details.p) ? qsTr("Serie-opname stoppen") : qsTr("Serie opnemen")
                     onClicked: panel.toggleSeries(list.currentIndex)
                     KeyNavigation.left: remindButton.visible ? remindButton : recordButton
                 }
@@ -330,7 +330,7 @@ FocusScope {
                 lineHeight: 1.25
                 color: "#d5d8dc"
                 font.pixelSize: (panel.unit * 2.7) * appModel.fontScale
-                text: details.p ? (details.p.description || "Geen beschrijving beschikbaar.") : ""
+                text: details.p ? (details.p.description || qsTr("Geen beschrijving beschikbaar.")) : ""
             }
         }
     }

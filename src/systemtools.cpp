@@ -331,3 +331,15 @@ bool SystemTools::restoreBackup(const QString &fileName)
     QTimer::singleShot(300, qApp, &QCoreApplication::quit);
     return true;
 }
+
+void SystemTools::restart()
+{
+    QStringList args = QCoreApplication::arguments().mid(1);
+    args.removeAll(QStringLiteral("--autostart"));
+    if (!args.contains(QStringLiteral("--profile-chosen"))) {
+        args << QStringLiteral("--profile-chosen");
+    }
+    qInfo() << "Restarting Kijkluister";
+    QProcess::startDetached(QCoreApplication::applicationFilePath(), args);
+    QTimer::singleShot(300, qApp, &QCoreApplication::quit);
+}

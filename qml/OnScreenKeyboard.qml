@@ -121,7 +121,7 @@ FocusScope {
                             border.width: parent.current ? kb.unit * 0.25 : 1
                             Text {
                                 anchors.centerIn: parent
-                                text: modelData
+                                text: qsTr(modelData)
                                 color: "white"
                                 font.pixelSize: kb.unit * (modelData.length > 1 ? 2.2 : 2.8) * appModel.fontScale
                             }

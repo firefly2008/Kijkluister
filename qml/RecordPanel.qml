@@ -53,7 +53,7 @@ FocusScope {
 
     function startRecording() {
         if (!channel.url) {
-            message.text = "Geen zender gekozen"
+            message.text = qsTr("Geen zender gekozen")
             return
         }
         if (recorder.start(channel.name, channel.url, durations[durationIndex])) {
@@ -66,7 +66,7 @@ FocusScope {
 
     FolderDialog {
         id: folderDialog
-        title: "Map voor opnames kiezen"
+        title: qsTr("Map voor opnames kiezen")
         onAccepted: recorder.folder = recorder.localPath(selectedFolder)
     }
 
@@ -96,16 +96,16 @@ FocusScope {
             color: "white"
             font.pixelSize: (panel.unit * 4) * appModel.fontScale
             font.weight: Font.DemiBold
-            text: "Opnemen  ·  " + (panel.channel.name || "")
+            text: qsTr("Opnemen  ·  ") + (panel.channel.name || "")
         }
         Text {
             color: "#a8acb3"
             font.pixelSize: (panel.unit * 2) * appModel.fontScale
-            text: "De opname loopt door op de achtergrond, ook als je een andere zender kijkt." + (gamepad.connectedCount > 0 ? "   Ⓑ sluiten" : "   Esc: sluiten")
+            text: qsTr("De opname loopt door op de achtergrond, ook als je een andere zender kijkt.") + (gamepad.connectedCount > 0 ? qsTr("   Ⓑ sluiten") : qsTr("   Esc: sluiten"))
         }
 
         // Map
-        Text { color: "#9fb4d0"; font.pixelSize: (panel.unit * 2.2) * appModel.fontScale; text: "Opslaan in"}
+        Text { color: "#9fb4d0"; font.pixelSize: (panel.unit * 2.2) * appModel.fontScale; text: qsTr("Opslaan in")}
         Row {
             spacing: panel.unit * 1.5
             Rectangle {
@@ -128,7 +128,7 @@ FocusScope {
             FocusButton {
                 id: folderButton
                 unit: panel.unit
-                text: "Andere map…"
+                text: qsTr("Andere map…")
                 enabled: !recorder.recording
                 onClicked: folderDialog.open()
                 KeyNavigation.right: openButton
@@ -137,7 +137,7 @@ FocusScope {
             FocusButton {
                 id: openButton
                 unit: panel.unit
-                text: "Map openen"
+                text: qsTr("Map openen")
                 onClicked: recorder.openFolder()
                 KeyNavigation.left: folderButton
                 KeyNavigation.down: durationRow
@@ -145,7 +145,7 @@ FocusScope {
         }
 
         // Duur
-        Text { color: "#9fb4d0"; font.pixelSize: (panel.unit * 2.2) * appModel.fontScale; text: "Duur"}
+        Text { color: "#9fb4d0"; font.pixelSize: (panel.unit * 2.2) * appModel.fontScale; text: qsTr("Duur")}
         FocusScope {
             id: durationRow
             width: content.width
@@ -163,7 +163,7 @@ FocusScope {
                         required property int modelData
                         required property int index
                         unit: panel.unit
-                        text: modelData === 0 ? "Tot ik stop" : (modelData >= 60 ? (modelData / 60) + " uur" : modelData + " min")
+                        text: modelData === 0 ? qsTr("Tot ik stop") : (modelData >= 60 ? (modelData / 60) + qsTr(" uur") : modelData + qsTr(" min"))
                         checked: index === panel.durationIndex
                         enabled: !recorder.recording
                         onClicked: panel.durationIndex = index
@@ -182,7 +182,7 @@ FocusScope {
             FocusButton {
                 id: startButton
                 unit: panel.unit
-                text: "●  Opname starten"
+                text: qsTr("●  Opname starten")
                 visible: !recorder.recording
                 onClicked: panel.startRecording()
                 KeyNavigation.up: durationRow
@@ -191,7 +191,7 @@ FocusScope {
             FocusButton {
                 id: stopButton
                 unit: panel.unit
-                text: "■  Opname stoppen"
+                text: qsTr("■  Opname stoppen")
                 visible: recorder.recording
                 onClicked: recorder.stop()
                 KeyNavigation.up: durationRow
@@ -217,9 +217,9 @@ FocusScope {
                         font.pixelSize: (panel.unit * 2.6) * appModel.fontScale
                         text: recorder.recording
                               ? recorder.channel + "   " + panel.fmtTime(recorder.elapsedSeconds)
-                                + (recorder.remainingSeconds >= 0 ? "   (nog " + panel.fmtTime(recorder.remainingSeconds) + ")" : "")
+                                + (recorder.remainingSeconds >= 0 ? qsTr("   (nog ") + panel.fmtTime(recorder.remainingSeconds) + ")" : "")
                                 + "   " + panel.fmtSize(recorder.bytes)
-                              : (recorder.status !== "" ? recorder.status : (recorder.available ? "" : "ffmpeg ontbreekt: opnemen kan niet"))
+                              : (recorder.status !== "" ? recorder.status : (recorder.available ? "" : qsTr("ffmpeg ontbreekt: opnemen kan niet")))
                     }
                 }
                 Text {
@@ -244,8 +244,8 @@ FocusScope {
             visible: recorder.schedule.length > 0
             color: "#9fb4d0"
             font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
-            text: "Gepland" + (gamepad.connectedCount > 0 ? "   ·   Ⓧ annuleren" : "   ·   F2 of rechtermuisknop: annuleren")
-                  + "   ·   Laat Kijkluister aan staan; de computer gaat tijdens een opname niet slapen"
+            text: qsTr("Gepland") + (gamepad.connectedCount > 0 ? qsTr("   ·   Ⓧ annuleren") : qsTr("   ·   F2 of rechtermuisknop: annuleren"))
+                  + qsTr("   ·   Laat Kijkluister aan staan; de computer gaat tijdens een opname niet slapen")
         }
         ListView {
             id: planned
@@ -266,7 +266,7 @@ FocusScope {
             function when(m) {
                 const d = new Date(m.start * 1000), e = new Date(m.stop * 1000)
                 const pad = n => (n < 10 ? "0" : "") + n
-                return d.toLocaleDateString(Qt.locale("nl_NL"), "ddd d MMM") + "  " + pad(d.getHours()) + ":" + pad(d.getMinutes())
+                return d.toLocaleDateString(Qt.locale(), "ddd d MMM") + "  " + pad(d.getHours()) + ":" + pad(d.getMinutes())
                        + " – " + pad(e.getHours()) + ":" + pad(e.getMinutes())
             }
             delegate: Rectangle {
@@ -312,8 +312,8 @@ FocusScope {
                     Text {
                         color: prow.current ? "#5f6368" : "#b0b4bb"
                         font.pixelSize: (panel.unit * 2.1) * appModel.fontScale
-                        text: prow.modelData.state === "bezig" ? "wordt opgenomen"
-                              : prow.modelData.state === "overlap" ? "overgeslagen: er liep al een opname"
+                        text: prow.modelData.state === "bezig" ? qsTr("wordt opgenomen")
+                              : prow.modelData.state === "overlap" ? qsTr("overgeslagen: er liep al een opname")
                               : prow.modelData.state === "mislukt" ? "mislukt" : "gepland"
                     }
                 }
@@ -324,8 +324,8 @@ FocusScope {
         Text {
             color: "#9fb4d0"
             font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
-            text: "Opnames in deze map" + (recorder.recordings.length > 0
-                  ? (gamepad.connectedCount > 0 ? "   ·   Ⓐ afspelen   ·   Ⓧ verwijderen" : "   ·   Enter: afspelen   ·   F2: verwijderen") : "")
+            text: qsTr("Opnames in deze map") + (recorder.recordings.length > 0
+                  ? (gamepad.connectedCount > 0 ? qsTr("   ·   Ⓐ afspelen   ·   Ⓧ verwijderen") : qsTr("   ·   Enter: afspelen   ·   F2: verwijderen")) : "")
         }
         ListView {
             id: list
@@ -352,7 +352,7 @@ FocusScope {
                 visible: list.count === 0
                 color: "#a8acb3"
                 font.pixelSize: (panel.unit * 2.4) * appModel.fontScale
-                text: "Nog geen opnames"
+                text: qsTr("Nog geen opnames")
             }
             delegate: Rectangle {
                 id: row
@@ -388,7 +388,7 @@ FocusScope {
                     Text {
                         color: row.current ? "#5f6368" : "#b0b4bb"
                         font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
-                        text: panel.confirmDelete === row.index ? (gamepad.connectedCount > 0 ? "Nog eens Ⓧ om te verwijderen" : "Nog eens F2 om te verwijderen") : panel.fmtSize(row.modelData.size)
+                        text: panel.confirmDelete === row.index ? (gamepad.connectedCount > 0 ? qsTr("Nog eens Ⓧ om te verwijderen") : qsTr("Nog eens F2 om te verwijderen")) : panel.fmtSize(row.modelData.size)
                     }
                 }
             }

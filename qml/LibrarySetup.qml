@@ -58,7 +58,7 @@ FocusScope {
             visible: fl.paths.length === 0
             color: "#a8acb3"
             font.pixelSize: (setup.unit * 2.3) * appModel.fontScale
-            text: "Nog geen map gekozen (mag leeg blijven)"
+            text: qsTr("Nog geen map gekozen (mag leeg blijven)")
         }
         Repeater {
             model: fl.paths
@@ -84,7 +84,7 @@ FocusScope {
                 FocusButton {
                     id: removeButton
                     unit: setup.unit
-                    text: "Weg"
+                    text: qsTr("Weg")
                     onClicked: setup.removePath(fl.kind, index)
                 }
             }
@@ -109,7 +109,7 @@ FocusScope {
             keyField.text = library.effectiveKey()
             keyField.forceActiveFocus()
         } else {
-            warning.text = "Pincode klopt niet."
+            warning.text = qsTr("Pincode klopt niet.")
             pinField.text = ""
             pinField.forceActiveFocus()
         }
@@ -117,7 +117,7 @@ FocusScope {
 
     function save() {
         if (moviesPaths.length === 0 && showsPaths.length === 0) {
-            warning.text = "Kies minstens één map."
+            warning.text = qsTr("Kies minstens één map.")
             moviesButton.forceActiveFocus()
             return
         }
@@ -133,12 +133,12 @@ FocusScope {
 
     FolderDialog {
         id: moviesDialog
-        title: "Map met films kiezen"
+        title: qsTr("Map met films kiezen")
         onAccepted: setup.addPath("movies", library.localPath(selectedFolder))
     }
     FolderDialog {
         id: showsDialog
-        title: "Map met series kiezen"
+        title: qsTr("Map met series kiezen")
         onAccepted: setup.addPath("shows", library.localPath(selectedFolder))
     }
 
@@ -170,25 +170,25 @@ FocusScope {
                 color: "white"
                 font.pixelSize: (setup.unit * 4) * appModel.fontScale
                 font.weight: Font.DemiBold
-                text: setup.firstRun ? "Waar staan je films en series?" : "Mappen kiezen"
+                text: setup.firstRun ? qsTr("Waar staan je films en series?") : qsTr("Mappen kiezen")
             }
             Text {
                 width: parent.width
                 wrapMode: Text.Wrap
                 color: "#c4c7cc"
                 font.pixelSize: (setup.unit * 2.2) * appModel.fontScale
-                text: "Kies de map met je films en de map met je series. Meer mappen mag ook, bijvoorbeeld op een "
-                      + "externe schijf. Kijkluister zoekt er zelf de titels, plaatjes en beschrijvingen bij."
+                text: qsTr("Kies de map met je films en de map met je series. Meer mappen mag ook, bijvoorbeeld op een ")
+                      + qsTr("externe schijf. Kijkluister zoekt er zelf de titels, plaatjes en beschrijvingen bij.")
             }
 
             // Films: een of meer mappen/locaties
             Row {
                 spacing: setup.unit * 2
-                Text { anchors.verticalCenter: parent.verticalCenter; color: "#9fb4d0"; font.pixelSize: (setup.unit * 2.2) * appModel.fontScale; text: "Mappen met films"}
+                Text { anchors.verticalCenter: parent.verticalCenter; color: "#9fb4d0"; font.pixelSize: (setup.unit * 2.2) * appModel.fontScale; text: qsTr("Mappen met films")}
                 FocusButton {
                     id: moviesButton
                     unit: setup.unit
-                    text: "+ Map toevoegen…"
+                    text: qsTr("+ Map toevoegen…")
                     onClicked: moviesDialog.open()
                     KeyNavigation.down: showsButton
                 }
@@ -198,11 +198,11 @@ FocusScope {
             // Series: een of meer mappen/locaties
             Row {
                 spacing: setup.unit * 2
-                Text { anchors.verticalCenter: parent.verticalCenter; color: "#9fb4d0"; font.pixelSize: (setup.unit * 2.2) * appModel.fontScale; text: "Mappen met series"}
+                Text { anchors.verticalCenter: parent.verticalCenter; color: "#9fb4d0"; font.pixelSize: (setup.unit * 2.2) * appModel.fontScale; text: qsTr("Mappen met series")}
                 FocusButton {
                     id: showsButton
                     unit: setup.unit
-                    text: "+ Map toevoegen…"
+                    text: qsTr("+ Map toevoegen…")
                     onClicked: showsDialog.open()
                     KeyNavigation.up: moviesButton
                     KeyNavigation.down: setup.showKey ? keyField : moreButton
@@ -218,13 +218,13 @@ FocusScope {
                     anchors.verticalCenter: parent.verticalCenter
                     color: "#c4c7cc"
                     font.pixelSize: (setup.unit * 2.2) * appModel.fontScale
-                    text: "🔒  Gegevens bij films: ingebouwde sleutel (vergrendeld)"
+                    text: qsTr("🔒  Gegevens bij films: ingebouwde sleutel (vergrendeld)")
                 }
                 FocusButton {
                     id: moreButton
                     unit: setup.unit
                     visible: !setup.askPin
-                    text: "Ontgrendelen…"
+                    text: qsTr("Ontgrendelen…")
                     onClicked: { setup.askPin = true; pinField.forceActiveFocus() }
                     KeyNavigation.up: showsButton
                     KeyNavigation.down: saveButton
@@ -262,7 +262,7 @@ FocusScope {
                         visible: pinField.text === "" && !pinField.activeFocus
                         color: "#a8acb3"
                         font.pixelSize: (setup.unit * 2.2) * appModel.fontScale
-                        text: "Pincode"
+                        text: qsTr("Pincode")
                     }
                 }
                 FocusButton {
@@ -281,7 +281,7 @@ FocusScope {
                 wrapMode: Text.Wrap
                 color: "#9fb4d0"
                 font.pixelSize: (setup.unit * 2.2) * appModel.fontScale
-                text: "Sleutel van TMDB (ontgrendeld). Leeg laten = de ingebouwde sleutel gebruiken."
+                text: qsTr("Sleutel van TMDB (ontgrendeld). Leeg laten = de ingebouwde sleutel gebruiken.")
             }
             Rectangle {
                 visible: setup.showKey
@@ -310,7 +310,7 @@ FocusScope {
                     visible: keyField.text === "" && !keyField.activeFocus
                     color: "#a8acb3"
                     font.pixelSize: (setup.unit * 2.3) * appModel.fontScale
-                    text: "Plak hier je sleutel of token"
+                    text: qsTr("Plak hier je sleutel of token")
                 }
             }
             Text {
@@ -319,9 +319,9 @@ FocusScope {
                 wrapMode: Text.Wrap
                 color: "#b0b4bb"
                 font.pixelSize: (setup.unit * 1.9) * appModel.fontScale
-                text: "Sleutel aanvragen: maak een gratis account op themoviedb.org en ga naar Instellingen → API. "
-                      + "Zonder sleutel komen series van TVmaze en tonen films alleen hun titel. "
-                      + "Dit product gebruikt de TMDB API, maar is niet door TMDB goedgekeurd of gecertificeerd."
+                text: qsTr("Sleutel aanvragen: maak een gratis account op themoviedb.org en ga naar Instellingen → API. ")
+                      + qsTr("Zonder sleutel komen series van TVmaze en tonen films alleen hun titel. ")
+                      + qsTr("Dit product gebruikt de TMDB API, maar is niet door TMDB goedgekeurd of gecertificeerd.")
             }
 
             Text {
@@ -336,7 +336,7 @@ FocusScope {
                 FocusButton {
                     id: saveButton
                     unit: setup.unit
-                    text: "Opslaan en zoeken"
+                    text: qsTr("Opslaan en zoeken")
                     onClicked: setup.save()
                     KeyNavigation.up: setup.showKey ? keyField : (setup.askPin ? pinField : moreButton)
                     KeyNavigation.right: cancelButton
@@ -344,7 +344,7 @@ FocusScope {
                 FocusButton {
                     id: cancelButton
                     unit: setup.unit
-                    text: "Annuleren"
+                    text: qsTr("Annuleren")
                     onClicked: {
                         setup.close()
                         setup.cancelled()

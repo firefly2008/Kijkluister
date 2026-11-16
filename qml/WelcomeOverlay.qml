@@ -28,7 +28,7 @@ FocusScope {
             list.push({ header: title })
             for (let k = 1; k < 5; ++k) list.push({ spacer: true })
         }
-        const kinds = new Map([[webVideo, "Streaming"], [webMusic, "Muziek"], [webPodcasts, "Podcasts"], [webNews, "Nieuws"]])
+        const kinds = new Map([[webVideo, qsTr("Streaming")], [webMusic, qsTr("Muziek")], [webPodcasts, qsTr("Podcasts")], [webNews, qsTr("Nieuws")]])
         for (const m of [webVideo, webMusic, webPodcasts, webNews]) {
             header(kinds.get(m))
             // Wat nu zichtbaar is, blijft aangevinkt; verborgen diensten komen er even bij
@@ -43,7 +43,7 @@ FocusScope {
         }
         // Alle Nederlandse radiozenders
         const topRadio = ["NPO Radio 2", "Qmusic", "Radio 538", "Sky Radio", "Radio 10", "JOE", "Radio Veronica"]
-        header("Radio")
+        header(qsTr("Radio"))
         for (const r of radio.catalog()) {
             list.push({ model: radio, name: r.name, icon: r.icon, accent: r.accent,
                         on: appModel.freshInstall ? topRadio.indexOf(r.name) >= 0 : r.on })
@@ -128,7 +128,7 @@ FocusScope {
                 color: "white"
                 font.pixelSize: (welcome.unit * 5) * appModel.fontScale
                 font.weight: Font.DemiBold
-                text: "Welkom bij Kijkluister"
+                text: qsTr("Welkom bij Kijkluister")
             }
         }
         Text {
@@ -136,7 +136,7 @@ FocusScope {
             wrapMode: Text.Wrap
             color: "#d5d8dc"
             font.pixelSize: (welcome.unit * 2.8) * appModel.fontScale
-            text: "Welke diensten en radiozenders gebruik je? Vink ze aan. De rest zetten we niet op het startscherm; via Instellingen haal je ze altijd terug."
+            text: qsTr("Welke diensten en radiozenders gebruik je? Vink ze aan. De rest zetten we niet op het startscherm; via Instellingen haal je ze altijd terug.")
         }
     }
 
@@ -254,7 +254,7 @@ FocusScope {
         FocusButton {
             id: doneButton
             unit: welcome.unit
-            text: "Klaar (" + welcome.choices.filter(c => c.on).length + " gekozen)"
+            text: qsTr("Klaar (") + welcome.choices.filter(c => c.on).length + qsTr(" gekozen)")
             onClicked: welcome.finish()
             KeyNavigation.up: grid
         }
@@ -262,8 +262,8 @@ FocusScope {
             anchors.verticalCenter: parent.verticalCenter
             unit: welcome.unit
             items: [
-                { pad: "✛", key: "Pijltjes", label: "Kiezen" },
-                { pad: "A", key: "Enter", label: "Aan / uit" }
+                { pad: "✛", key: qsTr("Pijltjes"), label: qsTr("Kiezen") },
+                { pad: "A", key: qsTr("Enter"), label: qsTr("Aan / uit") }
             ]
         }
     }

@@ -38,7 +38,7 @@ Window {
             }
             Text {
                 anchors.verticalCenter: parent.verticalCenter
-                text: "Kijkluister"
+                text: qsTr("Kijkluister")
                 font.pixelSize: homeWindow.unit * 2.2
                 font.weight: Font.DemiBold
                 color: "white"

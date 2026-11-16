@@ -73,6 +73,7 @@ target_compile_definitions(bigscreen-host PRIVATE KIJKLUISTER_VERSION="${KIJKLUI
 qt_add_resources(bigscreen-host "icons" PREFIX "/" FILES assets/kijkluister-256.png)
 # Release-info (Aanpassen → Release-info); bij elke nieuwe versie bovenaan aanvullen
 qt_add_resources(bigscreen-host "releasenotes" PREFIX "/" FILES releasenotes.json)
+qt_add_resources(bigscreen-host "i18n" PREFIX "/" FILES i18n/kijkluister_en.qm)
 
 if(WIN32)
     target_sources(bigscreen-host PRIVATE

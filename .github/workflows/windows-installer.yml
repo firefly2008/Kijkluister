@@ -98,7 +98,7 @@ jobs:
           $env:BIGSCREEN_TEST_M3U = "$tv\test.m3u"
           $env:BIGSCREEN_TEST_RECORD_DIR = "$env:RUNNER_TEMP\opnames"
           Get-Content "$tv\test.m3u"
-          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-unsplash', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel', 'librarysetup', 'iptvsources', 'iptvfreeguide', 'mpcplay', 'resume', 'epgrecord', 'welcome', 'libraryunlock', 'radio', 'radiohome', 'search', 'radioadd', 'sleep', 'weather', 'update', 'cec', 'radiobg', 'regional', 'nowplaying', 'sections', 'homekey', 'releaseinfo', 'news', 'photo', 'settingsmenu', 'usage', 'help', 'night', 'collapse', 'libraryesc', 'nowtv', 'guidegrid', 'reminder', 'series', 'prevchannel', 'ambient', 'audio', 'remote', 'backup', 'kidslimit', 'profiles', 'okkey', 'whoswatching', 'cleanup', 'parental'
+          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-unsplash', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel', 'librarysetup', 'iptvsources', 'iptvfreeguide', 'mpcplay', 'resume', 'epgrecord', 'welcome', 'libraryunlock', 'radio', 'radiohome', 'search', 'radioadd', 'sleep', 'weather', 'update', 'cec', 'radiobg', 'regional', 'nowplaying', 'sections', 'homekey', 'releaseinfo', 'news', 'photo', 'settingsmenu', 'usage', 'help', 'night', 'collapse', 'libraryesc', 'nowtv', 'guidegrid', 'reminder', 'series', 'prevchannel', 'ambient', 'audio', 'remote', 'backup', 'kidslimit', 'profiles', 'okkey', 'whoswatching', 'english', 'cleanup', 'parental'
           $manual = '${{ github.ref }}' -like 'refs/heads/screenshots/*'
           if ($manual) {
             # Schermafbeeldingen voor de handleiding, op Full HD
@@ -122,6 +122,7 @@ jobs:
           }
           foreach ($mode in $modes) {
             $env:BIGSCREEN_SELFTEST = $mode
+            if ($mode -eq 'english') { $env:BIGSCREEN_LANGUAGE = 'en' } else { Remove-Item Env:BIGSCREEN_LANGUAGE -ErrorAction SilentlyContinue }
             if ($mode -eq 'u-home' -or $mode -eq 'u-bigtext') {
               # Verder kijken laten zien: geschiedenis zoals MPC-HC hem schrijft, plus de lengte van het bestand
               $ep = "$series\Breaking Bad\Seizoen 2\Breaking.Bad.2x04.mp4"
@@ -143,7 +144,9 @@ jobs:
                 (Get-Item $f).LastWriteTime = (Get-Date).AddDays(-$d)
               }
             }
-            $p = Start-Process dist\Kijkluister.exe -PassThru
+            # 'english' start ook met de opties van Starten met Windows en profiel wisselen (moeten geaccepteerd worden)
+            if ($mode -eq 'english') { $p = Start-Process dist\Kijkluister.exe -ArgumentList '--autostart', '--profile-chosen' -PassThru }
+            else { $p = Start-Process dist\Kijkluister.exe -PassThru }
             Start-Sleep $(if ($mode -eq 'u-guiderecord') { 13 } elseif ($mode -eq 'u-library') { 30 } elseif ($manual -or $mode -like 'frame*') { 20 } elseif ($mode -eq 'record') { 75 } elseif ($mode -eq 'iptvfreeguide' -or $mode -eq 'mpcplay') { 45 } elseif ($mode -eq 'epgrecord') { 30 } elseif ($mode -eq 'radio') { 75 } elseif ($mode -eq 'radioadd' -or $mode -eq 'sleep') { 22 } elseif ($mode -eq 'weather' -or $mode -eq 'search') { 16 } elseif ($mode -eq 'regional') { 25 } elseif ($mode -eq 'photo') { 18 } else { 14 })
             if ($mode -like 'frame*esc' -or $mode -eq 'libraryesc') {
               # Echte toetsaanslag Esc naar het venster sturen (zoals toetsenbord of gamepad-B)
@@ -191,10 +194,10 @@ jobs:
               'libraryesc' = 'Library back; visible false'; 'nowtv' = 'Now tv count ok true'; 'guidegrid' = 'Guide grid opened'; 'reminder' = 'Reminder due';
               'series' = 'Series: checked'; 'prevchannel' = 'Previous channel 0'; 'ambient' = 'Ambient mode'; 'audio' = 'Audio outputs';
               'remote' = 'Remote test down right code 200'; 'backup' = 'Autostart off: false'; 'kidslimit' = 'Kids lock shown true';
-              'okkey' = 'Keyboard OK: Opslaan als'; 'whoswatching' = 'Who is watching:'
+              'okkey' = 'Keyboard OK: Opslaan als'; 'whoswatching' = 'Who is watching:'; 'english' = 'English check: Settings / Now on TV'
             }
             if ($checks.ContainsKey($mode)) {
-              Select-String -Path $log -Pattern "Search|Radio|Sleep|Weather|Update|CEC|Cleanup|Parental|Regional|IPTV play|Media first|Section order|Home|Usage|Help|Night|Collapsed|Profile|Library|Now tv|Guide|Reminder|Series|Previous|Ambient|Audio|Remote|Backup|Autostart|Kids|Keyboard|Who is|TypeError|ReferenceError" | ForEach-Object { $_.Line }
+              Select-String -Path $log -Pattern "Search|Radio|Sleep|Weather|Update|CEC|Cleanup|Parental|Regional|IPTV play|Media first|Section order|Home|Usage|Help|Night|Collapsed|Profile|Library|Now tv|Guide|Reminder|Series|Previous|Ambient|Audio|Remote|Backup|Autostart|Kids|Keyboard|Who is|English|Translator|TypeError|ReferenceError" | ForEach-Object { $_.Line }
               if (-not (Select-String -Path $log -Pattern $checks[$mode] -SimpleMatch -Quiet)) { throw "Rooktest mislukt: $mode ($($checks[$mode]) niet in het log)" }
               if ($mode -eq 'parental' -and -not (Select-String -Path $log -Pattern "Parental: wrong pin" -Quiet)) { throw "Rooktest mislukt: verkeerde pincode werd geaccepteerd" }
               if ($mode -eq 'remote' -and -not (Select-String -Path $log -Pattern "Remote test up wrong code 403" -SimpleMatch -Quiet)) { throw "Rooktest mislukt: telefoon met verkeerde code werd geaccepteerd" }

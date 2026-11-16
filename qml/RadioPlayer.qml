@@ -109,7 +109,7 @@ FocusScope {
             playStream()
         } else {
             player.stop()
-            errorText = radio.nameAt(row) + " is nu niet te beluisteren."
+            errorText = radio.nameAt(row) + qsTr(" is nu niet te beluisteren.")
         }
     }
 
@@ -213,7 +213,7 @@ FocusScope {
     Text {
         x: radioPlayer.unit * 4
         y: radioPlayer.unit * 4
-        text: "Radio"
+        text: qsTr("Radio")
         color: "#ffffff"
         font.pixelSize: radioPlayer.unit * 4 * appModel.fontScale
         font.weight: Font.DemiBold
@@ -290,9 +290,9 @@ FocusScope {
                 color: radioPlayer.errorText !== "" ? "#ff8a80" : "#ffffff"
                 font.pixelSize: radioPlayer.unit * 3 * appModel.fontScale
                 text: radioPlayer.errorText !== "" ? radioPlayer.errorText
-                    : radioPlayer.paused ? "Gepauzeerd"
-                    : radioPlayer.loading ? "Verbinden…"
-                    : radioPlayer.playing ? "Live" : ""
+                    : radioPlayer.paused ? qsTr("Gepauzeerd")
+                    : radioPlayer.loading ? qsTr("Verbinden…")
+                    : radioPlayer.playing ? qsTr("Live") : ""
             }
         }
 
@@ -302,7 +302,7 @@ FocusScope {
             width: Math.min(implicitWidth, radioPlayer.width * 0.8)
             elide: Text.ElideRight
             horizontalAlignment: Text.AlignHCenter
-            text: "Nu: " + radioPlayer.nowPlaying
+            text: qsTr("Nu: ") + radioPlayer.nowPlaying
             color: "#e6e8eb"
             font.pixelSize: radioPlayer.unit * 2.8 * appModel.fontScale
         }
@@ -406,12 +406,12 @@ FocusScope {
         anchors.bottomMargin: radioPlayer.unit * 3
         unit: radioPlayer.unit
         items: [
-            { pad: "◀ ▶", key: "◀ ▶", label: "Andere zender" },
-            { pad: "▲ ▼", key: "▲ ▼", label: "Volume" },
-            { pad: "A", key: "Enter", label: radioPlayer.paused ? "Verder" : "Pauze" },
-            { pad: "Y", key: "T", label: radioPlayer.sleepText !== "" ? "Slaaptimer: " + radioPlayer.sleepText : "Slaaptimer" },
-            { pad: "B", key: "Esc", label: "Terug (speelt door)" },
-            { pad: "X", key: "Del", label: "Stoppen" }
+            { pad: "◀ ▶", key: "◀ ▶", label: qsTr("Andere zender") },
+            { pad: "▲ ▼", key: "▲ ▼", label: qsTr("Volume") },
+            { pad: "A", key: qsTr("Enter"), label: radioPlayer.paused ? qsTr("Verder") : qsTr("Pauze") },
+            { pad: "Y", key: "T", label: radioPlayer.sleepText !== "" ? qsTr("Slaaptimer: ") + radioPlayer.sleepText : qsTr("Slaaptimer") },
+            { pad: "B", key: qsTr("Esc"), label: qsTr("Terug (speelt door)") },
+            { pad: "X", key: qsTr("Del"), label: qsTr("Stoppen") }
         ]
     }
 }

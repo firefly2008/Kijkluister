@@ -1,6 +1,6 @@
 // Hulpregel met knoppen in plaats van jargon. Met een controller: gekleurde rondjes (Ⓐ Ⓑ Ⓧ Ⓨ),
 // anders toetsen ("Enter", "Esc"). Gebruik:
-//   HintBar { unit: ...; items: [ { pad: "A", key: "Enter", label: "Openen" }, ... ] }
+//   HintBar { unit: ...; items: [ { pad: "A", key: "Enter", label: qsTr("Openen") }, ... ] }
 // pad / key mogen leeg zijn (dan alleen bij de andere bediening tonen).
 // SPDX-License-Identifier: GPL-2.0-or-later
 import QtQuick

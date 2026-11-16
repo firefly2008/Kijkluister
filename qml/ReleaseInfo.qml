@@ -47,14 +47,14 @@ FocusScope {
         y: info.unit * 5
         spacing: info.unit * 1
         Text {
-            text: "Release-info"
+            text: qsTr("Release-info")
             color: "white"
             font.pixelSize: info.unit * 4.5 * appModel.fontScale
             font.weight: Font.DemiBold
         }
         Text {
-            text: "Geïnstalleerd: Kijkluister " + updater.current
-                  + (updater.updateAvailable ? "   ·   Nieuwste versie: " + updater.latest : "   ·   Dit is de nieuwste versie")
+            text: qsTr("Geïnstalleerd: Kijkluister ") + updater.current
+                  + (updater.updateAvailable ? qsTr("   ·   Nieuwste versie: ") + updater.latest : qsTr("   ·   Dit is de nieuwste versie"))
             color: "#d5d8dc"
             font.pixelSize: info.unit * 2.6 * appModel.fontScale
         }
@@ -96,7 +96,7 @@ FocusScope {
                     Row {
                         spacing: info.unit * 1.5
                         Text {
-                            text: "Versie " + modelData.version
+                            text: qsTr("Versie ") + modelData.version
                             color: "white"
                             font.pixelSize: info.unit * 3.2 * appModel.fontScale
                             font.weight: Font.DemiBold
@@ -111,7 +111,7 @@ FocusScope {
                             Text {
                                 id: badge
                                 anchors.centerIn: parent
-                                text: "Geïnstalleerd"
+                                text: qsTr("Geïnstalleerd")
                                 color: "white"
                                 font.pixelSize: info.unit * 1.8 * appModel.fontScale
                             }
@@ -124,7 +124,7 @@ FocusScope {
                         }
                     }
                     Repeater {
-                        model: modelData.notes
+                        model: uiLanguage === "en" && modelData.notes_en ? modelData.notes_en : modelData.notes
                         Text {
                             required property string modelData
                             width: list.width
@@ -147,6 +147,6 @@ FocusScope {
         anchors.bottom: parent.bottom
         anchors.bottomMargin: info.unit * 3
         unit: info.unit
-        items: [{ pad: "▲ ▼", key: "▲ ▼", label: "Lezen" }, { pad: "B", key: "Esc", label: "Terug" }]
+        items: [{ pad: "▲ ▼", key: "▲ ▼", label: qsTr("Lezen") }, { pad: "B", key: qsTr("Esc"), label: qsTr("Terug") }]
     }
 }
