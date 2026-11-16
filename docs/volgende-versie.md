@@ -23,3 +23,9 @@ de C++-objecten worden vóór het QML-venster opgeruimd. Venster/engine eerst af
 - Zenderlogo's die niet laden (docdog.top…) worden in de gids steeds opnieuw geprobeerd: mislukte adressen onthouden en niet opnieuw laden.
 - Time-out (-138) bij een zender: melding "Zender reageert niet" i.p.v. technische tekst.
 - Logo's NLZIET en Simone FM ontbreken: eigen logo meeleveren.
+
+## 5. Logo ontbreekt op de telefoon-afstandsbediening
+Oorzaak: in remoteserver.cpp `respond(socket, f.open(...) ? 200 : 404, "image/png", f.readAll())` — de volgorde waarin C++ argumenten uitrekent
+ligt niet vast; MSVC doet `f.readAll()` vóór `f.open()`, dus een leeg plaatje met status 200 (daarom slaagde de test wel).
+Eerst openen en lezen, dan antwoorden. Rooktest: grootte van /icon-192.png > 1000 bytes (en /icon-512.png, /icon-maskable.png).
+Daarna op de telefoon: de snelkoppeling op het beginscherm opnieuw toevoegen (Chrome bewaart het oude, lege pictogram).
