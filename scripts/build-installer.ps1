@@ -52,7 +52,13 @@ $ffDir = Join-Path $root "build\ffmpeg"
 if (-not (Test-Path "$ffDir\ffmpeg.exe")) {
     New-Item -ItemType Directory -Force $ffDir | Out-Null
     $zip = Join-Path $ffDir "ffmpeg.zip"
-    Invoke-WebRequest -UseBasicParsing "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" -OutFile $zip
+    # gyan.dev, en als die niet antwoordt de bouw van BtbN op GitHub
+    try {
+        Invoke-WebRequest -UseBasicParsing "https://www.gyan.dev/ffmpeg/builds/ffmpeg-release-essentials.zip" -OutFile $zip
+    } catch {
+        Write-Host "gyan.dev niet bereikbaar ($($_.Exception.Message)); ffmpeg van GitHub (BtbN)"
+        Invoke-WebRequest -UseBasicParsing "https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-master-latest-win64-gpl.zip" -OutFile $zip
+    }
     Expand-Archive $zip -DestinationPath "$ffDir\unz" -Force
     $exe = Get-ChildItem "$ffDir\unz" -Recurse -Filter ffmpeg.exe | Select-Object -First 1
     Copy-Item $exe.FullName "$ffDir\ffmpeg.exe"
