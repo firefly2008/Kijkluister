@@ -201,6 +201,8 @@ jobs:
               if (-not (Select-String -Path $log -Pattern $checks[$mode] -SimpleMatch -Quiet)) { throw "Rooktest mislukt: $mode ($($checks[$mode]) niet in het log)" }
               if ($mode -eq 'parental' -and -not (Select-String -Path $log -Pattern "Parental: wrong pin" -Quiet)) { throw "Rooktest mislukt: verkeerde pincode werd geaccepteerd" }
               if ($mode -eq 'remote' -and -not (Select-String -Path $log -Pattern "Remote test up wrong code 403" -SimpleMatch -Quiet)) { throw "Rooktest mislukt: telefoon met verkeerde code werd geaccepteerd" }
+              if ($mode -eq 'remote' -and -not (Select-String -Path $log -Pattern "Remote manifest 200 standalone" -SimpleMatch -Quiet)) { throw "Rooktest mislukt: app-manifest voor de telefoon ontbreekt" }
+              if ($mode -eq 'remote' -and -not (Select-String -Path $log -Pattern "Remote icon 200" -SimpleMatch -Quiet)) { throw "Rooktest mislukt: app-pictogram voor de telefoon ontbreekt" }
               if ($mode -eq 'backup' -and -not (Select-String -Path $log -Pattern "Autostart on: true" -SimpleMatch -Quiet)) { throw "Rooktest mislukt: starten met Windows gaat niet aan" }
               if ($mode -eq 'backup' -and -not (Select-String -Path $log -Pattern "Backup made: Kijkluister-backup" -SimpleMatch -Quiet)) { throw "Rooktest mislukt: back-up niet gemaakt" }
             }

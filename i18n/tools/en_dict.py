@@ -632,7 +632,7 @@ a(
 "Lezen","Read",
 "Zet de afstandsbediening aan; dan verschijnt hier een QR-code.","Turn on the remote; a QR code will appear here.",
 "Telefoon als afstandsbediening","Phone as remote control",
-"1. Zorg dat je telefoon op hetzelfde wifi-netwerk zit.\n2. Scan de QR-code met de camera van je telefoon.\n3. Bedien Kijkluister met de pijltjes, OK, Terug en Home, en typ met het toetsenbord van je telefoon.\n\nTip: zet de pagina op je beginscherm (Delen → Zet op beginscherm).","1. Make sure your phone is on the same Wi-Fi network.\n2. Scan the QR code with your phone's camera.\n3. Control Kijkluister with the arrows, OK, Back and Home, and type with your phone's keyboard.\n\nTip: add the page to your home screen (Share → Add to Home Screen).",
+"1. Zorg dat je telefoon op hetzelfde wifi-netwerk zit.\n2. Scan de QR-code met de camera van je telefoon.\n3. Bedien Kijkluister met de pijltjes, OK, Terug en Home, en typ met het toetsenbord van je telefoon.\n\nAls app: tik in Chrome op ⋮ → Toevoegen aan startscherm. Dan staat Kijkluister tussen je apps en onthoudt hij de code.","1. Make sure your phone is on the same Wi-Fi network.\n2. Scan the QR code with your phone's camera.\n3. Control Kijkluister with the arrows, OK, Back and Home, and type with your phone's keyboard.\n\nAs an app: in Chrome tap ⋮ → Add to Home screen. Kijkluister then sits among your apps and remembers the code.",
 "Bedien Kijkluister met je telefoon: pijltjes, OK, Terug, Home, volume en typen. Werkt alleen op je eigen wifi en alleen met de code.","Control Kijkluister with your phone: arrows, OK, Back, Home, volume and typing. Works only on your own Wi-Fi and only with the code.",
 "Of typ dit adres in de browser van je telefoon:","Or type this address in your phone's browser:",
 "📱 Verbonden met ","📱 Connected to ",
@@ -699,3 +699,4 @@ a(
 "Wissen","Clear",
 )
 a("Streaming","Streaming")
+a("standaard","default")

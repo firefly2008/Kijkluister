@@ -6,6 +6,7 @@
 
 #include <QDateTime>
 #include <QDebug>
+#include <QFile>
 #include <QFileInfo>
 #include <QImage>
 #include <QNetworkInterface>
@@ -25,24 +26,42 @@ constexpr quint16 firstPort = 8642;
 // Pagina voor de telefoon: groot, donker, één hand te bedienen
 const char page[] = R"HTML(<!doctype html>
 <html lang="nl"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
-<meta name="theme-color" content="#0b0c0f"><title>Kijkluister</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#0b0c0f">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Kijkluister">
+<link rel="manifest" href="/manifest.webmanifest?c=__CODE__">
+<link rel="icon" href="/icon-192.png">
+<link rel="apple-touch-icon" href="/icon-192.png">
+<title>Kijkluister</title>
 <style>
-*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
-body{margin:0;background:#0b0c0f;color:#fff;font:16px system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;padding:18px 14px 28px}
-h1{font-size:20px;font-weight:600;margin:4px 0 16px;color:#d4d7dc}
-.pad{display:grid;grid-template-columns:repeat(3,88px);grid-template-rows:repeat(3,88px);gap:10px;margin-bottom:18px}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
+html,body{height:100%}
+body{margin:0;background:#0b0c0f;color:#fff;font:16px system-ui,sans-serif;display:flex;flex-direction:column;align-items:center;
+padding:calc(env(safe-area-inset-top) + 12px) 14px calc(env(safe-area-inset-bottom) + 20px);overscroll-behavior:none}
+header{width:284px;display:flex;align-items:center;gap:10px;margin:2px 0 14px}
+header img{width:30px;height:30px;border-radius:8px}
+header b{font-size:19px;font-weight:600;flex:1}
+#dot{width:10px;height:10px;border-radius:50%;background:#555}
+#dot.on{background:#3fb950}#dot.off{background:#e5484d}
+#fs{background:none;font-size:20px;width:36px;height:36px;border-radius:10px}
+.pad{display:grid;grid-template-columns:repeat(3,88px);grid-template-rows:repeat(3,88px);gap:10px;margin-bottom:16px}
 button{border:0;border-radius:18px;background:#22262e;color:#fff;font-size:28px;touch-action:manipulation}
 button:active{background:#3d6fb4}
 .ok{background:#3d6fb4;font-size:22px;font-weight:600;border-radius:50%}
 .row{display:grid;grid-template-columns:repeat(3,88px);gap:10px;margin-bottom:10px}
-.row button{height:64px;font-size:17px}
-.type{display:flex;gap:8px;width:284px;margin-top:12px}
-input{flex:1;border:0;border-radius:14px;background:#22262e;color:#fff;font-size:18px;padding:14px;user-select:text}
+.row button{height:62px;font-size:17px}
+.type{display:flex;gap:8px;width:284px;margin-top:10px}
+input{flex:1;border:0;border-radius:14px;background:#22262e;color:#fff;font-size:18px;padding:14px;user-select:text;-webkit-user-select:text}
 .type button{font-size:16px;padding:0 16px;height:52px}
-#s{height:20px;margin-top:12px;color:#8a8f98;font-size:14px}
+#s{min-height:20px;margin-top:10px;color:#8a8f98;font-size:14px;text-align:center;width:284px}
+#hint{display:none;width:284px;background:#1d2026;border:1px solid #3d6fb4;border-radius:14px;padding:12px 38px 12px 14px;margin-bottom:14px;font-size:14px;line-height:1.4;color:#d4d7dc;position:relative}
+#hint button{position:absolute;right:6px;top:6px;width:28px;height:28px;font-size:16px;background:none}
 </style></head><body>
-<h1>Kijkluister</h1>
+<header><img src="/icon-192.png" alt=""><b>Kijkluister</b><span id="dot" title=""></span><button id="fs" aria-label="Volledig scherm">⛶</button></header>
+<div id="hint"><span id="hintText">Zet Kijkluister als app op je telefoon: tik in Chrome op ⋮ en kies <b>Toevoegen aan startscherm</b>.</span><button id="hx" aria-label="Sluiten">✕</button></div>
 <div class="pad">
 <span></span><button data-k="up">▲</button><span></span>
 <button data-k="left">◀</button><button class="ok" data-k="ok">OK</button><button data-k="right">▶</button>
@@ -54,14 +73,37 @@ input{flex:1;border:0;border-radius:14px;background:#22262e;color:#fff;font-size
 <div class="type"><input id="t" placeholder="Typen…" autocomplete="off"><button id="send">Stuur</button></div>
 <div id="s"></div>
 <script>
-const c=new URLSearchParams(location.search).get('c')||'';const s=document.getElementById('s');
-function send(path,body){fetch(path+'?c='+encodeURIComponent(c),{method:'POST',body:body||''}).then(r=>{s.textContent=r.ok?'':'Code klopt niet: scan de QR-code opnieuw'}).catch(()=>{s.textContent='Geen verbinding met Kijkluister'})}
+// Code uit de link (QR-code) of eerder bewaard; zo blijft het werken als app op het beginscherm
+const q=new URLSearchParams(location.search).get('c');
+let c=q||'';try{if(q)localStorage.setItem('kl-code',q);else c=localStorage.getItem('kl-code')||''}catch(e){}
+const s=document.getElementById('s'),dot=document.getElementById('dot');
+const T={wrong:'Code klopt niet: scan de QR-code opnieuw',off:'Geen verbinding met Kijkluister. Staat de pc aan en zit je op dezelfde wifi?',on:'Verbonden'};
+function state(ok,msg){dot.className=ok?'on':'off';dot.title=ok?T.on:T.off;s.textContent=msg||''}
+function send(path,body){fetch(path+'?c='+encodeURIComponent(c),{method:'POST',body:body||''})
+.then(r=>state(r.status!==403,r.status===403?T.wrong:'')).catch(()=>state(false,T.off))}
+function ping(){fetch('/ping?c='+encodeURIComponent(c),{cache:'no-store'}).then(r=>state(r.ok,r.status===403?T.wrong:'')).catch(()=>state(false,T.off))}
+ping();setInterval(()=>{if(!document.hidden)ping()},5000);document.addEventListener('visibilitychange',()=>{if(!document.hidden)ping()});
+const standalone=matchMedia('(display-mode: standalone)').matches||matchMedia('(display-mode: fullscreen)').matches||navigator.standalone;
+// Volledig scherm: knop ⛶, en bij de eerste tik (niet als app, die is al schermvullend)
+const fs=document.getElementById('fs');
+function full(){const d=document.documentElement;if(!document.fullscreenElement&&d.requestFullscreen)d.requestFullscreen({navigationUI:'hide'}).catch(()=>{})}
+fs.onclick=()=>{if(document.fullscreenElement)document.exitFullscreen();else full()};
+if(standalone)fs.style.display='none';
+let first=!standalone;document.addEventListener('pointerdown',()=>{if(first){first=false;full()}},{once:false,capture:true});
+// Uitleg "als app installeren", één keer
+const hint=document.getElementById('hint');let seen='';try{seen=localStorage.getItem('kl-hint')||''}catch(e){}
+if(!standalone&&!seen)hint.style.display='block';
+document.getElementById('hx').onclick=e=>{e.stopPropagation();hint.style.display='none';try{localStorage.setItem('kl-hint','1')}catch(x){}};
+let deferred=null;window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferred=e;
+document.getElementById('hintText').innerHTML='Zet Kijkluister als app op je telefoon: <b>tik hier</b>.';
+hint.onclick=()=>{deferred.prompt();deferred=null;hint.style.display='none'}});
 document.querySelectorAll('[data-k]').forEach(b=>{let t=null;const k=b.dataset.k;
 b.addEventListener('pointerdown',e=>{e.preventDefault();navigator.vibrate&&navigator.vibrate(12);send('/k',k);
 if(['up','down','left','right','voldown','volup','backspace'].includes(k))t=setTimeout(function r(){send('/k',k);t=setTimeout(r,140)},450)});
 ['pointerup','pointerleave','pointercancel'].forEach(ev=>b.addEventListener(ev,()=>{clearTimeout(t);t=null}))});
 const i=document.getElementById('t');function go(){if(i.value){send('/t',i.value);i.value=''}}
 document.getElementById('send').onclick=go;i.addEventListener('keydown',e=>{if(e.key==='Enter')go()});
+if('serviceWorker' in navigator&&window.isSecureContext)navigator.serviceWorker.register('/sw.js').catch(()=>{});
 </script></body></html>)HTML";
 
 #ifdef Q_OS_WIN
@@ -295,19 +337,69 @@ void RemoteServer::handle(QTcpSocket *socket)
     const QString path = url.path();
     const QString code = QUrlQuery(url).queryItemValue(QStringLiteral("c"));
 
+    const bool english = QSettings(appSettingsFile(), QSettings::IniFormat).value(QStringLiteral("global/language")).toString() == QLatin1String("en");
     if (method == "GET" && (path == QLatin1String("/") || path == QLatin1String("/index.html"))) {
         QByteArray html(page);
-        if (QSettings(appSettingsFile(), QSettings::IniFormat).value(QStringLiteral("global/language")).toString() == QLatin1String("en")) {
-            const QList<QPair<QByteArray, QByteArray>> english = {
+        // Code meegeven aan het manifest, zodat de app op het beginscherm meteen de juiste code heeft
+        html.replace("__CODE__", QUrl::toPercentEncoding(code.isEmpty() ? QString() : code));
+        if (english) {
+            const QList<QPair<QByteArray, QByteArray>> en = {
                 {"lang=\"nl\"", "lang=\"en\""}, {"↩ Terug", "↩ Back"}, {"🔍 Zoek", "🔍 Search"},
-                {"Typen…", "Type…"}, {">Stuur<", ">Send<"},
+                {"Typen…", "Type…"}, {">Stuur<", ">Send<"}, {"Volledig scherm", "Full screen"}, {"\"Sluiten\"", "\"Close\""},
                 {"Code klopt niet: scan de QR-code opnieuw", "Wrong code: scan the QR code again"},
-                {"Geen verbinding met Kijkluister", "No connection to Kijkluister"}};
-            for (const auto &pair : english) {
+                {"Geen verbinding met Kijkluister. Staat de pc aan en zit je op dezelfde wifi?",
+                 "No connection to Kijkluister. Is the PC on and are you on the same Wi-Fi?"},
+                {"on:'Verbonden'", "on:'Connected'"},
+                {"Zet Kijkluister als app op je telefoon: tik in Chrome op ⋮ en kies <b>Toevoegen aan startscherm</b>.",
+                 "Put Kijkluister on your phone as an app: tap ⋮ in Chrome and choose <b>Add to Home screen</b>."},
+                {"Zet Kijkluister als app op je telefoon: <b>tik hier</b>.", "Put Kijkluister on your phone as an app: <b>tap here</b>."}};
+            for (const auto &pair : en) {
                 html.replace(pair.first, pair.second);
             }
         }
         respond(socket, 200, "text/html; charset=utf-8", html);
+        return;
+    }
+    // App op het beginscherm (Android: Chrome → Toevoegen aan startscherm)
+    if (method == "GET" && path == QLatin1String("/manifest.webmanifest")) {
+        const QString start = code.isEmpty() ? QStringLiteral("/") : QStringLiteral("/?c=") + code;
+        const QByteArray manifest = QStringLiteral(R"({
+  "name": "Kijkluister",
+  "short_name": "Kijkluister",
+  "description": "%1",
+  "lang": "%2",
+  "start_url": "%3",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0b0c0f",
+  "theme_color": "#0b0c0f",
+  "icons": [
+    {"src": "/icon-192.png", "sizes": "192x192", "type": "image/png"},
+    {"src": "/icon-512.png", "sizes": "512x512", "type": "image/png"},
+    {"src": "/icon-maskable.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable"}
+  ]
+})").arg(english ? QStringLiteral("Remote control for Kijkluister") : QStringLiteral("Afstandsbediening voor Kijkluister"),
+         english ? QStringLiteral("en") : QStringLiteral("nl"), start).toUtf8();
+        respond(socket, 200, "application/manifest+json", manifest);
+        return;
+    }
+    if (method == "GET" && (path == QLatin1String("/icon-192.png") || path == QLatin1String("/icon-512.png") || path == QLatin1String("/icon-maskable.png"))) {
+        const QString file = path == QLatin1String("/icon-192.png") ? QStringLiteral(":/assets/web-192.png")
+                             : path == QLatin1String("/icon-512.png") ? QStringLiteral(":/assets/web-512.png")
+                                                                      : QStringLiteral(":/assets/web-maskable-512.png");
+        QFile f(file);
+        respond(socket, f.open(QIODevice::ReadOnly) ? 200 : 404, "image/png", f.readAll());
+        return;
+    }
+    // Lege service worker (alleen gebruikt als de pagina ooit via https komt)
+    if (method == "GET" && path == QLatin1String("/sw.js")) {
+        respond(socket, 200, "text/javascript", "self.addEventListener('fetch',()=>{});");
+        return;
+    }
+    // Verbonden? (bolletje rechtsboven in de app)
+    if (method == "GET" && path == QLatin1String("/ping")) {
+        respond(socket, code == m_code ? 200 : 403, "application/json", code == m_code ? "{\"ok\":true}" : "{\"ok\":false}");
         return;
     }
     if (method != "POST" || (path != QLatin1String("/k") && path != QLatin1String("/t"))) {

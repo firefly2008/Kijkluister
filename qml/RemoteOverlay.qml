@@ -75,7 +75,7 @@ FocusScope {
                 lineHeight: 1.25
                 font.pixelSize: ro.unit * 2.4 * appModel.fontScale
                 text: remote.listening
-                      ? qsTr("1. Zorg dat je telefoon op hetzelfde wifi-netwerk zit.\n2. Scan de QR-code met de camera van je telefoon.\n3. Bedien Kijkluister met de pijltjes, OK, Terug en Home, en typ met het toetsenbord van je telefoon.\n\nTip: zet de pagina op je beginscherm (Delen → Zet op beginscherm).")
+                      ? qsTr("1. Zorg dat je telefoon op hetzelfde wifi-netwerk zit.\n2. Scan de QR-code met de camera van je telefoon.\n3. Bedien Kijkluister met de pijltjes, OK, Terug en Home, en typ met het toetsenbord van je telefoon.\n\nAls app: tik in Chrome op ⋮ → Toevoegen aan startscherm. Dan staat Kijkluister tussen je apps en onthoudt hij de code.")
                       : qsTr("Bedien Kijkluister met je telefoon: pijltjes, OK, Terug, Home, volume en typen. Werkt alleen op je eigen wifi en alleen met de code.")
             }
             Column {

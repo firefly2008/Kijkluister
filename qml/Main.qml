@@ -493,7 +493,7 @@ Rectangle {
             { label: qsTr("Weer…  (") + (weather.enabled ? (weather.place || "aan") : qsTr("uit")) + ")", action: "weather" },
             { label: "Taal / Language: " + (uiLanguage === "en" ? "English" : "Nederlands"), action: "language" },
             { label: qsTr("Starten bij opstarten van Windows: ") + (systemTools.autostart ? qsTr("aan") : qsTr("uit")), action: "autostart" },
-            { label: qsTr("Geluid via…  (") + (systemTools.audioOutputName() || "standaard") + ")", action: "audio" },
+            { label: qsTr("Geluid via…  (") + (systemTools.audioOutputName() || qsTr("standaard")) + ")", action: "audio" },
             { label: qsTr("Telefoon als afstandsbediening…  (") + (remote.enabled ? qsTr("aan") : qsTr("uit")) + ")", action: "remote" },
             { label: qsTr("Sfeerstand (Schilderij als je niets doet): ") + ambientLabel(), action: "ambient" },
             { label: qsTr("Bij opstarten vragen wie er kijkt: ") + (systemTools.globalSetting("askProfile", true) ? qsTr("aan") : qsTr("uit")), action: "ask-profile" },
@@ -1223,6 +1223,19 @@ Rectangle {
                 }
                 send("0000", "up")
                 send(remote.code, "down")
+                // Als app: manifest en pictogram
+                const m = new XMLHttpRequest()
+                m.open("GET", remote.address + "/manifest.webmanifest?c=" + remote.code)
+                m.onreadystatechange = () => { if (m.readyState === XMLHttpRequest.DONE) {
+                    let ok = false
+                    try { const j = JSON.parse(m.responseText); ok = j.display === "standalone" && j.icons.length === 3 && j.start_url.indexOf(remote.code) > 0 } catch (e) {}
+                    console.info("Remote manifest", m.status, ok ? "standalone" : "bad")
+                } }
+                m.send()
+                const ic = new XMLHttpRequest()
+                ic.open("GET", remote.address + "/icon-192.png")
+                ic.onreadystatechange = () => { if (ic.readyState === XMLHttpRequest.DONE) console.info("Remote icon", ic.status) }
+                ic.send()
             })
         } else if (selfTest === "whoswatching") {
             // startWhereLeft vraagt het (er zijn 2+ profielen uit eerdere tests)

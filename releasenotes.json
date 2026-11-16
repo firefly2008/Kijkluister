@@ -1,5 +1,19 @@
 [
   {
+    "version": "4.6.0",
+    "date": "2026-11-16",
+    "notes": [
+      "Telefoon als afstandsbediening is nu ook een app: in Chrome ⋮ → Toevoegen aan startscherm zet Kijkluister met eigen pictogram tussen je apps",
+      "De app onthoudt de code, toont rechtsboven of hij verbonden is en kan schermvullend (knop ⛶)",
+      "Engels: ook “Geluid via… (default)” is vertaald"
+    ],
+    "notes_en": [
+      "Phone as remote control is now also an app: in Chrome ⋮ → Add to Home screen puts Kijkluister with its own icon among your apps",
+      "The app remembers the code, shows at the top right whether it is connected and can go full screen (⛶ button)",
+      "English: “Sound through… (default)” is now translated too"
+    ]
+  },
+  {
     "version": "4.5.0",
     "date": "2026-11-16",
     "notes": [

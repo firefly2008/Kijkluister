@@ -70,7 +70,7 @@ set(KIJKLUISTER_VERSION "0.0.0" CACHE STRING "Versie van Kijkluister (voor bijwe
 target_compile_definitions(bigscreen-host PRIVATE KIJKLUISTER_VERSION="${KIJKLUISTER_VERSION}")
 
 # Pictogram (getekend door assets/make_icon.py)
-qt_add_resources(bigscreen-host "icons" PREFIX "/" FILES assets/kijkluister-256.png)
+qt_add_resources(bigscreen-host "icons" PREFIX "/" FILES assets/kijkluister-256.png assets/web-192.png assets/web-512.png assets/web-maskable-512.png)
 # Release-info (Aanpassen → Release-info); bij elke nieuwe versie bovenaan aanvullen
 qt_add_resources(bigscreen-host "releasenotes" PREFIX "/" FILES releasenotes.json)
 qt_add_resources(bigscreen-host "i18n" PREFIX "/" FILES i18n/kijkluister_en.qm)
