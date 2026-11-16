@@ -49,7 +49,10 @@ void Weather::refresh()
 // Ongeveer waar de computer staat (plaats van het internetadres); alleen bij de eerste keer
 void Weather::locate()
 {
-    QNetworkReply *reply = m_network.get(QNetworkRequest(QUrl(QStringLiteral("https://get.geojs.io/v1/ip/geo.json"))));
+    // Niet eindeloos wachten als de dienst niet antwoordt (dan later opnieuw)
+    QNetworkRequest request(QUrl(QStringLiteral("https://get.geojs.io/v1/ip/geo.json")));
+    request.setTransferTimeout(8000);
+    QNetworkReply *reply = m_network.get(request);
     connect(reply, &QNetworkReply::finished, this, [this, reply] {
         reply->deleteLater();
         const QJsonObject o = QJsonDocument::fromJson(reply->readAll()).object();
@@ -77,7 +80,9 @@ void Weather::fetch()
     q.addQueryItem(QStringLiteral("timezone"), QStringLiteral("auto"));
     q.addQueryItem(QStringLiteral("forecast_days"), QStringLiteral("3"));
     url.setQuery(q);
-    QNetworkReply *reply = m_network.get(QNetworkRequest(url));
+    QNetworkRequest request(url);
+    request.setTransferTimeout(8000);
+    QNetworkReply *reply = m_network.get(request);
     connect(reply, &QNetworkReply::finished, this, [this, reply] {
         reply->deleteLater();
         const QJsonObject o = QJsonDocument::fromJson(reply->readAll()).object();
@@ -119,7 +124,9 @@ void Weather::searchPlaces(const QString &query)
     q.addQueryItem(QStringLiteral("count"), QStringLiteral("8"));
     q.addQueryItem(QStringLiteral("language"), QStringLiteral("nl"));
     url.setQuery(q);
-    QNetworkReply *reply = m_network.get(QNetworkRequest(url));
+    QNetworkRequest request(url);
+    request.setTransferTimeout(8000);
+    QNetworkReply *reply = m_network.get(request);
     connect(reply, &QNetworkReply::finished, this, [this, reply] {
         reply->deleteLater();
         m_places.clear();
