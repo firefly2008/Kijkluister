@@ -151,6 +151,7 @@ FocusScope {
             width: frameScreen.width * 0.6 - frameScreen.unit * 5
             spacing: frameScreen.unit * 0.5
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: Math.min(implicitWidth, parent.width)
                 elide: Text.ElideRight
                 color: "white"
@@ -159,6 +160,7 @@ FocusScope {
                 text: frameScreen.shownItem ? frameScreen.shownItem.title : ""
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: Math.min(implicitWidth, parent.width)
                 elide: Text.ElideRight
                 color: "#d5d8dc"
@@ -167,6 +169,7 @@ FocusScope {
                 text: frameScreen.shownItem ? frameScreen.shownItem.subtitle : ""
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 color: "#9a9ea6"
                 font.pixelSize: (frameScreen.unit * 1.8) * appModel.fontScale
                 text: (frameScreen.shownItem ? frameScreen.shownItem.credit : "")
@@ -178,6 +181,7 @@ FocusScope {
 
     // Bezig of foutmelding
     Text {
+        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
         anchors.centerIn: parent
         visible: !frameScreen.shownItem
         color: "#b0b4bb"
@@ -303,6 +307,7 @@ FocusScope {
                 spacing: frameScreen.unit * 1.4
 
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     color: "white"
                     font.pixelSize: (frameScreen.unit * 4) * appModel.fontScale
                     font.weight: Font.DemiBold

@@ -229,6 +229,7 @@ FocusScope {
             color: "#c00b0c0f"
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 id: sidebarTitle
                 anchors.top: parent.top
                 anchors.left: parent.left
@@ -289,6 +290,7 @@ FocusScope {
                         anchors.leftMargin: lib.unit * 2.2
                         spacing: lib.unit * 1.8
                         Text {
+                            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                             anchors.verticalCenter: parent.verticalCenter
                             color: entry.focused ? "#111318" : "white"
                             font.family: "Segoe MDL2 Assets"
@@ -296,6 +298,7 @@ FocusScope {
                             text: entry.modelData.glyph
                         }
                         Text {
+                            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                             anchors.verticalCenter: parent.verticalCenter
                             color: entry.focused ? "#111318" : "white"
                             font.pixelSize: (lib.unit * 2.5) * appModel.fontScale
@@ -319,6 +322,7 @@ FocusScope {
             }
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.bottom: parent.bottom
                 anchors.left: parent.left
                 anchors.right: parent.right
@@ -342,6 +346,7 @@ FocusScope {
             visible: lib.current !== null
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 color: "white"
                 font.pixelSize: (lib.unit * 6.5) * appModel.fontScale
@@ -350,6 +355,7 @@ FocusScope {
                 text: lib.current ? lib.current.title : ""
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 color: "#d0d3d8"
                 font.pixelSize: (lib.unit * 2.3) * appModel.fontScale
@@ -357,6 +363,7 @@ FocusScope {
                 text: lib.metaLine(lib.current)
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 wrapMode: Text.Wrap
                 maximumLineCount: 4
@@ -369,6 +376,7 @@ FocusScope {
         }
 
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             id: statusLine
             anchors.top: parent.top
             anchors.right: parent.right
@@ -379,6 +387,7 @@ FocusScope {
         }
 
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             id: sectionTitle
             anchors.bottom: grid.top
             anchors.left: grid.left
@@ -446,6 +455,7 @@ FocusScope {
             }
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.centerIn: parent
                 width: parent.width * 0.8
                 horizontalAlignment: Text.AlignHCenter
@@ -478,6 +488,7 @@ FocusScope {
             radius: lib.unit
             color: "#22252b"
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.centerIn: parent
                 width: parent.width * 0.85
                 horizontalAlignment: Text.AlignHCenter
@@ -507,6 +518,7 @@ FocusScope {
             spacing: lib.unit * 1.3
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 wrapMode: Text.Wrap
                 maximumLineCount: 2
@@ -517,6 +529,7 @@ FocusScope {
                 text: lib.detail ? lib.detail.title + (lib.detail.year ? "  (" + lib.detail.year + ")" : "") : ""
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 elide: Text.ElideRight
                 color: "#d0d3d8"
@@ -524,6 +537,7 @@ FocusScope {
                 text: lib.metaLine(lib.detail)
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 visible: text !== ""
                 elide: Text.ElideRight
@@ -532,6 +546,7 @@ FocusScope {
                 text: lib.detail && lib.detail.maker ? lib.detail.makerLabel + ": " + lib.detail.maker : ""
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 wrapMode: Text.Wrap
                 maximumLineCount: lib.detail && lib.detail.kind === "show" ? 4 : 6
@@ -605,12 +620,14 @@ FocusScope {
                     anchors.leftMargin: lib.unit * 1.5
                     spacing: lib.unit * 2
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         color: episodeRow.focused ? "#111318" : "#9fb4d0"
                         font.pixelSize: (lib.unit * 2.2) * appModel.fontScale
                         font.weight: Font.DemiBold
                         text: episodeRow.modelData.code
                     }
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         width: episodeList.width - lib.unit * 16
                         elide: Text.ElideRight
                         color: episodeRow.focused ? "#111318" : "white"
@@ -641,6 +658,7 @@ FocusScope {
 
         // --- Cast ---
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             id: castTitle
             anchors.left: detailPoster.left
             anchors.bottom: castList.top
@@ -676,6 +694,7 @@ FocusScope {
                     color: "#2a2d33"
                     clip: true
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         anchors.centerIn: parent
                         visible: photo.status !== Image.Ready
                         color: "#a8acb3"
@@ -693,6 +712,7 @@ FocusScope {
                     }
                 }
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     width: parent.width
                     elide: Text.ElideRight
                     color: "white"
@@ -700,6 +720,7 @@ FocusScope {
                     text: person.modelData.name
                 }
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     width: parent.width
                     elide: Text.ElideRight
                     color: "#9a9ea6"
@@ -724,6 +745,7 @@ FocusScope {
         z: 10
         Behavior on opacity { NumberAnimation { duration: 200 } }
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             id: message
             anchors.centerIn: parent
             color: "white"

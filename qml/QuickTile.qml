@@ -27,6 +27,7 @@ Item {
             spacing: parent.height * 0.25
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.verticalCenter: parent.verticalCenter
                 color: tile.selected ? "#111318" : "white"
                 font.family: "Segoe MDL2 Assets"
@@ -34,6 +35,7 @@ Item {
                 text: tile.glyph
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.verticalCenter: parent.verticalCenter
                 color: tile.selected ? "#111318" : "white"
                 font.pixelSize: (tile.height * 0.34) * appModel.fontScale
@@ -55,6 +57,7 @@ Item {
         radius: height / 2
         color: "#e8eaed"
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             id: bubbleText
             anchors.centerIn: parent
             color: "#111318"

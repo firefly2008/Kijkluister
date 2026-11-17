@@ -54,4 +54,7 @@ private:
     QString m_code;
     QUrl m_qr;
     QHash<QString, qint64> m_seen;   // telefoon (ip) → laatst gezien
+    QHash<QString, QList<qint64>> m_failures;   // ip → tijden van foute codes
+    QHash<QString, qint64> m_blockedUntil;      // ip → geblokkeerd tot
+    int m_open = 0;                              // open verbindingen
 };

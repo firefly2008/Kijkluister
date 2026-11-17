@@ -22,6 +22,8 @@ public:
     bool unlocked() const;
     QStringList locked() const { return m_settings.value(QStringLiteral("parental/locked")).toStringList(); }
 
+    // Seconden dat de pincode niet geprobeerd kan worden (na 5 foute pogingen)
+    Q_INVOKABLE int waitSeconds() const;
     // Pincode instellen (4 cijfers). Bestaande tegels Live tv/Films/Series worden standaard vergrendeld.
     Q_INVOKABLE bool setPin(const QString &pin);
     Q_INVOKABLE bool check(const QString &pin);     // goed: een uur ontgrendeld

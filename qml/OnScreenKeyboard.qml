@@ -120,6 +120,7 @@ FocusScope {
                             border.color: parent.current ? "white" : "#3a3f48"
                             border.width: parent.current ? kb.unit * 0.25 : 1
                             Text {
+                                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                                 anchors.centerIn: parent
                                 text: qsTr(modelData)
                                 color: "white"

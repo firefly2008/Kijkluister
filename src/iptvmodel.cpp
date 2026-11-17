@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "mpcplayer.h"
 #include "iptvmodel.h"
+#include "securestore.h"
 #include "appmodel.h"
 
 #include <QDebug>
@@ -149,14 +150,14 @@ IptvModel::IptvModel(const QString &dataDir, QObject *parent)
     , m_dataDir(dataDir)
     , m_settings(dataDir + QStringLiteral("/settings.ini"), QSettings::IniFormat)
 {
-    m_sources = m_settings.value(QStringLiteral("iptv/sources")).toList();
+    m_sources = SecureStore::value(m_settings, QStringLiteral("iptv/sources")).toList();
     const QStringList favorites = m_settings.value(QStringLiteral("iptv/favorites")).toStringList();
     m_favorites = QSet<QString>(favorites.begin(), favorites.end());
     m_group = m_favorites.isEmpty() ? allGroup : favoritesGroup;
     loadCache();
     rebuildGroups();
     applyFilter();
-    m_epgUrls = m_settings.value(QStringLiteral("iptv/epgUrls")).toStringList();
+    m_epgUrls = SecureStore::value(m_settings, QStringLiteral("iptv/epgUrls")).toStringList();
     m_extraEpgUrls = m_settings.value(QStringLiteral("iptv/extraEpg")).toStringList();
     m_epgUrls.removeIf([](const QString &u) { return u.contains(QLatin1String("firefly2008/bigscreen-host-windows")); });
     // Bestaande installaties met gratis zenders: gratis gids er meteen bij
@@ -395,7 +396,7 @@ int IptvModel::addFreeSources(bool includeNews)
         ++added;
     }
     if (added > 0) {
-        m_settings.setValue(QStringLiteral("iptv/sources"), m_sources);
+        SecureStore::setValue(m_settings, QStringLiteral("iptv/sources"), m_sources);
         m_settings.sync();
         Q_EMIT sourcesChanged();
         reload();
@@ -443,7 +444,7 @@ bool IptvModel::addSource(const QString &type, const QString &name, const QStrin
         source[QStringLiteral("name")] = sourceLabel(source);
     }
     m_sources.append(source);
-    m_settings.setValue(QStringLiteral("iptv/sources"), m_sources);
+    SecureStore::setValue(m_settings, QStringLiteral("iptv/sources"), m_sources);
     m_settings.sync();
     Q_EMIT sourcesChanged();
     reload();
@@ -456,7 +457,7 @@ void IptvModel::removeSource(int index)
         return;
     }
     m_sources.removeAt(index);
-    m_settings.setValue(QStringLiteral("iptv/sources"), m_sources);
+    SecureStore::setValue(m_settings, QStringLiteral("iptv/sources"), m_sources);
     Q_EMIT sourcesChanged();
     reload();
 }
@@ -691,7 +692,7 @@ void IptvModel::finishLoading()
         saveCache();
         m_loadingEpgUrls.removeDuplicates();
         m_epgUrls = m_loadingEpgUrls;
-        m_settings.setValue(QStringLiteral("iptv/epgUrls"), m_epgUrls);
+        SecureStore::setValue(m_settings, QStringLiteral("iptv/epgUrls"), m_epgUrls);
         reloadEpg();
     }
     m_loading.clear();
@@ -997,7 +998,7 @@ void IptvModel::setExtraEpgUrls(const QStringList &urls)
         }
     }
     m_epgUrls = all;
-    m_settings.setValue(QStringLiteral("iptv/epgUrls"), m_epgUrls);
+    SecureStore::setValue(m_settings, QStringLiteral("iptv/epgUrls"), m_epgUrls);
     reloadEpg();
 }
 

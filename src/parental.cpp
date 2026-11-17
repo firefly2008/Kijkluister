@@ -40,15 +40,37 @@ bool Parental::setPin(const QString &pin)
     return true;
 }
 
+int Parental::waitSeconds() const
+{
+    return int(qMax<qint64>(0, m_settings.value(QStringLiteral("parental/lockedUntil")).toLongLong() - QDateTime::currentSecsSinceEpoch()));
+}
+
 bool Parental::check(const QString &pin)
 {
     if (!enabled()) {
         return true;
     }
+    // Raden tegengaan: na 5 foute pogingen eerst 1 minuut wachten, daarna steeds langer (max. 15 min);
+    // ook na herstarten van Kijkluister
+    const qint64 now = QDateTime::currentSecsSinceEpoch();
+    const qint64 lockedUntil = m_settings.value(QStringLiteral("parental/lockedUntil")).toLongLong();
+    if (lockedUntil > now) {
+        qInfo() << "Parental: locked for" << (lockedUntil - now) << "s";
+        return false;
+    }
     if (hash(pin) != m_settings.value(QStringLiteral("parental/pin")).toString()) {
+        const int fails = m_settings.value(QStringLiteral("parental/fails")).toInt() + 1;
+        m_settings.setValue(QStringLiteral("parental/fails"), fails);
+        if (fails >= 5) {
+            const qint64 wait = qMin<qint64>(900, 60LL << qMin(fails - 5, 4));
+            m_settings.setValue(QStringLiteral("parental/lockedUntil"), now + wait);
+            qInfo() << "Parental: too many wrong pins, waiting" << wait << "s";
+        }
         qInfo() << "Parental: wrong pin";
         return false;
     }
+    m_settings.remove(QStringLiteral("parental/fails"));
+    m_settings.remove(QStringLiteral("parental/lockedUntil"));
     m_unlockedUntil = QDateTime::currentSecsSinceEpoch() + 3600;
     qInfo() << "Parental: unlocked";
     Q_EMIT changed();

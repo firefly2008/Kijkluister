@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "cec.h"
 
+#include <QCryptographicHash>
+
 #include <QDir>
 #include <QDirIterator>
 #include <QFile>
@@ -199,11 +201,13 @@ void Cec::install()
         reply->deleteLater();
         QUrl asset;
         QString name;
+        QString digest;
         for (const QJsonValue &v : QJsonDocument::fromJson(reply->readAll()).object().value(QStringLiteral("assets")).toArray()) {
             const QString n = v.toObject().value(QStringLiteral("name")).toString();
             if (n.endsWith(QLatin1String(".exe"), Qt::CaseInsensitive)) {
                 asset = QUrl(v.toObject().value(QStringLiteral("browser_download_url")).toString());
                 name = n;
+                digest = v.toObject().value(QStringLiteral("digest")).toString();
             }
         }
         if (!asset.isValid()) {
@@ -214,14 +218,22 @@ void Cec::install()
         QNetworkRequest dl(asset);
         dl.setAttribute(QNetworkRequest::RedirectPolicyAttribute, QNetworkRequest::NoLessSafeRedirectPolicy);
         QNetworkReply *download = m_network.get(dl);
-        connect(download, &QNetworkReply::finished, this, [this, download, file] {
+        connect(download, &QNetworkReply::finished, this, [this, download, file, digest] {
             download->deleteLater();
             QFile out(file);
             if (download->error() != QNetworkReply::NoError || !out.open(QIODevice::WriteOnly)) {
                 setStatus(tr("Ophalen van libCEC lukte niet."));
                 return;
             }
-            out.write(download->readAll());
+            const QByteArray data = download->readAll();
+            // Controlegetal van GitHub: een vervalste installer niet met beheerdersrechten starten
+            if (digest.startsWith(QLatin1String("sha256:"))
+                && QString::fromLatin1(QCryptographicHash::hash(data, QCryptographicHash::Sha256).toHex()) != digest.mid(7).toLower()) {
+                qWarning() << "CEC: installer checksum mismatch";
+                setStatus(tr("Ophalen van libCEC lukte niet."));
+                return;
+            }
+            out.write(data);
             out.close();
             qInfo() << "CEC: running installer" << file;
 #ifdef Q_OS_WIN

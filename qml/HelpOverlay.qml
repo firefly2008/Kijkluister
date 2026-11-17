@@ -62,6 +62,7 @@ FocusScope {
         spacing: help.unit * 1.2
 
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             text: qsTr("Hulp: welke knop doet wat?")
             color: "white"
             font.pixelSize: help.unit * 4.2 * appModel.fontScale
@@ -74,6 +75,7 @@ FocusScope {
             Repeater {
                 model: ["", qsTr("🎮 Controller"), qsTr("📺 Afstandsbediening"), qsTr("⌨ Toetsenbord")]
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     required property string modelData
                     required property int index
                     width: index === 0 ? parent.width * 0.4 : parent.width * 0.2
@@ -100,6 +102,7 @@ FocusScope {
                     Repeater {
                         model: [modelData.what, modelData.pad, modelData.remote, modelData.key]
                         Text {
+                            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                             required property string modelData
                             required property int index
                             width: index === 0 ? parent.width * 0.4 : parent.width * 0.2
@@ -116,6 +119,7 @@ FocusScope {
         }
 
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             topPadding: help.unit * 1.5
             text: qsTr("Druk op B, Esc of Enter om te sluiten.")
             color: "#a8acb3"

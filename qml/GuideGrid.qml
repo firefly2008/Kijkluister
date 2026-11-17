@@ -140,11 +140,13 @@ FocusScope {
         width: parent.width - x * 2
         spacing: gg.unit * 0.8
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             text: qsTr("Gids  ·  ") + qsTr(iptv.group || "Alle zenders")
             color: "#a8acb3"
             font.pixelSize: gg.unit * 2.2 * appModel.fontScale
         }
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             width: parent.width
             elide: Text.ElideRight
             color: "white"
@@ -153,6 +155,7 @@ FocusScope {
             text: gg.selected ? gg.selected.title : (gg.selectedChannel ? gg.selectedChannel.name : "")
         }
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             width: parent.width
             elide: Text.ElideRight
             color: "#ffb74d"
@@ -163,6 +166,7 @@ FocusScope {
                               : qsTr("Geen gidsinformatie")
         }
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             width: parent.width
             height: gg.unit * 6
             wrapMode: Text.Wrap
@@ -189,6 +193,7 @@ FocusScope {
         Repeater {
             model: 6
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 required property int index
                 x: index * gg.timelineWidth / 6
                 color: "#a8acb3"
@@ -224,6 +229,7 @@ FocusScope {
                         x: gg.unit
                         spacing: gg.unit
                         Text {
+                            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                             anchors.verticalCenter: parent.verticalCenter
                             color: "#80848b"
                             font.pixelSize: gg.unit * 1.8 * appModel.fontScale
@@ -237,6 +243,7 @@ FocusScope {
                             asynchronous: true
                         }
                         Text {
+                            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                             anchors.verticalCenter: parent.verticalCenter
                             width: gg.channelWidth - gg.unit * 11
                             elide: Text.ElideRight
@@ -258,6 +265,7 @@ FocusScope {
                         radius: gg.unit * 0.8
                         color: rowItem.current ? "#e8eaed" : "#15181d"
                         Text {
+                            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                             anchors.verticalCenter: parent.verticalCenter
                             x: gg.unit * 1.2
                             color: rowItem.current ? "#111318" : "#80848b"
@@ -278,6 +286,7 @@ FocusScope {
                             radius: gg.unit * 0.8
                             color: chosen ? "#e8eaed" : modelData.isNow ? "#26303d" : "#1d2026"
                             Text {
+                                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                                 anchors.verticalCenter: parent.verticalCenter
                                 x: gg.unit
                                 width: parent.width - gg.unit * 2
@@ -333,7 +342,7 @@ FocusScope {
         opacity: toastTimer.running ? 1 : 0
         visible: opacity > 0
         Behavior on opacity { NumberAnimation { duration: 200 } }
-        Text { id: toastText; anchors.centerIn: parent; color: "white"; font.pixelSize: gg.unit * 2.4 * appModel.fontScale }
+        Text { id: toastText; textFormat: Text.PlainText; anchors.centerIn: parent; color: "white"; font.pixelSize: gg.unit * 2.4 * appModel.fontScale }
     }
     Timer { id: toastTimer; interval: 4000 }
 }

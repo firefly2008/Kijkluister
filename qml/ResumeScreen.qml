@@ -42,6 +42,7 @@ FocusScope {
     }
 
     Text {
+        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
         id: title
         x: screen.unit * 5
         y: screen.unit * 4
@@ -52,6 +53,7 @@ FocusScope {
     }
 
     Text {
+        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
         anchors.left: title.left
         anchors.top: title.bottom
         anchors.topMargin: screen.unit * 3
@@ -128,6 +130,7 @@ FocusScope {
                     anchors.bottomMargin: screen.unit * 0.9
                     spacing: screen.unit * 0.3
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         width: parent.width
                         text: cell.name
                         color: "white"
@@ -136,6 +139,7 @@ FocusScope {
                         font.weight: Font.DemiBold
                     }
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         width: parent.width
                         text: cell.parts ? cell.parts[1] : cell.sub
                         color: "#d4d7dc"
@@ -143,6 +147,7 @@ FocusScope {
                         font.pixelSize: screen.unit * 1.8 * appModel.fontScale
                     }
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         width: parent.width
                         visible: cell.split >= 0
                         text: cell.parts ? cell.parts[2] : ""

@@ -47,6 +47,7 @@ FocusScope {
                 cache: false
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.centerIn: parent
                 width: parent.width * 0.8
                 visible: !remote.listening
@@ -63,12 +64,14 @@ FocusScope {
             anchors.verticalCenter: parent.verticalCenter
             spacing: ro.unit * 2
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 color: "white"
                 font.pixelSize: ro.unit * 4.5 * appModel.fontScale
                 font.weight: Font.DemiBold
                 text: qsTr("Telefoon als afstandsbediening")
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 wrapMode: Text.Wrap
                 color: "#c9ccd1"
@@ -82,17 +85,20 @@ FocusScope {
                 visible: remote.listening
                 spacing: ro.unit * 0.6
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     color: "#a8acb3"
                     font.pixelSize: ro.unit * 2 * appModel.fontScale
                     text: qsTr("Of typ dit adres in de browser van je telefoon:")
                 }
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     color: "#ffb74d"
                     font.pixelSize: ro.unit * 3 * appModel.fontScale
                     font.weight: Font.DemiBold
                     text: remote.address + "/?c=" + remote.code
                 }
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     color: "#a8acb3"
                     font.pixelSize: ro.unit * 2 * appModel.fontScale
                     text: remote.clients > 0 ? qsTr("📱 Verbonden met ") + remote.clients + (remote.clients === 1 ? qsTr(" telefoon") : qsTr(" telefoons"))
@@ -126,6 +132,7 @@ FocusScope {
                 }
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 visible: remote.listening
                 width: parent.width
                 wrapMode: Text.Wrap

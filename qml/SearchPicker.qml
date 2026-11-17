@@ -95,6 +95,7 @@ FocusScope {
     }
 
     Text {
+        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
         id: titleLabel
         x: picker.unit * 5
         y: picker.unit * 4
@@ -117,6 +118,7 @@ FocusScope {
         border.color: keyboard.activeFocus ? "#5b8fd8" : "#3a3f48"
         border.width: picker.unit * 0.25
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             anchors.left: parent.left
             anchors.leftMargin: picker.unit * 2
             anchors.verticalCenter: parent.verticalCenter
@@ -136,6 +138,7 @@ FocusScope {
             radius: width / 2
             color: field.activeFocus ? "#e53935" : micMouse.containsMouse ? "#3d6fb4" : "#2a2f38"
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.centerIn: parent
                 text: qsTr("\uE720")   // microfoon
                 font.family: "Segoe MDL2 Assets"
@@ -161,6 +164,7 @@ FocusScope {
             activeFocusOnPress: false
             onTextChanged: debounce.restart()
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.verticalCenter: parent.verticalCenter
                 visible: field.text === ""
                 text: picker.placeholder
@@ -207,6 +211,7 @@ FocusScope {
 
     // Resultaten
     Text {
+        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
         anchors.left: list.left
         anchors.top: list.top
         anchors.topMargin: picker.unit * 2
@@ -283,6 +288,7 @@ FocusScope {
                     sourceSize: Qt.size(128, 128)
                 }
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     anchors.centerIn: parent
                     visible: iconImage.status !== Image.Ready
                     readonly property bool emoji: iconBox.icon !== "" && !iconBox.icon.startsWith("glyph:") && !iconBox.icon.startsWith("http")
@@ -300,6 +306,7 @@ FocusScope {
                 anchors.rightMargin: picker.unit
                 anchors.verticalCenter: parent.verticalCenter
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     width: parent.width
                     elide: Text.ElideRight
                     text: resultRow.name
@@ -307,6 +314,7 @@ FocusScope {
                     font.pixelSize: picker.unit * 2.9 * appModel.fontScale
                 }
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     width: parent.width
                     elide: Text.ElideRight
                     visible: text !== ""
@@ -316,6 +324,7 @@ FocusScope {
                 }
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 id: badgeLabel
                 anchors.right: parent.right
                 anchors.rightMargin: picker.unit * 2

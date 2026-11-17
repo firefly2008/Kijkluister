@@ -211,6 +211,7 @@ FocusScope {
 
     // Titel linksboven
     Text {
+        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
         x: radioPlayer.unit * 4
         y: radioPlayer.unit * 4
         text: qsTr("Radio")
@@ -241,6 +242,7 @@ FocusScope {
                 mipmap: true
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.centerIn: parent
                 visible: radioPlayer.logo.startsWith("glyph:")
                 text: radioPlayer.logo.substring(6)
@@ -251,6 +253,7 @@ FocusScope {
         }
 
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             anchors.horizontalCenter: parent.horizontalCenter
             text: radioPlayer.row >= 0 ? radio.nameAt(radioPlayer.row) : ""
             color: "#ffffff"
@@ -259,6 +262,7 @@ FocusScope {
         }
 
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             anchors.horizontalCenter: parent.horizontalCenter
             text: radioPlayer.row >= 0 ? radio.subtitleAt(radioPlayer.row) : ""
             color: "#c9ccd1"
@@ -286,6 +290,7 @@ FocusScope {
                 }
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.verticalCenter: parent.verticalCenter
                 color: radioPlayer.errorText !== "" ? "#ff8a80" : "#ffffff"
                 font.pixelSize: radioPlayer.unit * 3 * appModel.fontScale
@@ -297,6 +302,7 @@ FocusScope {
         }
 
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             anchors.horizontalCenter: parent.horizontalCenter
             visible: radioPlayer.nowPlaying !== "" && radioPlayer.playing
             width: Math.min(implicitWidth, radioPlayer.width * 0.8)
@@ -337,6 +343,7 @@ FocusScope {
             }
         }
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             anchors.horizontalCenter: parent.horizontalCenter
             anchors.bottom: parent.bottom
             anchors.bottomMargin: radioPlayer.unit * 1.4
@@ -381,6 +388,7 @@ FocusScope {
                     mipmap: true
                 }
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     anchors.centerIn: parent
                     visible: iconSource.startsWith("glyph:")
                     width: parent.width * 0.9

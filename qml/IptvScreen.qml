@@ -307,6 +307,7 @@ FocusScope {
             color: "#a00b0c0f"
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 id: title
                 anchors.top: parent.top
                 anchors.left: parent.left
@@ -332,6 +333,7 @@ FocusScope {
                 border.width: searchField.activeFocus ? 3 : 1
                 border.color: searchField.activeFocus ? "#e8eaed" : "#33ffffff"
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     id: searchIcon
                     anchors.left: parent.left
                     anchors.leftMargin: tv.unit * 2
@@ -364,6 +366,7 @@ FocusScope {
                         }
                     }
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         anchors.fill: parent
                         verticalAlignment: Text.AlignVCenter
                         visible: searchField.text === "" && !searchField.activeFocus
@@ -406,6 +409,7 @@ FocusScope {
                     radius: height / 2
                     color: focused ? "#e8eaed" : chosen ? "#2a2d33" : "transparent"
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         anchors.verticalCenter: parent.verticalCenter
                         anchors.left: parent.left
                         anchors.right: parent.right
@@ -500,6 +504,7 @@ FocusScope {
         }
 
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             id: heading
             anchors.left: sidebar.right
             anchors.leftMargin: tv.unit * 4
@@ -512,6 +517,7 @@ FocusScope {
             text: iptv.search !== "" ? qsTr("Zoeken: ") + iptv.search : qsTr(iptv.group)
         }
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             id: statusLine
             anchors.left: heading.left
             anchors.top: heading.bottom
@@ -604,6 +610,7 @@ FocusScope {
             }
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.centerIn: parent
                 width: parent.width * 0.8
                 horizontalAlignment: Text.AlignHCenter
@@ -671,6 +678,7 @@ FocusScope {
                      || tv.player.mediaStatus === MediaPlayer.StalledMedia
                      || (tv.player.mediaStatus === MediaPlayer.BufferingMedia && !tv.player.hasVideo)))
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.horizontalCenter: parent.horizontalCenter
                 color: "white"
                 font.pixelSize: (tv.unit * 3.4) * appModel.fontScale
@@ -678,6 +686,7 @@ FocusScope {
                 text: tv.errorText !== "" ? qsTr("Deze zender is nu niet te zien") : qsTr("Laden…")
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.horizontalCenter: parent.horizontalCenter
                 width: Math.min(implicitWidth, tv.width * 0.7)
                 horizontalAlignment: Text.AlignHCenter
@@ -707,6 +716,7 @@ FocusScope {
                 }
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.horizontalCenter: parent.horizontalCenter
                 visible: tv.errorText !== ""
                 color: "#a8acb3"
@@ -755,6 +765,7 @@ FocusScope {
                     spacing: tv.unit * 0.6
                     width: tv.width - tv.unit * 25
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         color: "white"
                         font.pixelSize: (tv.unit * 4) * appModel.fontScale
                         font.weight: Font.DemiBold
@@ -765,12 +776,14 @@ FocusScope {
                         spacing: tv.unit * 1.5
                         visible: !!tv.nowNext.nowTitle
                         Text {
+                            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                             color: "#ffb74d"
                             font.pixelSize: (tv.unit * 2.4) * appModel.fontScale
                             font.weight: Font.DemiBold
                             text: qsTr("NU")
                         }
                         Text {
+                            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                             color: "white"
                             font.pixelSize: (tv.unit * 2.6) * appModel.fontScale
                             text: (tv.nowNext.nowTime || "") + "   " + (tv.nowNext.nowTitle || "")
@@ -792,6 +805,7 @@ FocusScope {
                         }
                     }
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         visible: !!tv.nowNext.nextTitle
                         color: "#b0b4bb"
                         font.pixelSize: (tv.unit * 2.2) * appModel.fontScale
@@ -800,6 +814,7 @@ FocusScope {
                         text: qsTr("Straks  ") + (tv.nowNext.nextTime || "") + "   " + (tv.nowNext.nextTitle || "")
                     }
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         visible: !tv.nowNext.nowTitle && !tv.nowNext.nextTitle
                         color: "#a8acb3"
                         font.pixelSize: (tv.unit * 2.2) * appModel.fontScale
@@ -886,6 +901,7 @@ FocusScope {
         z: 10
         Behavior on opacity { NumberAnimation { duration: 200 } }
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             id: message
             anchors.centerIn: parent
             color: "white"
@@ -945,6 +961,7 @@ FocusScope {
                 }
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 id: recText
                 color: "white"
                 font.pixelSize: (tv.unit * 2.3) * appModel.fontScale
@@ -981,6 +998,7 @@ FocusScope {
             radius: tv.unit * 0.8
             color: "#ee16181d"
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 id: tipText
                 anchors.centerIn: parent
                 text: qsTr("Opname stoppen")
@@ -1004,6 +1022,7 @@ FocusScope {
         Column {
             anchors.centerIn: parent
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 id: numberText
                 anchors.horizontalCenter: parent.horizontalCenter
                 text: tv.numberEntry
@@ -1012,6 +1031,7 @@ FocusScope {
                 font.weight: Font.Bold
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.horizontalCenter: parent.horizontalCenter
                 readonly property int n: parseInt(tv.numberEntry) - 1
                 text: n >= 0 && n < iptv.count ? iptv.channelAt(n).name : "—"

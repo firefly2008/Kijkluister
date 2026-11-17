@@ -700,3 +700,4 @@ a(
 )
 a("Streaming","Streaming")
 a("standaard","default")
+a("Te vaak fout: wacht %1 seconden","Too many wrong attempts: wait %1 seconds")

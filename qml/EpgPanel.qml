@@ -153,6 +153,7 @@ FocusScope {
         Column {
             anchors.verticalCenter: parent.verticalCenter
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 color: "white"
                 font.pixelSize: (panel.unit * 4) * appModel.fontScale
                 font.weight: Font.DemiBold
@@ -172,6 +173,7 @@ FocusScope {
     }
 
     Text {
+        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
         anchors.centerIn: parent
         visible: panel.programmes.length === 0
         color: "#b0b4bb"
@@ -208,6 +210,7 @@ FocusScope {
                 onClicked: { list.currentIndex = item.index; list.forceActiveFocus() }
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 visible: item.newDay
                 x: panel.unit * 1.5
                 y: panel.unit * 0.6
@@ -222,11 +225,13 @@ FocusScope {
                 x: panel.unit * 1.5
                 spacing: panel.unit * 2
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     color: item.current ? "#202124" : "#b0b4bb"
                     font.pixelSize: (panel.unit * 2.6) * appModel.fontScale
                     text: item.modelData.start
                 }
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     width: list.width - panel.unit * 17
                     elide: Text.ElideRight
                     color: item.current ? "#202124" : "white"
@@ -235,6 +240,7 @@ FocusScope {
                     text: (item.modelData.isNow ? "▶ " : "") + item.modelData.title
                 }
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     visible: panel.hasReminder(item.modelData)
                     anchors.verticalCenter: parent.verticalCenter
                     font.pixelSize: (panel.unit * 2) * appModel.fontScale
@@ -268,6 +274,7 @@ FocusScope {
             width: details.width
             spacing: panel.unit * 1.5
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 wrapMode: Text.Wrap
                 color: "white"
@@ -276,6 +283,7 @@ FocusScope {
                 text: details.p ? details.p.title : ""
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 color: "#ffb74d"
                 font.pixelSize: (panel.unit * 2.4) * appModel.fontScale
                 text: details.p ? details.p.day + "   " + details.p.start + " – " + details.p.stop
@@ -325,6 +333,7 @@ FocusScope {
 
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 wrapMode: Text.Wrap
                 lineHeight: 1.25
@@ -362,12 +371,14 @@ FocusScope {
                 id: recordToastColumn
                 spacing: panel.unit * 0.6
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     id: recordToastTitle
                     color: "white"
                     font.pixelSize: (panel.unit * 3) * appModel.fontScale
                     font.weight: Font.DemiBold
                 }
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     id: recordToastText
                     visible: text !== ""
                     color: "#d5d8dc"

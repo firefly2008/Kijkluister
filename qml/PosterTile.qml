@@ -32,6 +32,7 @@ Item {
 
             // Nog geen poster: titel in het vlak
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.centerIn: parent
                 width: parent.width * 0.85
                 visible: poster.status !== Image.Ready
@@ -56,6 +57,7 @@ Item {
         }
 
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             width: parent.width
             horizontalAlignment: Text.AlignHCenter
             elide: Text.ElideRight

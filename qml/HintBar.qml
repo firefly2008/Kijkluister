@@ -43,6 +43,7 @@ Row {
                 border.width: round ? 0 : 1
                 border.color: "#66ffffff"
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     id: keyText
                     anchors.centerIn: parent
                     color: "white"
@@ -53,6 +54,7 @@ Row {
             }
             // Wat de knop doet
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.verticalCenter: parent.verticalCenter
                 color: bar.textColor
                 font.pixelSize: (bar.size) * appModel.fontScale

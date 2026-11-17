@@ -13,6 +13,7 @@
 #include <QQmlContext>
 #include <QQmlEngine>
 #include <QQmlError>
+#include <QRegularExpression>
 #include <QTextStream>
 #include <QDateTime>
 #include <QDir>
@@ -142,13 +143,29 @@ namespace {
 QString g_logPath;
 QMutex g_logMutex;
 
+// Inloggegevens nooit in het logbestand: wachtwoorden/sleutels in links (…?password=…) en
+// Xtream-adressen met gebruiker en wachtwoord in het pad (http://server:8080[/live]/<gebruiker>/<wachtwoord>/<id>)
+QString redactSecrets(QString text)
+{
+    static const QRegularExpression query(QStringLiteral(R"(\b(password|passwd|pwd|username|user|token|api_key|apikey|key|access_token|auth)=[^&\s"']+)"),
+                                          QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression xtream(QStringLiteral(R"((https?://[^/\s"']+)/((?:live|movie|series|timeshift)/)?[^/\s"']+/[^/\s"']+/(\d+(?:\.\w+)?))"),
+                                           QRegularExpression::CaseInsensitiveOption);
+    static const QRegularExpression userinfo(QStringLiteral(R"(://[^/\s"'@]+:[^/\s"'@]+@)"));
+    text.replace(query, QStringLiteral("\\1=***"));
+    text.replace(xtream, QStringLiteral("\\1/\\2***/***/\\3"));
+    text.replace(userinfo, QStringLiteral("://***:***@"));
+    return text;
+}
+
 void logHandler(QtMsgType type, const QMessageLogContext &, const QString &msg)
 {
     static const char *names[] = {"DEBUG", "WARN", "CRIT", "FATAL", "INFO"};
+    const QString safe = redactSecrets(msg);
     QMutexLocker lock(&g_logMutex);
     QFile f(g_logPath);
     if (f.open(QIODevice::Append | QIODevice::Text)) {
-        QTextStream(&f) << QDateTime::currentDateTime().toString(Qt::ISODate) << " [" << names[type] << "] " << msg << "\n";
+        QTextStream(&f) << QDateTime::currentDateTime().toString(Qt::ISODate) << " [" << names[type] << "] " << safe << "\n";
     }
 }
 
@@ -411,5 +428,8 @@ int main(int argc, char *argv[])
     // of controllerknop (zie Global::takeScreenshot() in het migratieplan),
     // niet hier op een vast moment -- de functie staat hierboven als referentie.
 
+    // Bij afsluiten eerst de QML-schermen opruimen, dan pas de onderdelen waar ze naar kijken
+    // (anders ~100 meldingen "Cannot read property … of null" en kans op een vastloper)
+    QObject::connect(&app, &QCoreApplication::aboutToQuit, &view, [&view] { view.setSource(QUrl()); });
     return app.exec();
 }

@@ -71,7 +71,7 @@ FocusScope {
             returnFocusTo = focusBack
             onDone = done
             pin = ""
-            error = qsTr("Onjuiste pincode")
+            error = parental.waitSeconds() > 0 ? qsTr("Te vaak fout: wacht %1 seconden").arg(parental.waitSeconds()) : qsTr("Onjuiste pincode")
             visible = true
             grid.forceActiveFocus()
             shake.restart()
@@ -118,6 +118,7 @@ FocusScope {
             spacing: pad.unit * 2
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 horizontalAlignment: Text.AlignHCenter
                 wrapMode: Text.WordWrap
@@ -127,6 +128,7 @@ FocusScope {
                 font.weight: Font.DemiBold
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 visible: text !== ""
                 horizontalAlignment: Text.AlignHCenter
@@ -154,6 +156,7 @@ FocusScope {
             }
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 height: pad.unit * 3
                 horizontalAlignment: Text.AlignHCenter
@@ -187,6 +190,7 @@ FocusScope {
                         border.color: grid.activeFocus && grid.currentIndex === index ? "white" : "transparent"
                         border.width: pad.unit * 0.25
                         Text {
+                            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                             anchors.centerIn: parent
                             text: modelData
                             color: "white"

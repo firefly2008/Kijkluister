@@ -51,6 +51,8 @@ qt_add_executable(bigscreen-host WIN32
     src/homebridge.h
     src/photosearch.cpp
     src/systemtools.cpp
+    src/securestore.cpp
+    src/securestore.h
     src/remoteserver.cpp
     src/nowtvmodel.cpp
     src/nowtvmodel.h
@@ -118,7 +120,7 @@ target_link_libraries(bigscreen-host PRIVATE
 )
 
 if(WIN32)
-    target_link_libraries(bigscreen-host PRIVATE user32 shell32 ole32 comctl32 ws2_32 iphlpapi)
+    target_link_libraries(bigscreen-host PRIVATE user32 shell32 ole32 comctl32 ws2_32 iphlpapi crypt32)
 endif()
 
 # Installatie: alles plat in een map, zodat windeployqt + Inno Setup er een installer van maken

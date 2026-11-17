@@ -93,12 +93,14 @@ FocusScope {
         spacing: panel.unit * 1.6
 
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             color: "white"
             font.pixelSize: (panel.unit * 4) * appModel.fontScale
             font.weight: Font.DemiBold
             text: qsTr("Opnemen  ·  ") + (panel.channel.name || "")
         }
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             color: "#a8acb3"
             font.pixelSize: (panel.unit * 2) * appModel.fontScale
             text: qsTr("De opname loopt door op de achtergrond, ook als je een andere zender kijkt.") + (gamepad.connectedCount > 0 ? qsTr("   Ⓑ sluiten") : qsTr("   Esc: sluiten"))
@@ -116,6 +118,7 @@ FocusScope {
                 border.width: 1
                 border.color: "#33ffffff"
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     anchors.fill: parent
                     anchors.margins: panel.unit * 1.5
                     verticalAlignment: Text.AlignVCenter
@@ -213,6 +216,7 @@ FocusScope {
                         }
                     }
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         color: "white"
                         font.pixelSize: (panel.unit * 2.6) * appModel.fontScale
                         text: recorder.recording
@@ -223,6 +227,7 @@ FocusScope {
                     }
                 }
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     visible: recorder.recording
                     color: "#b0b4bb"
                     font.pixelSize: (panel.unit * 2) * appModel.fontScale
@@ -233,6 +238,7 @@ FocusScope {
             }
         }
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             id: message
             color: "#ffb74d"
             font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
@@ -241,6 +247,7 @@ FocusScope {
 
         // Geplande opnames (uit de tv-gids)
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             visible: recorder.schedule.length > 0
             color: "#9fb4d0"
             font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
@@ -297,12 +304,14 @@ FocusScope {
                         color: prow.modelData.state === "bezig" ? "#e53935" : prow.modelData.state === "gepland" ? "#ff8a80" : "#9e9e9e"
                     }
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         width: planned.width * 0.28
                         color: prow.current ? "#202124" : "#d5d8dc"
                         font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
                         text: planned.when(prow.modelData)
                     }
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         width: planned.width * 0.45
                         elide: Text.ElideRight
                         color: prow.current ? "#202124" : "white"
@@ -310,6 +319,7 @@ FocusScope {
                         text: prow.modelData.title + "  ·  " + prow.modelData.channel
                     }
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         color: prow.current ? "#5f6368" : "#b0b4bb"
                         font.pixelSize: (panel.unit * 2.1) * appModel.fontScale
                         text: prow.modelData.state === "bezig" ? qsTr("wordt opgenomen")
@@ -322,6 +332,7 @@ FocusScope {
 
         // Eerdere opnames
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             color: "#9fb4d0"
             font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
             text: qsTr("Opnames in deze map") + (recorder.recordings.length > 0
@@ -349,6 +360,7 @@ FocusScope {
                 }
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 visible: list.count === 0
                 color: "#a8acb3"
                 font.pixelSize: (panel.unit * 2.4) * appModel.fontScale
@@ -373,6 +385,7 @@ FocusScope {
                     x: panel.unit * 1.5
                     spacing: panel.unit * 3
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         width: list.width * 0.55
                         elide: Text.ElideRight
                         color: row.current ? "#202124" : "white"
@@ -380,12 +393,14 @@ FocusScope {
                         text: (row.modelData.busy ? "●  " : "") + row.modelData.name
                     }
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         width: list.width * 0.18
                         color: row.current ? "#5f6368" : "#b0b4bb"
                         font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
                         text: row.modelData.date
                     }
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         color: row.current ? "#5f6368" : "#b0b4bb"
                         font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
                         text: panel.confirmDelete === row.index ? (gamepad.connectedCount > 0 ? qsTr("Nog eens Ⓧ om te verwijderen") : qsTr("Nog eens F2 om te verwijderen")) : panel.fmtSize(row.modelData.size)

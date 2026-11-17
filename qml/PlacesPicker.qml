@@ -96,6 +96,7 @@ FocusScope {
             spacing: picker.unit * 2
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 elide: Text.ElideRight
                 color: "white"
@@ -103,6 +104,7 @@ FocusScope {
                 text: picker.title
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 color: "#9fb4d0"
                 font.pixelSize: (picker.unit * 2.3) * appModel.fontScale
                 text: qsTr("Hoeveel ") + picker.unitName + qsTr("? (1 tot ") + picker.maximum + ")"
@@ -120,6 +122,7 @@ FocusScope {
                     MouseArea { anchors.fill: parent; onClicked: picker.change(-1) }
                 }
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     anchors.verticalCenter: parent.verticalCenter
                     width: picker.unit * 14
                     horizontalAlignment: Text.AlignHCenter
@@ -154,6 +157,7 @@ FocusScope {
             }
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.horizontalCenter: parent.horizontalCenter
                 color: "#a8acb3"
                 font.pixelSize: (picker.unit * 1.9) * appModel.fontScale

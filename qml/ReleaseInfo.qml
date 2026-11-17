@@ -47,12 +47,14 @@ FocusScope {
         y: info.unit * 5
         spacing: info.unit * 1
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             text: qsTr("Release-info")
             color: "white"
             font.pixelSize: info.unit * 4.5 * appModel.fontScale
             font.weight: Font.DemiBold
         }
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             text: qsTr("Geïnstalleerd: Kijkluister ") + updater.current
                   + (updater.updateAvailable ? qsTr("   ·   Nieuwste versie: ") + updater.latest : qsTr("   ·   Dit is de nieuwste versie"))
             color: "#d5d8dc"
@@ -96,6 +98,7 @@ FocusScope {
                     Row {
                         spacing: info.unit * 1.5
                         Text {
+                            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                             text: qsTr("Versie ") + modelData.version
                             color: "white"
                             font.pixelSize: info.unit * 3.2 * appModel.fontScale
@@ -109,6 +112,7 @@ FocusScope {
                             radius: height / 2
                             color: "#2e7d32"
                             Text {
+                                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                                 id: badge
                                 anchors.centerIn: parent
                                 text: qsTr("Geïnstalleerd")
@@ -117,6 +121,7 @@ FocusScope {
                             }
                         }
                         Text {
+                            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                             anchors.verticalCenter: parent.verticalCenter
                             text: modelData.date || ""
                             color: "#a8acb3"
@@ -126,6 +131,7 @@ FocusScope {
                     Repeater {
                         model: uiLanguage === "en" && modelData.notes_en ? modelData.notes_en : modelData.notes
                         Text {
+                            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                             required property string modelData
                             width: list.width
                             wrapMode: Text.WordWrap

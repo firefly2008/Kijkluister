@@ -57,6 +57,7 @@ FocusScope {
         MouseArea { anchors.fill: parent }
 
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             id: titleLabel
             anchors.top: parent.top
             anchors.left: parent.left
@@ -68,6 +69,7 @@ FocusScope {
             text: overlay.title
         }
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             id: messageLabel
             visible: overlay.message !== ""
             anchors.top: titleLabel.bottom
@@ -110,6 +112,7 @@ FocusScope {
                 color: list.currentIndex === index ? "#3d6fb4" : "transparent"
 
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
                     anchors.leftMargin: panel.unit * 2.5

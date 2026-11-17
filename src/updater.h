@@ -67,6 +67,7 @@ private:
     QNetworkAccessManager m_network;
     QString m_latest;
     QUrl m_asset;
+    QString m_digest;   // "sha256:…" van GitHub
     QString m_notes;
     bool m_busy = false;
     double m_progress = 0;

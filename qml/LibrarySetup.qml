@@ -55,6 +55,7 @@ FocusScope {
         width: content.width
         spacing: setup.unit * 0.6
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             visible: fl.paths.length === 0
             color: "#a8acb3"
             font.pixelSize: (setup.unit * 2.3) * appModel.fontScale
@@ -72,6 +73,7 @@ FocusScope {
                     radius: setup.unit
                     color: "#0f1115"
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         anchors.fill: parent
                         anchors.margins: setup.unit * 1.5
                         verticalAlignment: Text.AlignVCenter
@@ -167,12 +169,14 @@ FocusScope {
             spacing: setup.unit * 1.6
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 color: "white"
                 font.pixelSize: (setup.unit * 4) * appModel.fontScale
                 font.weight: Font.DemiBold
                 text: setup.firstRun ? qsTr("Waar staan je films en series?") : qsTr("Mappen kiezen")
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 wrapMode: Text.Wrap
                 color: "#c4c7cc"
@@ -215,6 +219,7 @@ FocusScope {
                 visible: !setup.showKey
                 spacing: setup.unit * 1.5
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     anchors.verticalCenter: parent.verticalCenter
                     color: "#c4c7cc"
                     font.pixelSize: (setup.unit * 2.2) * appModel.fontScale
@@ -258,6 +263,7 @@ FocusScope {
                         KeyNavigation.down: saveButton
                     }
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         anchors.centerIn: parent
                         visible: pinField.text === "" && !pinField.activeFocus
                         color: "#a8acb3"
@@ -276,6 +282,7 @@ FocusScope {
                 }
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 visible: setup.showKey
                 width: parent.width
                 wrapMode: Text.Wrap
@@ -305,6 +312,7 @@ FocusScope {
                     onAccepted: setup.save()
                 }
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     anchors.fill: keyField
                     verticalAlignment: Text.AlignVCenter
                     visible: keyField.text === "" && !keyField.activeFocus
@@ -314,6 +322,7 @@ FocusScope {
                 }
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 visible: setup.showKey
                 width: parent.width
                 wrapMode: Text.Wrap
@@ -325,6 +334,7 @@ FocusScope {
             }
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 id: warning
                 visible: text !== ""
                 color: "#ff8a80"

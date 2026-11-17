@@ -1,5 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "updater.h"
+
+#include <QCryptographicHash>
 #include "paths.h"
 
 #include <QCoreApplication>
@@ -186,14 +188,17 @@ void Updater::check(bool manual)
         }
         m_notes = o.value(QStringLiteral("body")).toString().left(600);
         m_asset = QUrl();
+        m_digest.clear();
         for (const QJsonValue &v : o.value(QStringLiteral("assets")).toArray()) {
             const QString name = v.toObject().value(QStringLiteral("name")).toString();
             if (name.endsWith(QLatin1String("-x64-setup.exe"), Qt::CaseInsensitive)) {
                 m_asset = QUrl(v.toObject().value(QStringLiteral("browser_download_url")).toString());
+                m_digest = v.toObject().value(QStringLiteral("digest")).toString();
             }
         }
         m_settings.setValue(QStringLiteral("update/latest"), m_latest);
         m_settings.setValue(QStringLiteral("update/asset"), m_asset);
+        m_settings.setValue(QStringLiteral("update/digest"), m_digest);
         m_settings.setValue(QStringLiteral("update/notes"), m_notes);
         qInfo() << "Update check: current" << current() << "latest" << m_latest;
         setStatus(updateAvailable() ? tr("Kijkluister %1 is er.").arg(m_latest)
@@ -237,6 +242,20 @@ void Updater::install()
             QFile::remove(file);
             setStatus(tr("Ophalen lukte niet. Probeer het later nog eens."), false);
             return;
+        }
+        // Controlegetal van GitHub verplicht: anders deze installer niet starten
+        {
+            QFile f(file);
+            QCryptographicHash sha(QCryptographicHash::Sha256);
+            const bool ok = m_digest.startsWith(QLatin1String("sha256:")) && f.open(QIODevice::ReadOnly) && sha.addData(&f)
+                            && QString::fromLatin1(sha.result().toHex()) == m_digest.mid(7).toLower();
+            f.close();
+            if (!ok) {
+                qWarning() << "Update: checksum missing or wrong";
+                QFile::remove(file);
+                setStatus(tr("Ophalen lukte niet. Probeer het later nog eens."), false);
+                return;
+            }
         }
         qInfo() << "Update downloaded" << file;
         setStatus(tr("Bijwerken… Kijkluister start zo opnieuw."), true);

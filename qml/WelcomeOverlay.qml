@@ -124,6 +124,7 @@ FocusScope {
                 sourceSize: Qt.size(128, 128)
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.verticalCenter: parent.verticalCenter
                 color: "white"
                 font.pixelSize: (welcome.unit * 5) * appModel.fontScale
@@ -132,6 +133,7 @@ FocusScope {
             }
         }
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             width: parent.width
             wrapMode: Text.Wrap
             color: "#d5d8dc"
@@ -173,6 +175,7 @@ FocusScope {
             z: cell.modelData.header ? 1 : 0
             // Kopje (Streaming, Muziek, ...) over de hele breedte
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 visible: !!cell.modelData.header
                 anchors.left: parent.left
                 anchors.leftMargin: welcome.unit * 0.7
@@ -204,6 +207,7 @@ FocusScope {
                         border.width: 2
                         border.color: "white"
                         Text {
+                            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                             anchors.centerIn: parent
                             visible: cell.modelData.on
                             color: "#202124"
@@ -223,6 +227,7 @@ FocusScope {
                     Column {
                         anchors.verticalCenter: parent.verticalCenter
                         Text {
+                            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                             width: grid.cellWidth - welcome.unit * 13
                             elide: Text.ElideRight
                             color: "white"
@@ -231,6 +236,7 @@ FocusScope {
                             text: cell.modelData.name
                         }
                         Text {
+                            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                             color: "#d5d8dc"
                             font.pixelSize: (welcome.unit * 1.7) * appModel.fontScale
                             text: cell.modelData.kind || ""

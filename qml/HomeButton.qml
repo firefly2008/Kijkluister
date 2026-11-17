@@ -30,6 +30,7 @@ Window {
             anchors.centerIn: parent
             spacing: homeWindow.unit * 1.1
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.verticalCenter: parent.verticalCenter
                 text: ""   // huisje
                 font.family: "Segoe MDL2 Assets"
@@ -37,6 +38,7 @@ Window {
                 color: "white"
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.verticalCenter: parent.verticalCenter
                 text: qsTr("Kijkluister")
                 font.pixelSize: homeWindow.unit * 2.2

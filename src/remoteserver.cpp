@@ -14,6 +14,8 @@
 #include <QRandomGenerator>
 #include <QSettings>
 #include <QTcpSocket>
+#include <QTimer>
+#include <QHostInfo>
 #include <QUrlQuery>
 
 #ifdef Q_OS_WIN
@@ -106,6 +108,30 @@ document.getElementById('send').onclick=go;i.addEventListener('keydown',e=>{if(e
 if('serviceWorker' in navigator&&window.isSecureContext)navigator.serviceWorker.register('/sw.js').catch(()=>{});
 </script></body></html>)HTML";
 
+// Thuisnetwerk: 10.x, 172.16-31.x, 192.168.x, link-local, deze pc (ook IPv6 ULA/link-local)
+bool isLocalPeer(QHostAddress a)
+{
+    bool ok = false;
+    const quint32 v4 = a.toIPv4Address(&ok);
+    if (ok) {
+        a = QHostAddress(v4);
+    }
+    return a.isLoopback() || a.isPrivateUse() || a.isLinkLocal() || a.isSiteLocal() || a.isUniqueLocalUnicast();
+}
+
+// Vergelijken zonder dat de duur verraadt hoeveel cijfers goed zijn
+bool sameCode(const QString &a, const QString &b)
+{
+    if (a.size() != b.size() || b.isEmpty()) {
+        return false;
+    }
+    ushort diff = 0;
+    for (int i = 0; i < a.size(); ++i) {
+        diff |= a.at(i).unicode() ^ b.at(i).unicode();
+    }
+    return diff == 0;
+}
+
 #ifdef Q_OS_WIN
 void sendKeys(std::initializer_list<WORD> keys)
 {
@@ -164,13 +190,25 @@ RemoteServer::RemoteServer(const QString &dataDir, QObject *parent)
 {
     QSettings settings(appSettingsFile(), QSettings::IniFormat);
     m_code = settings.value(QStringLiteral("remote/code")).toString();
-    if (m_code.isEmpty()) {
+    // 4.7: zes cijfers (oudere codes van vier cijfers waren te makkelijk te raden)
+    if (m_code.size() < 6) {
         newCode();
     }
     connect(&m_server, &QTcpServer::newConnection, this, [this] {
         while (QTcpSocket *socket = m_server.nextPendingConnection()) {
+            // Alleen apparaten op het eigen netwerk (of deze pc); nooit vanaf internet
+            if (!isLocalPeer(socket->peerAddress()) || m_open >= 32) {
+                qInfo() << "Remote: refused connection from" << socket->peerAddress().toString();
+                socket->abort();
+                socket->deleteLater();
+                continue;
+            }
+            ++m_open;
             connect(socket, &QTcpSocket::readyRead, this, [this, socket] { handle(socket); });
             connect(socket, &QTcpSocket::disconnected, socket, &QObject::deleteLater);
+            connect(socket, &QObject::destroyed, this, [this] { --m_open; });
+            // Trage of half-open verbindingen niet eindeloos openhouden
+            QTimer::singleShot(10000, socket, [socket] { socket->abort(); });
         }
     });
     if (settings.value(QStringLiteral("remote/enabled"), false).toBool()) {
@@ -262,7 +300,7 @@ int RemoteServer::clients() const
 
 void RemoteServer::newCode()
 {
-    m_code = QString::number(QRandomGenerator::system()->bounded(1000, 10000));
+    m_code = QString::number(QRandomGenerator::system()->bounded(100000, 1000000));
     QSettings(appSettingsFile(), QSettings::IniFormat).setValue(QStringLiteral("remote/code"), m_code);
     m_seen.clear();
     makeQr();
@@ -299,10 +337,14 @@ void RemoteServer::makeQr()
 
 void RemoteServer::respond(QTcpSocket *socket, int status, const QByteArray &type, const QByteArray &body)
 {
-    const QByteArray reason = status == 200 ? "OK" : status == 403 ? "Forbidden" : status == 404 ? "Not Found" : "Bad Request";
+    const QByteArray reason = status == 200 ? "OK" : status == 403 ? "Forbidden" : status == 404 ? "Not Found"
+                              : status == 429 ? "Too Many Requests" : "Bad Request";
     QByteArray head = "HTTP/1.1 " + QByteArray::number(status) + ' ' + reason + "\r\n";
     head += "Content-Type: " + type + "\r\nContent-Length: " + QByteArray::number(body.size())
-            + "\r\nCache-Control: no-store\r\nConnection: close\r\n\r\n";
+            + "\r\nCache-Control: no-store\r\nConnection: close"
+            "\r\nX-Content-Type-Options: nosniff\r\nX-Frame-Options: DENY\r\nReferrer-Policy: no-referrer"
+            "\r\nContent-Security-Policy: default-src 'self'; script-src 'self' 'unsafe-inline'; style-src 'unsafe-inline'; img-src 'self'; frame-ancestors 'none'"
+            "\r\n\r\n";
     socket->write(head + body);
     socket->disconnectFromHost();
 }
@@ -336,6 +378,52 @@ void RemoteServer::handle(QTcpSocket *socket)
     const QUrl url(QString::fromUtf8(request.value(1)));
     const QString path = url.path();
     const QString code = QUrlQuery(url).queryItemValue(QStringLiteral("c"));
+    const QString ip = socket->peerAddress().toString();
+    const qint64 now = QDateTime::currentSecsSinceEpoch();
+
+    // Alleen aanvragen voor een IP-adres, localhost of de naam van deze pc (tegen "DNS rebinding":
+    // een website die zich voordoet als dit adres)
+    QByteArray host;
+    for (const QByteArray &line : lines) {
+        if (line.toLower().startsWith("host:")) {
+            host = line.mid(5).trimmed().toLower();
+        }
+    }
+    {
+        QString h = QString::fromLatin1(host);
+        if (h.startsWith(QLatin1Char('['))) {
+            h = h.mid(1, h.indexOf(QLatin1Char(']')) - 1);
+        } else if (h.count(QLatin1Char(':')) == 1) {
+            h = h.section(QLatin1Char(':'), 0, 0);
+        }
+        const QString machine = QHostInfo::localHostName().toLower();
+        const bool okHost = !QHostAddress(h).isNull() || h == QLatin1String("localhost") || h == machine
+                            || h == machine + QLatin1String(".local") || h == machine + QLatin1String(".home") || h == machine + QLatin1String(".lan");
+        if (!okHost) {
+            qInfo() << "Remote: refused host" << h << "from" << ip;
+            respond(socket, 403, "text/plain", "verboden");
+            return;
+        }
+    }
+
+    // Na 5 foute codes binnen 10 minuten: dit apparaat 10 minuten geblokkeerd (raden onmogelijk maken)
+    const bool needsCode = method == "POST" || path == QLatin1String("/ping");
+    if (needsCode && m_blockedUntil.value(ip) > now) {
+        respond(socket, 429, "text/plain", "te veel pogingen, probeer het later");
+        return;
+    }
+    if (needsCode && !sameCode(code, m_code)) {
+        auto &fails = m_failures[ip];
+        fails.append(now);
+        while (!fails.isEmpty() && now - fails.first() > 600) {
+            fails.removeFirst();
+        }
+        if (fails.size() >= 5) {
+            m_blockedUntil.insert(ip, now + 600);
+            fails.clear();
+            qWarning() << "Remote: blocked" << ip << "after 5 wrong codes";
+        }
+    }
 
     const bool english = QSettings(appSettingsFile(), QSettings::IniFormat).value(QStringLiteral("global/language")).toString() == QLatin1String("en");
     if (method == "GET" && (path == QLatin1String("/") || path == QLatin1String("/index.html"))) {
@@ -388,8 +476,11 @@ void RemoteServer::handle(QTcpSocket *socket)
         const QString file = path == QLatin1String("/icon-192.png") ? QStringLiteral(":/assets/web-192.png")
                              : path == QLatin1String("/icon-512.png") ? QStringLiteral(":/assets/web-512.png")
                                                                       : QStringLiteral(":/assets/web-maskable-512.png");
+        // Eerst openen en lezen, dan antwoorden (de volgorde van argumenten ligt in C++ niet vast:
+        // in 4.6.0 kwam er zo een leeg plaatje)
         QFile f(file);
-        respond(socket, f.open(QIODevice::ReadOnly) ? 200 : 404, "image/png", f.readAll());
+        const QByteArray png = f.open(QIODevice::ReadOnly) ? f.readAll() : QByteArray();
+        respond(socket, png.isEmpty() ? 404 : 200, "image/png", png);
         return;
     }
     // Lege service worker (alleen gebruikt als de pagina ooit via https komt)
@@ -399,19 +490,20 @@ void RemoteServer::handle(QTcpSocket *socket)
     }
     // Verbonden? (bolletje rechtsboven in de app)
     if (method == "GET" && path == QLatin1String("/ping")) {
-        respond(socket, code == m_code ? 200 : 403, "application/json", code == m_code ? "{\"ok\":true}" : "{\"ok\":false}");
+        const bool ok = sameCode(code, m_code);
+        respond(socket, ok ? 200 : 403, "application/json", ok ? "{\"ok\":true}" : "{\"ok\":false}");
         return;
     }
     if (method != "POST" || (path != QLatin1String("/k") && path != QLatin1String("/t"))) {
         respond(socket, 404, "text/plain", "niet gevonden");
         return;
     }
-    if (code != m_code) {
-        qInfo() << "Remote: wrong code from" << socket->peerAddress().toString();
+    if (!sameCode(code, m_code)) {
+        qInfo() << "Remote: wrong code from" << ip;
         respond(socket, 403, "text/plain", "code klopt niet");
         return;
     }
-    const QString ip = socket->peerAddress().toString();
+    m_failures.remove(ip);
     const bool isNew = !m_seen.contains(ip) || QDateTime::currentSecsSinceEpoch() - m_seen.value(ip) >= 120;
     m_seen.insert(ip, QDateTime::currentSecsSinceEpoch());
     if (isNew) {

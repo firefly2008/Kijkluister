@@ -14,6 +14,18 @@ $status = Join-Path $data 'update-status.txt'
 $now = Join-Path $data 'update-now'
 $log = Join-Path $work 'update.log'
 New-Item -ItemType Directory -Force $work | Out-Null
+# Downloadmap alleen schrijfbaar voor beheerders en SYSTEM (de installer wordt met hoogste rechten gestart)
+try {
+    $acl = New-Object System.Security.AccessControl.DirectorySecurity
+    $acl.SetAccessRuleProtection($true, $false)
+    foreach ($sid in 'S-1-5-18', 'S-1-5-32-544') {
+        $id = New-Object System.Security.Principal.SecurityIdentifier $sid
+        $acl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule $id, 'FullControl', 'ContainerInherit,ObjectInherit', 'None', 'Allow'))
+    }
+    $users = New-Object System.Security.Principal.SecurityIdentifier 'S-1-5-32-545'
+    $acl.AddAccessRule((New-Object System.Security.AccessControl.FileSystemAccessRule $users, 'ReadAndExecute', 'ContainerInherit,ObjectInherit', 'None', 'Allow'))
+    Set-Acl -Path $work -AclObject $acl
+} catch { }
 New-Item -ItemType Directory -Force $data | Out-Null
 function Log($text) { "$(Get-Date -Format s) $text" | Add-Content $log }
 function Status($text) { Set-Content -Path $status -Value $text -Encoding UTF8 }
@@ -37,11 +49,10 @@ try {
     Status "downloading $latest"
     Invoke-WebRequest -Uri $asset.browser_download_url -OutFile $setup -UseBasicParsing -TimeoutSec 1800
     if ((Get-Item $setup).Length -lt 1MB) { throw 'Download te klein' }
-    # Controle met de SHA-256 die GitHub bij de release bewaart (als die er is)
-    if ($asset.digest -and $asset.digest.StartsWith('sha256:')) {
-        $hash = (Get-FileHash $setup -Algorithm SHA256).Hash.ToLower()
-        if ($hash -ne $asset.digest.Substring(7).ToLower()) { throw 'Controlegetal klopt niet' }
-    }
+    # Controle met de SHA-256 die GitHub bij de release bewaart: verplicht (zonder controlegetal niet installeren)
+    if (-not ($asset.digest -and $asset.digest.StartsWith('sha256:'))) { Remove-Item $setup -Force; throw 'Geen controlegetal bij de release' }
+    $expected = $asset.digest.Substring(7).ToLower()
+    if ((Get-FileHash $setup -Algorithm SHA256).Hash.ToLower() -ne $expected) { Remove-Item $setup -Force; throw 'Controlegetal klopt niet' }
     Log "Downloaded $latest"
     Status "ready $latest"
 
@@ -54,6 +65,8 @@ try {
     Status "installing $latest"
     for ($i = 0; $i -lt 30 -and (Get-Process Kijkluister -ErrorAction SilentlyContinue); $i++) { Start-Sleep -Seconds 1 }
     Get-Process Kijkluister -ErrorAction SilentlyContinue | Stop-Process -Force
+    # Vlak voor het installeren nog een keer controleren (het bestand heeft uren kunnen wachten)
+    if ((Get-FileHash $setup -Algorithm SHA256).Hash.ToLower() -ne $expected) { Remove-Item $setup -Force; throw 'Installer gewijzigd na download' }
     Log "Installing $latest"
     $p = Start-Process -FilePath $setup -ArgumentList '/VERYSILENT', '/SUPPRESSMSGBOXES', '/NORESTART', '/CLOSEAPPLICATIONS' -Wait -PassThru
     Log "Installer exit $($p.ExitCode)"

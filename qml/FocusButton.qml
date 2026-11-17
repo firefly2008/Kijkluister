@@ -18,6 +18,7 @@ Rectangle {
     color: activeFocus ? "#e8eaed" : checked ? "#3d6fb4" : (mouse.containsMouse ? "#55ffffff" : "#33ffffff")
 
     Text {
+        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
         id: label
         anchors.centerIn: parent
         color: button.activeFocus ? "#111318" : "white"

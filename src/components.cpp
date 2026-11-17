@@ -1,6 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "components.h"
 
+#include <QCryptographicHash>
+#include <utility>
+
 #include <QDateTime>
 #include <QDir>
 #include <QDirIterator>
@@ -178,7 +181,9 @@ void Components::fetchRelease()
         const QString tag = release.value(QStringLiteral("tag_name")).toString();
         QString url;
         QString chosen;
+        QHash<QString, QString> digests;   // naam → "sha256:…" (door GitHub berekend)
         for (const QJsonValue &v : release.value(QStringLiteral("assets")).toArray()) {
+            digests.insert(v.toObject().value(QStringLiteral("name")).toString(), v.toObject().value(QStringLiteral("digest")).toString());
             const QString n = v.toObject().value(QStringLiteral("name")).toString();
             const QString u = v.toObject().value(QStringLiteral("browser_download_url")).toString();
             if (kind == MpcHc) {
@@ -203,6 +208,7 @@ void Components::fetchRelease()
                 }
             }
         }
+        m_expectedDigest = digests.value(chosen);
         if (url.isEmpty() && kind != MpcHc) {
             // GitHub-API geweigerd (bv. limiet bereikt): vaste downloadlink van de nieuwste master-bouw
             chosen = QStringLiteral("ffmpeg-master-latest-win64-gpl.zip");
@@ -284,6 +290,20 @@ void Components::download(const QString &url, const QString &tag)
             QFile::remove(file);
             finish(false);
             return;
+        }
+        // Controlegetal van GitHub (als bekend): een beschadigd of vervalst pakket niet uitpakken
+        const QString expected = std::exchange(m_expectedDigest, QString());
+        if (expected.startsWith(QLatin1String("sha256:"))) {
+            QFile f(file);
+            QCryptographicHash sha(QCryptographicHash::Sha256);
+            if (!f.open(QIODevice::ReadOnly) || !sha.addData(&f) || QString::fromLatin1(sha.result().toHex()) != expected.mid(7).toLower()) {
+                qWarning() << "Components: checksum mismatch" << file;
+                f.close();
+                QFile::remove(file);
+                finish(false);
+                return;
+            }
+            qInfo() << "Components: checksum ok";
         }
         extract(file, tag);
     });

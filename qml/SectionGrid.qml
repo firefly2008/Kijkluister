@@ -41,6 +41,7 @@ Item {
     height: visible ? label.height + grid.height + unit * 1.5 : 0
 
     Text {
+        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
         id: label
         anchors.left: parent.left
         anchors.leftMargin: section.unit * 1.5

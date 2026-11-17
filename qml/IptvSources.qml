@@ -89,6 +89,7 @@ FocusScope {
             KeyNavigation.down: field.downItem
         }
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             anchors.fill: input
             verticalAlignment: Text.AlignVCenter
             visible: input.text === "" && !input.activeFocus
@@ -129,6 +130,7 @@ FocusScope {
             spacing: sources.unit * 1.4
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 color: "white"
                 font.pixelSize: (sources.unit * 4) * appModel.fontScale
                 font.weight: Font.DemiBold
@@ -137,6 +139,7 @@ FocusScope {
 
             // --- Bestaande bronnen ---
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 visible: sourceList.count > 0
                 color: "#9fb4d0"
                 font.pixelSize: (sources.unit * 2.2) * appModel.fontScale
@@ -174,6 +177,7 @@ FocusScope {
 
             // --- Nieuwe bron ---
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 color: "#9fb4d0"
                 font.pixelSize: (sources.unit * 2.2) * appModel.fontScale
                 text: qsTr("Zenders toevoegen van je eigen tv-abonnement")
@@ -265,6 +269,7 @@ FocusScope {
             }
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 wrapMode: Text.Wrap
                 color: "#9a9ea6"
@@ -273,6 +278,7 @@ FocusScope {
                       + qsTr("Gegevens worden alleen op deze pc bewaard.")
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 id: warning
                 visible: text !== ""
                 color: "#ff8a80"
@@ -329,6 +335,7 @@ FocusScope {
 
             // --- Tv-gids ---
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 color: "#9fb4d0"
                 font.pixelSize: (sources.unit * 2.2) * appModel.fontScale
                 text: qsTr("Tv-gids van je aanbieder (optioneel): link naar het gidsbestand (XMLTV); meerdere met een komma ertussen")
@@ -357,6 +364,7 @@ FocusScope {
                 }
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 color: "#a8acb3"
                 font.pixelSize: (sources.unit * 1.9) * appModel.fontScale
                 text: (iptv.epgStatus !== "" ? iptv.epgStatus + "   ·   " : "")

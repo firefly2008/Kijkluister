@@ -1,5 +1,27 @@
 [
   {
+    "version": "4.7.0",
+    "date": "2026-11-17",
+    "notes": [
+      "Beveiliging: inloggegevens van je tv-aanbieder staan versleuteld op de pc (alleen jouw Windows-account kan ze lezen) en komen niet meer in het logbestand",
+      "Telefoon als afstandsbediening: code van zes cijfers (één keer opnieuw scannen), na vijf foute codes tien minuten geblokkeerd, alleen apparaten op je eigen netwerk",
+      "Telefoon als afstandsbediening: het Kijkluister-pictogram komt nu wel mee (verwijder de oude snelkoppeling en voeg hem opnieuw toe)",
+      "Kinderslot: na vijf foute pincodes eerst even wachten",
+      "Updates, ffmpeg, MPC-HC en libCEC worden pas gebruikt als het controlegetal van GitHub klopt",
+      "Teksten uit zenderlijsten en gidsen worden altijd als gewone tekst getoond",
+      "Afsluiten zonder foutmeldingen in het logbestand"
+    ],
+    "notes_en": [
+      "Security: your TV provider's login details are stored encrypted on the PC (only your Windows account can read them) and no longer end up in the log file",
+      "Phone as remote control: six-digit code (scan once more), blocked for ten minutes after five wrong codes, only devices on your own network",
+      "Phone as remote control: the Kijkluister icon now comes along (remove the old shortcut and add it again)",
+      "Parental lock: after five wrong PINs you have to wait a moment",
+      "Updates, ffmpeg, MPC-HC and libCEC are only used when GitHub's checksum matches",
+      "Text from channel lists and guides is always shown as plain text",
+      "Closing without error messages in the log file"
+    ]
+  },
+  {
     "version": "4.6.0",
     "date": "2026-11-16",
     "notes": [

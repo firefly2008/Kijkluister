@@ -2,6 +2,7 @@
 #include "builtinkey.h"
 #include "mpcplayer.h"
 #include "medialibrary.h"
+#include "securestore.h"
 #include "appmodel.h"
 
 #include <QDebug>
@@ -200,7 +201,7 @@ MediaLibrary::MediaLibrary(const QString &dataDir, QObject *parent)
     if (m_showsFolders.isEmpty() && !oldShows.isEmpty()) {
         m_showsFolders << oldShows;
     }
-    m_userKey = m_settings.value(QStringLiteral("library/tmdbKey")).toString();
+    m_userKey = SecureStore::value(m_settings, QStringLiteral("library/tmdbKey")).toString();
     if (m_userKey == BuiltinKey::token()) {
         m_userKey.clear();
     }
@@ -282,7 +283,7 @@ void MediaLibrary::configureFolders(const QStringList &moviesFolders, const QStr
     m_settings.setValue(QStringLiteral("library/showsFolders"), m_showsFolders);
     m_settings.setValue(QStringLiteral("library/moviesFolder"), moviesFolder());
     m_settings.setValue(QStringLiteral("library/showsFolder"), showsFolder());
-    m_settings.setValue(QStringLiteral("library/tmdbKey"), m_userKey);
+    SecureStore::setValue(m_settings, QStringLiteral("library/tmdbKey"), m_userKey);
     m_settings.sync();
     Q_EMIT settingsChanged();
     qInfo() << "Library folders" << m_moviesFolders << m_showsFolders << "key" << (m_userKey.isEmpty() ? "builtin" : "own");

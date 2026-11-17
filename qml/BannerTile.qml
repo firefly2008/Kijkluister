@@ -94,6 +94,7 @@ Item {
             anchors.margins: card.height * 0.08
             spacing: card.height * 0.03
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 color: "white"
                 font.pixelSize: (card.height * 0.15) * appModel.fontScale
@@ -102,6 +103,7 @@ Item {
                 text: tile.name
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 visible: text !== ""
                 color: "#d5d8dc"
@@ -137,6 +139,7 @@ Item {
 
                 // Nog geen pictogram: beginletter
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     anchors.centerIn: parent
                     visible: !tile.isGlyph && (tile.iconSource === "" || icon.status === Image.Error)
                     color: "white"
@@ -145,6 +148,7 @@ Item {
                     text: tile.name.charAt(0).toUpperCase()
                 }
                 Text {
+                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                     anchors.centerIn: parent
                     visible: tile.isGlyph
                     color: "white"
@@ -164,6 +168,7 @@ Item {
             }
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.verticalCenter: parent.verticalCenter
                 width: Math.min(implicitWidth, card.width - card.height * 0.56 - card.height * 0.34)
                 color: "white"

@@ -68,12 +68,14 @@ FocusScope {
             spacing: panel.unit * 1.5
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 color: "white"
                 font.pixelSize: (panel.unit * 3.4) * appModel.fontScale
                 text: qsTr("Tegel toevoegen")
             }
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 color: "#9fb4d0"
                 font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
                 text: qsTr("Naam")
@@ -101,6 +103,7 @@ FocusScope {
             }
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 color: "#9fb4d0"
                 font.pixelSize: (panel.unit * 2.2) * appModel.fontScale
                 text: qsTr("Webadres (bijv. netflix.com) of pad naar een programma")
@@ -162,6 +165,7 @@ FocusScope {
                     border.width: buttons.activeFocus && buttons.currentIndex === index ? 3 : 0
                     border.color: "white"
                     Text {
+                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                         anchors.centerIn: parent
                         color: "white"
                         font.pixelSize: (panel.unit * 2.5) * appModel.fontScale

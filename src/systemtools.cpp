@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "systemtools.h"
 #include "paths.h"
+#include "securestore.h"
 
 #include <QCoreApplication>
 #include <QDateTime>
@@ -273,7 +274,7 @@ QString SystemTools::shareLog() const
     info += QStringLiteral("Tijd: %1\n\n").arg(QDateTime::currentDateTime().toString(Qt::ISODate));
     out.write(info.toUtf8());
     // Wachtwoorden en sleutels uit links halen (lijsten van aanbieders bevatten ze in de url)
-    static const QRegularExpression secrets(QStringLiteral(R"((password|username|token|key|apikey)=[^&\s"]+)"),
+    static const QRegularExpression secrets(QStringLiteral(R"((password|passwd|pwd|username|user|token|api_key|apikey|key|access_token|auth)=[^&\s"']+)"),
                                             QRegularExpression::CaseInsensitiveOption);
     for (const QString &name : {QStringLiteral("kijkluister-vorige.log"), QStringLiteral("kijkluister.log")}) {
         QFile log(appDataDir() + QLatin1Char('/') + name);
@@ -281,6 +282,10 @@ QString SystemTools::shareLog() const
             out.write(QStringLiteral("===== %1 =====\n").arg(name).toUtf8());
             QString text = QString::fromUtf8(log.readAll());
             text.replace(secrets, QStringLiteral("\\1=***"));
+            // Xtream-adressen: gebruiker en wachtwoord staan in het pad (ook in logs van oudere versies)
+            static const QRegularExpression xtream(QStringLiteral(R"((https?://[^/\s"']+)/((?:live|movie|series|timeshift)/)?[^/\s"']+/[^/\s"']+/(\d+(?:\.\w+)?))"),
+                                                   QRegularExpression::CaseInsensitiveOption);
+            text.replace(xtream, QStringLiteral("\\1/\\2***/***/\\3"));
             out.write(text.toUtf8());
             out.write("\n");
         }
@@ -300,7 +305,10 @@ QString SystemTools::makeBackup() const
         qWarning() << "Backup failed" << target;
         return {};
     }
-    qInfo() << "Backup made" << target;
+    // Inloggegevens staan versleuteld voor deze Windows-gebruiker; in de back-up weer leesbaar,
+    // zodat hij ook op een andere pc werkt (de back-up zelf dus goed bewaren)
+    const int opened = SecureStore::unprotectFile(target);
+    qInfo() << "Backup made" << target << "protected values exported:" << opened;
     return QFileInfo(target).fileName();
 }
 

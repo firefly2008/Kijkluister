@@ -1161,6 +1161,26 @@ Rectangle {
             const pid = profiles.add("Petra", false)
             console.info("Profiles count", profiles.count, profiles.nameOf(pid))
             Qt.callLater(() => openProfileMenu())
+        } else if (selfTest === "security") {
+            // Inloggegevens mogen niet in het log komen (de test zoekt "geheimwachtwoord" in het logbestand)
+            console.warn("Security test url http://voorbeeld.tv:8080/kees/geheimwachtwoord/1332 en get.php?username=kees&password=geheimwachtwoord")
+            if (iptv.sources.length === 0) iptv.addSource("m3u-file", "Gids-test", selfTestM3u, "", "")
+            // Raden van de code: na 5 foute pogingen geblokkeerd
+            remote.enabled = true
+            let n = 0
+            const next = () => {
+                const x = new XMLHttpRequest()
+                const right = n >= 6
+                x.open("POST", remote.address + "/k?c=" + (right ? remote.code : "99999" + n))
+                x.onreadystatechange = () => {
+                    if (x.readyState !== XMLHttpRequest.DONE) return
+                    if (right) { console.info("Remote test blocked", x.status); return }
+                    n++
+                    next()
+                }
+                x.send("down")
+            }
+            testStep.run(1500, next)
         } else if (selfTest === "english") {
             console.info("English check:", qsTr("Instellingen"), "/", qsTr("Nu op tv"), "/", appModel.nameAt(0))
             Qt.callLater(() => openMoreMenu())
@@ -1234,7 +1254,7 @@ Rectangle {
                 m.send()
                 const ic = new XMLHttpRequest()
                 ic.open("GET", remote.address + "/icon-192.png")
-                ic.onreadystatechange = () => { if (ic.readyState === XMLHttpRequest.DONE) console.info("Remote icon", ic.status) }
+                ic.onreadystatechange = () => { if (ic.readyState === XMLHttpRequest.DONE) console.info("Remote icon", ic.status, ic.getResponseHeader("Content-Length")) }
                 ic.send()
             })
         } else if (selfTest === "whoswatching") {
@@ -1344,6 +1364,7 @@ Rectangle {
             smooth: true
         }
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             id: brand
             anchors.left: brandIcon.right
             anchors.leftMargin: root.unit * 1.2
@@ -1355,6 +1376,7 @@ Rectangle {
         }
 
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             id: clock
             anchors.right: parent.right
             anchors.verticalCenter: parent.verticalCenter
@@ -1362,6 +1384,7 @@ Rectangle {
             font.pixelSize: (root.unit * 3.2) * appModel.fontScale
         }
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             id: dateLabel
             anchors.right: clock.left
             anchors.rightMargin: root.unit * 2
@@ -1377,6 +1400,7 @@ Rectangle {
             anchors.verticalCenter: parent.verticalCenter
             spacing: root.unit * 1.6
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 visible: sleepTimer.active
                 anchors.verticalCenter: parent.verticalCenter
                 text: "🌙 " + sleepTimer.remainingText
@@ -1384,6 +1408,7 @@ Rectangle {
                 font.pixelSize: (root.unit * 2.4) * appModel.fontScale
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 id: weatherLabel
                 visible: weather.available
                 anchors.verticalCenter: parent.verticalCenter
@@ -1508,6 +1533,7 @@ Rectangle {
             spacing: root.unit
 
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 color: "white"
                 font.pixelSize: (root.unit * 7.5) * appModel.fontScale
@@ -1516,6 +1542,7 @@ Rectangle {
                 text: root.focusName
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 color: "#c4c7cc"
                 font.pixelSize: (root.unit * 2.4) * appModel.fontScale
                 text: root.focusKind
@@ -1603,6 +1630,7 @@ Rectangle {
         Behavior on opacity { NumberAnimation { duration: 200 } }
 
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             id: toast
             anchors.centerIn: parent
             color: "white"
@@ -1697,6 +1725,7 @@ Rectangle {
             anchors.centerIn: parent
             spacing: root.height * 0.015
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.verticalCenter: parent.verticalCenter
                 color: "white"
                 font.pixelSize: (root.height * 0.024) * appModel.fontScale
@@ -2023,12 +2052,14 @@ Rectangle {
             width: parent.width - root.unit * 5
             spacing: root.unit * 1.2
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 color: "#ffb74d"
                 font.pixelSize: root.unit * 2.2 * appModel.fontScale
                 text: root.reminderData ? qsTr("🔔  Om ") + root.reminderData.time + qsTr(" op ") + root.reminderData.channel : ""
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 width: parent.width
                 wrapMode: Text.Wrap
                 color: "white"
@@ -2130,6 +2161,7 @@ Rectangle {
             anchors.centerIn: parent
             spacing: root.unit * 2.5
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.horizontalCenter: parent.horizontalCenter
                 color: "white"
                 font.pixelSize: root.unit * 5 * appModel.fontScale
@@ -2137,6 +2169,7 @@ Rectangle {
                 text: qsTr("De kijktijd voor vandaag is op")
             }
             Text {
+                textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.horizontalCenter: parent.horizontalCenter
                 color: "#c9ccd1"
                 font.pixelSize: root.unit * 2.6 * appModel.fontScale
@@ -2305,6 +2338,7 @@ Rectangle {
         visible: opacity > 0
         Behavior on opacity { NumberAnimation { duration: 300 } }
         Text {
+            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
             id: updateText
             anchors.centerIn: parent
             color: "white"

@@ -67,6 +67,7 @@ private:
     QNetworkAccessManager m_network;
     QList<Job> m_queue;
     int m_current = -1;           // Kind van de lopende taak
+    QString m_expectedDigest;     // sha256 van het pakket dat wordt opgehaald
     bool m_currentUpdateOnly = false;
     QHash<int, QList<std::function<void(bool)>>> m_waiting;
     QString m_status;

@@ -98,7 +98,7 @@ jobs:
           $env:BIGSCREEN_TEST_M3U = "$tv\test.m3u"
           $env:BIGSCREEN_TEST_RECORD_DIR = "$env:RUNNER_TEMP\opnames"
           Get-Content "$tv\test.m3u"
-          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-unsplash', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel', 'librarysetup', 'iptvsources', 'iptvfreeguide', 'mpcplay', 'resume', 'epgrecord', 'welcome', 'libraryunlock', 'radio', 'radiohome', 'search', 'radioadd', 'sleep', 'weather', 'update', 'cec', 'radiobg', 'regional', 'nowplaying', 'sections', 'homekey', 'releaseinfo', 'news', 'photo', 'settingsmenu', 'usage', 'help', 'night', 'collapse', 'libraryesc', 'nowtv', 'guidegrid', 'reminder', 'series', 'prevchannel', 'ambient', 'audio', 'remote', 'backup', 'kidslimit', 'profiles', 'okkey', 'whoswatching', 'english', 'cleanup', 'parental'
+          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-unsplash', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel', 'librarysetup', 'iptvsources', 'iptvfreeguide', 'mpcplay', 'resume', 'epgrecord', 'welcome', 'libraryunlock', 'radio', 'radiohome', 'search', 'radioadd', 'sleep', 'weather', 'update', 'cec', 'radiobg', 'regional', 'nowplaying', 'sections', 'homekey', 'releaseinfo', 'news', 'photo', 'settingsmenu', 'usage', 'help', 'night', 'collapse', 'libraryesc', 'nowtv', 'guidegrid', 'reminder', 'series', 'prevchannel', 'ambient', 'audio', 'remote', 'backup', 'kidslimit', 'profiles', 'okkey', 'whoswatching', 'english', 'security', 'cleanup', 'parental'
           $manual = '${{ github.ref }}' -like 'refs/heads/screenshots/*'
           if ($manual) {
             # Schermafbeeldingen voor de handleiding, op Full HD
@@ -194,14 +194,22 @@ jobs:
               'libraryesc' = 'Library back; visible false'; 'nowtv' = 'Now tv count ok true'; 'guidegrid' = 'Guide grid opened'; 'reminder' = 'Reminder due';
               'series' = 'Series: checked'; 'prevchannel' = 'Previous channel 0'; 'ambient' = 'Ambient mode'; 'audio' = 'Audio outputs';
               'remote' = 'Remote test down right code 200'; 'backup' = 'Autostart off: false'; 'kidslimit' = 'Kids lock shown true';
-              'okkey' = 'Keyboard OK: Opslaan als'; 'whoswatching' = 'Who is watching:'; 'english' = 'English check: Settings / Now on TV'
+              'okkey' = 'Keyboard OK: Opslaan als'; 'whoswatching' = 'Who is watching:'; 'english' = 'English check: Settings / Now on TV'; 'security' = 'Remote test blocked 429'
             }
             if ($checks.ContainsKey($mode)) {
-              Select-String -Path $log -Pattern "Search|Radio|Sleep|Weather|Update|CEC|Cleanup|Parental|Regional|IPTV play|Media first|Section order|Home|Usage|Help|Night|Collapsed|Profile|Library|Now tv|Guide|Reminder|Series|Previous|Ambient|Audio|Remote|Backup|Autostart|Kids|Keyboard|Who is|English|Translator|TypeError|ReferenceError" | ForEach-Object { $_.Line }
+              Select-String -Path $log -Pattern "Search|Radio|Sleep|Weather|Update|CEC|Cleanup|Parental|Regional|IPTV play|Media first|Section order|Home|Usage|Help|Night|Collapsed|Profile|Library|Now tv|Guide|Reminder|Series|Previous|Ambient|Audio|Remote|Backup|Autostart|Kids|Keyboard|Who is|English|Translator|Security|SecureStore|blocked|TypeError|ReferenceError" | ForEach-Object { $_.Line }
               if (-not (Select-String -Path $log -Pattern $checks[$mode] -SimpleMatch -Quiet)) { throw "Rooktest mislukt: $mode ($($checks[$mode]) niet in het log)" }
               if ($mode -eq 'parental' -and -not (Select-String -Path $log -Pattern "Parental: wrong pin" -Quiet)) { throw "Rooktest mislukt: verkeerde pincode werd geaccepteerd" }
               if ($mode -eq 'remote' -and -not (Select-String -Path $log -Pattern "Remote test up wrong code 403" -SimpleMatch -Quiet)) { throw "Rooktest mislukt: telefoon met verkeerde code werd geaccepteerd" }
               if ($mode -eq 'remote' -and -not (Select-String -Path $log -Pattern "Remote manifest 200 standalone" -SimpleMatch -Quiet)) { throw "Rooktest mislukt: app-manifest voor de telefoon ontbreekt" }
+              if ($mode -eq 'security') {
+                if (Select-String -Path $log -Pattern "geheimwachtwoord" -SimpleMatch -Quiet) { throw "Rooktest mislukt: wachtwoord staat in het logbestand" }
+                if (-not (Select-String -Path $log -Pattern "8080/***/***/1332" -SimpleMatch -Quiet)) { throw "Rooktest mislukt: adres niet afgeschermd in het log" }
+                $ini = Join-Path $env:LOCALAPPDATA 'Kijkluister\settings.ini'
+                if (-not (Select-String -Path $ini -Pattern "sources_dpapi" -SimpleMatch -Quiet)) { throw "Rooktest mislukt: zenderbronnen niet versleuteld" }
+                if (Select-String -Path $ini -Pattern "^sources=" -Quiet) { throw "Rooktest mislukt: zenderbronnen staan nog onversleuteld" }
+              }
+              if ($mode -eq 'remote' -and -not (Select-String -Path $log -Pattern "Remote icon 200 \d{4,}" -Quiet)) { throw "Rooktest mislukt: app-pictogram is leeg" }
               if ($mode -eq 'remote' -and -not (Select-String -Path $log -Pattern "Remote icon 200" -SimpleMatch -Quiet)) { throw "Rooktest mislukt: app-pictogram voor de telefoon ontbreekt" }
               if ($mode -eq 'backup' -and -not (Select-String -Path $log -Pattern "Autostart on: true" -SimpleMatch -Quiet)) { throw "Rooktest mislukt: starten met Windows gaat niet aan" }
               if ($mode -eq 'backup' -and -not (Select-String -Path $log -Pattern "Backup made: Kijkluister-backup" -SimpleMatch -Quiet)) { throw "Rooktest mislukt: back-up niet gemaakt" }
