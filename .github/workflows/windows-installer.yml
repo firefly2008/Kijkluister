@@ -99,7 +99,7 @@ jobs:
           $env:BIGSCREEN_TEST_M3U = "$tv\test.m3u"
           $env:BIGSCREEN_TEST_RECORD_DIR = "$env:RUNNER_TEMP\opnames"
           Get-Content "$tv\test.m3u"
-          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-unsplash', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel', 'librarysetup', 'iptvsources', 'iptvfreeguide', 'mpcplay', 'resume', 'epgrecord', 'welcome', 'radio', 'radiohome', 'search', 'radioadd', 'sleep', 'weather', 'update', 'cec', 'radiobg', 'regional', 'nowplaying', 'sections', 'homekey', 'releaseinfo', 'news', 'photo', 'settingsmenu', 'usage', 'help', 'night', 'collapse', 'libraryesc', 'nowtv', 'guidegrid', 'reminder', 'series', 'prevchannel', 'ambient', 'audio', 'remote', 'backup', 'kidslimit', 'profiles', 'okkey', 'whoswatching', 'english', 'security', 'cleanup', 'parental', 'tabs', 'tabs-apps', 'tabs-tv', 'keys', 'settingsgroups'
+          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-unsplash', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel', 'librarysetup', 'iptvsources', 'iptvfreeguide', 'mpcplay', 'resume', 'epgrecord', 'welcome', 'radio', 'radiohome', 'search', 'radioadd', 'sleep', 'weather', 'update', 'cec', 'radiobg', 'regional', 'nowplaying', 'sections', 'homekey', 'releaseinfo', 'news', 'photo', 'settingsmenu', 'usage', 'help', 'night', 'collapse', 'libraryesc', 'nowtv', 'guidegrid', 'reminder', 'series', 'prevchannel', 'ambient', 'audio', 'remote', 'backup', 'kidslimit', 'profiles', 'okkey', 'whoswatching', 'english', 'security', 'cleanup', 'parental', 'tabs', 'tabs-apps', 'tabs-tv', 'keys', 'settingsgroups', 'radiodrift'
           $manual = '${{ github.ref }}' -like 'refs/heads/screenshots/*'
           if ($manual) {
             # Schermafbeeldingen voor de handleiding, op Full HD
@@ -188,7 +188,7 @@ jobs:
             }
             $checks = @{
               'search' = 'Search results'; 'radioadd' = 'Radio added'; 'sleep' = 'Sleep timer fired'; 'weather' = 'Weather:';
-              'update' = 'Update check'; 'cec' = 'CEC key'; 'radiobg' = 'Radio in background'; 'cleanup' = 'Cleanup suggested';
+              'update' = 'Update check'; 'cec' = 'CEC key'; 'radiobg' = 'Radio in background'; 'radiodrift' = 'Radio drift true'; 'cleanup' = 'Cleanup suggested';
               'parental' = 'Parental: unlocked'; 'regional' = 'IPTV playing:'; 'nowplaying' = 'Media first tile: Nu op de radio';
               'sections' = 'Section order moved:'; 'homekey' = 'Home screen'; 'releaseinfo' = 'Release info: '; 'photo' = 'Photo search';  'frame-unsplash' = 'Frame: Unsplash gave'; 'usage' = 'Usage count'; 'help' = 'Help opened'; 'night' = 'Night mode true';
               'collapse' = 'Collapsed Podcasts: true'; 'profiles' = 'Profiles count 2'; 'resume' = 'Resume screen: 1';
