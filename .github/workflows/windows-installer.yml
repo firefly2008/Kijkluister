@@ -29,10 +29,6 @@ jobs:
         run: choco install innosetup -y --no-progress
       - name: Bouwen + installer maken
         shell: pwsh
-        env:
-          # Alleen voor de tests: het programma zelf bevat geen sleutels meer
-          BIGSCREEN_TEST_UNSPLASH: ${{ secrets.UNSPLASH_TOKEN }}
-          BIGSCREEN_TEST_TMDB: ${{ secrets.TMDB_TOKEN }}
         run: |
           # Branch release/2.0.0 bepaalt het versienummer; gewone pushes heten "dev"
           $version = if ($env:GITHUB_REF_NAME -like 'release/*') { $env:GITHUB_REF_NAME.Substring(8) } else { 'dev' }
@@ -41,6 +37,10 @@ jobs:
           .\scripts\build-installer.ps1 -QtDir "$env:QT_ROOT_DIR" -VcpkgRoot "$env:VCPKG_INSTALLATION_ROOT" -Version $version
       - name: Rooktest (start de app op de runner)
         shell: pwsh
+        env:
+          # Alleen voor de tests: het programma zelf bevat geen sleutels meer
+          BIGSCREEN_TEST_UNSPLASH: ${{ secrets.UNSPLASH_TOKEN }}
+          BIGSCREEN_TEST_TMDB: ${{ secrets.TMDB_TOKEN }}
         run: |
           Add-Type -AssemblyName System.Windows.Forms, System.Drawing
           $log = "$env:LOCALAPPDATA\Kijkluister\kijkluister.log"
