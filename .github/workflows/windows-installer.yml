@@ -200,6 +200,7 @@ jobs:
             if ($checks.ContainsKey($mode)) {
               Select-String -Path $log -Pattern "Search|Radio|Sleep|Weather|Update|CEC|Cleanup|Parental|Regional|IPTV play|Media first|Section order|Home|Usage|Help|Night|Collapsed|Profile|Library|Now tv|Guide|Reminder|Series|Previous|Ambient|Audio|Remote|Backup|Autostart|Kids|Keyboard|Who is|English|Translator|Security|SecureStore|blocked|Tabs|TypeError|ReferenceError" | ForEach-Object { $_.Line }
               if (-not (Select-String -Path $log -Pattern $checks[$mode] -SimpleMatch -Quiet)) { throw "Rooktest mislukt: $mode ($($checks[$mode]) niet in het log)" }
+              if ($mode -eq 'releaseinfo' -and (Select-String -Path $log -Pattern "Release info: 0 versions" -SimpleMatch -Quiet)) { throw "Rooktest mislukt: Release-info is leeg" }
               if ($mode -like 'tabs*' -and (Select-String -Path $log -Pattern "Tabs focus .* ok false" -Quiet)) { throw "Rooktest mislukt: focus op een onzichtbaar item in de tabbladen-layout ($mode)" }
               if ($mode -eq 'tabs') {
                 foreach ($w in 'content', 'after-menu', 'classic', 'tabs-again') {
