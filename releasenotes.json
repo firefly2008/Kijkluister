@@ -3,10 +3,12 @@
     "version": "4.11.0",
     "date": "2026-11-21",
     "notes": [
+      "Kleurrijke tegels: Films & Series is nu paars en Live tv blauw, zodat je ze op het startscherm meteen vindt",
       "Onder de motorkap: opnemen en kijken via de doorgifte delen nu dezelfde code voor ffmpeg. Verder geen veranderingen te zien",
       "Nieuw in de documentatie: een overzicht van hoe Kijkluister in elkaar zit"
     ],
     "notes_en": [
+      "Colourful tiles: Films & Series is now purple and Live tv is blue, so you spot them right away on the home screen",
       "Under the hood: recording and watching via the relay now share the same ffmpeg code. Nothing else changes visibly",
       "New in the documentation: an overview of how Kijkluister is put together"
     ]

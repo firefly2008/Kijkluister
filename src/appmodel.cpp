@@ -477,6 +477,13 @@ QColor AppModel::accentFor(const App &app) const
     if (app.path == QLatin1String("bigscreen:radio-now") && !m_nowPlayingAccent.isEmpty()) {
         return QColor(m_nowPlayingAccent);
     }
+    // Vaste, levendige kleuren voor de twee hoofdtegels (wit blijft goed leesbaar)
+    if (app.path == QLatin1String("bigscreen:movies")) {
+        return QColor(QStringLiteral("#8e24aa"));   // paars
+    }
+    if (app.path == QLatin1String("bigscreen:iptv")) {
+        return QColor(QStringLiteral("#1976d2"));   // blauw
+    }
     if (m_kind != Web) {
         return QColor(QStringLiteral("#22252b"));
     }
