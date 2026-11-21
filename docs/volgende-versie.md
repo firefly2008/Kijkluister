@@ -59,3 +59,39 @@ Gevraagd op 21-11-2026, nog niet gebouwd ("niet nu").
 ### Waar op te letten bij bouwen
 - Alle handleActions blijven bestaan (alleen de indeling verandert), dus de bestaande tests blijven gelden; testmodes 'settingsmenu', 'parental', 'kidslimit', 'cleanup', 'audio', 'backup', 'profiles' controleren op nieuwe menu-opbouw.
 - Alle nieuwe teksten vertalen (en_dict.py) en releasenotes vermelden dat instellingen verhuisd zijn, met een klein "Waar is X gebleven?" in de help.
+
+
+## 4. Escape-toets: terug naar de startpagina vanuit alle apps (onderzocht 21-11-2026, nog niet gebouwd)
+
+### Nu
+- Alleen **Esc 1 seconde vasthouden** brengt je vanuit een externe app/website naar Kijkluister (HomeBridge, `src/homebridge.cpp`, timer 1000 ms, alleen als `m_external`). Een korte Esc gaat gewoon naar de app (sluit dialoogjes, verlaat volledig scherm).
+- Home-toets van een afstandsbediening, Xbox-knop en CEC-home doen het direct. Gamepad "Terug" 900 ms vasthouden ook.
+- Wat `goHome` doet: Edge, Chrome en MPC-HC sluiten (WM_CLOSE), elk ander programma wordt geminimaliseerd, Kijkluister komt naar voren. Zelf geopende browservensters worden altijd gesloten.
+
+### Risico's / te checken bij bouwen
+- Een korte Esc is te dubbelzinnig: in Netflix/YouTube verlaat Esc het volledige scherm, in een spel opent het een menu. Per se direct naar huis zou dan elke keer de app afsluiten. Voorstel: dubbele Esc (twee keer snel) óf vasthouden inkorten naar ~0,6 s, en kort "Houd Esc vast om terug te gaan" tonen als de app opent (nu staat dat alleen in de Help).
+- Voorstel: Esc-gedrag instelbaar (Instellingen → Gezin/Apparaten): "Vasthouden (standaard)", "Dubbel indrukken", "Altijd direct".
+- Programma's (geen browser) worden geminimaliseerd, niet afgesloten: ze blijven op de achtergrond draaien (geluid, spel). Beslissen: voor bekende speler-apps (VLC, Kodi, Spotify) afsluiten of pauzeren, voor de rest minimaliseren + melding.
+- Testen op: Edge-app (Netflix/Disney+), Chrome, MPC-HC, zelf toegevoegd .exe, volledig-scherm-programma (spel), een programma dat Esc afvangt of als beheerder draait (de toetshook ziet dan geen toets: bij "als administrator" draaiende apps werkt WH_KEYBOARD_LL niet; dan blijft Home/Xbox-knop de uitweg, vermelden in Help).
+- Smoke-test toevoegen: simuleer Esc-vasthouden met een extern venster (bijv. Kladblok) en controleer "Home: Esc held" + dat Kijkluister weer vooraan staat.
+
+## 5. Code opschonen en structureren (onderzocht 21-11-2026, nog niet gebouwd)
+
+### Bevindingen (ca. 21.800 regels)
+- `qml/Main.qml` is 2818 regels en doet alles: startpagina, tabbladen-layout, alle menu's, `handleMenuAction` (grote if/else-keten), selftests, toasts. Belangrijkste knelpunt.
+- `src/iptvmodel.cpp` 1459 regels (kanalen, bronnen, Xtream, EPG, herinneringen, series), `qml/IptvScreen.qml` 1119 (speler, fout/retry, opname- en gidspanelen, test-timers), `src/medialibrary.cpp` 860, `qml/LibraryScreen.qml` 771.
+- Testcode (selftest-takken, `tabsTest`, guideTestTimer, recordTestTimer) staat tussen de productiecode in Main.qml en IptvScreen.qml.
+- Vaste teksten met hardcoded indeling van menu's in Main.qml (zie punt 3).
+
+### Voorstel (zonder gedrag te veranderen)
+1. Main.qml opsplitsen: `SettingsMenus.qml` (alle menu-opbouw + handleMenuAction in een tabel actie→functie), `HomeTabs.qml` (tabbladen-layout), `SelfTests.qml` (alle testcode, alleen geladen bij BIGSCREEN_SELFTEST). Main.qml blijft alleen de bedrading.
+2. `handleMenuAction` vervangen door een kaart van actie → handler, en acties met parameter ("audio-set:ID") via één prefix-parser. Elke menu-actie op één plek.
+3. IptvScreen.qml: afspeelstatus (poging, retry, doorgifte, fout) naar een eigen `PlaybackState.qml`/C++-klasse; testtimers naar SelfTests.
+4. `iptvmodel.cpp` splitsen: `iptvsources` (m3u/Xtream), `iptvepg` (XMLTV), `iptvreminders`. Eén ding per bestand.
+5. Dubbele ffmpeg-zoekfunctie (recorder.cpp en streamrelay.cpp) naar `components` (één `ffmpegPath()`), idem `freeUdpPort`.
+6. Hardcoded paden, tijden en teksten naar constanten (`paths.h` bestaat al), geen magische getallen in de QML (unit-factoren).
+7. Een korte `docs/ARCHITECTUUR.md`: welke module doet wat, hoe een release/test werkt.
+
+### Veilig bouwen
+- Eerst alleen verplaatsen, geen gedrag wijzigen; na elke stap volledige smoke-tests (alle modes uit de workflow moeten groen blijven).
+- Eigen versie hiervoor (bijv. 4.11.0, "onder de motorkap") zodat een fout makkelijk terug te draaien is en niet vermengd raakt met nieuwe functies.
