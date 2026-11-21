@@ -1,40 +1,9 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "streamrelay.h"
 
-#include <QCoreApplication>
 #include <QDebug>
-#include <QFileInfo>
-#include <QRandomGenerator>
-#include <QStandardPaths>
-#include <QUdpSocket>
 
 #include "components.h"
-
-namespace {
-quint16 freePort()
-{
-    QUdpSocket socket;
-    if (socket.bind(QHostAddress::LocalHost, 0)) {
-        return socket.localPort();
-    }
-    return quint16(49000 + QRandomGenerator::global()->bounded(2000));
-}
-
-QString findFfmpeg()
-{
-    if (Components *c = Components::instance()) {
-        const QString fetched = c->executable(Components::Ffmpeg);
-        if (!fetched.isEmpty()) {
-            return fetched;
-        }
-    }
-    const QString local = QCoreApplication::applicationDirPath() + QStringLiteral("/ffmpeg/ffmpeg.exe");
-    if (QFileInfo::exists(local)) {
-        return local;
-    }
-    return QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
-}
-}
 
 StreamRelay::StreamRelay(QObject *parent)
     : QObject(parent)
@@ -54,12 +23,12 @@ bool StreamRelay::running() const
 QString StreamRelay::start(const QString &url)
 {
     stop();
-    const QString ffmpeg = findFfmpeg();
+    const QString ffmpeg = Components::ffmpegPath();
     if (ffmpeg.isEmpty() || url.isEmpty()) {
         return {};
     }
-    const QString relay = QStringLiteral("udp://127.0.0.1:%1").arg(freePort());
-    const QString target = relay + QStringLiteral("?pkt_size=1316&localport=") + QString::number(freePort());
+    const QString relay = QStringLiteral("udp://127.0.0.1:%1").arg(Components::freeUdpPort());
+    const QString target = relay + QStringLiteral("?pkt_size=1316&localport=") + QString::number(Components::freeUdpPort());
     const QStringList args{
         QStringLiteral("-hide_banner"), QStringLiteral("-loglevel"), QStringLiteral("warning"),
         QStringLiteral("-user_agent"), QStringLiteral("VLC/3.0.9 LibVLC/3.0.9"),

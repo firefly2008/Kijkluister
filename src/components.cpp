@@ -13,7 +13,10 @@
 #include <QJsonDocument>
 #include <QJsonObject>
 #include <QNetworkReply>
+#include <QCoreApplication>
 #include <QProcess>
+#include <QRandomGenerator>
+#include <QUdpSocket>
 #include <QRegularExpression>
 #include <QStandardPaths>
 #include <QTimer>
@@ -376,4 +379,28 @@ void Components::extract(const QString &archive, const QString &tag)
         finish(!executable(kind).isEmpty());
     });
     tar->start();
+}
+
+QString Components::ffmpegPath()
+{
+    if (Components *c = Components::instance()) {
+        const QString fetched = c->executable(Components::Ffmpeg);
+        if (!fetched.isEmpty()) {
+            return fetched;
+        }
+    }
+    const QString local = QCoreApplication::applicationDirPath() + QStringLiteral("/ffmpeg/ffmpeg.exe"); // tot en met 3.8.8
+    if (QFileInfo::exists(local)) {
+        return local;
+    }
+    return QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
+}
+
+quint16 Components::freeUdpPort()
+{
+    QUdpSocket socket;
+    if (socket.bind(QHostAddress::LocalHost, 0)) {
+        return socket.localPort();
+    }
+    return quint16(47000 + QRandomGenerator::global()->bounded(2000));
 }

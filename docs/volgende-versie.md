@@ -1,6 +1,6 @@
 # Plan volgende versie
 
-Gebouwd in 4.10.0: punt 1 (eigen sleutels), 2 (kinderslot versleuteld + instellingen achter pincode), 3 (menu in zes groepen), 4 (Esc instelbaar). Open: punt 5 (code opschonen, 4.11.0).
+Gebouwd in 4.10.0: punt 1 (eigen sleutels), 2 (kinderslot versleuteld + instellingen achter pincode), 3 (menu in zes groepen), 4 (Esc instelbaar). Punt 5 (code opschonen) gedeeltelijk in 4.11.0: gedeelde ffmpeg/poort-hulpjes en docs/ARCHITECTUUR.md. Nog open: Main.qml en iptvmodel.cpp opsplitsen, handleMenuAction als tabel, zelftests uit de productiecode (zie punt 5 hieronder).
 
 ## (4.10.0, gebouwd) oorspronkelijk plan
 

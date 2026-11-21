@@ -196,27 +196,12 @@ Recorder::~Recorder()
 
 quint16 Recorder::freeUdpPort()
 {
-    QUdpSocket socket;
-    if (socket.bind(QHostAddress::LocalHost, 0)) {
-        return socket.localPort();
-    }
-    return quint16(47000 + QRandomGenerator::global()->bounded(2000));
+    return Components::freeUdpPort();
 }
 
 QString Recorder::ffmpegPath() const
 {
-    if (Components *c = Components::instance()) {
-        const QString fetched = c->executable(Components::Ffmpeg);
-        if (!fetched.isEmpty()) {
-            return fetched;
-        }
-    }
-    const QString local = QCoreApplication::applicationDirPath() + QStringLiteral("/ffmpeg/ffmpeg.exe"); // tot en met 3.8.8
-    if (QFileInfo::exists(local)) {
-        return local;
-    }
-    const QString onPath = QStandardPaths::findExecutable(QStringLiteral("ffmpeg"));
-    return onPath;
+    return Components::ffmpegPath();
 }
 
 bool Recorder::available() const

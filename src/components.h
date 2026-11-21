@@ -30,6 +30,10 @@ public:
 
     explicit Components(const QString &dataDir, QObject *parent = nullptr);
     static Components *instance();
+    // Gedeelde hulpjes voor alles wat ffmpeg start (opnemen, doorgifte): pad naar ffmpeg (leeg = niet aanwezig)
+    // en een vrije UDP-poort op 127.0.0.1
+    static QString ffmpegPath();
+    static quint16 freeUdpPort();
 
     QString dir(Kind kind) const;
     QString executable(Kind kind) const;      // leeg als nog niet aanwezig

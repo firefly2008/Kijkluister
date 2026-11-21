@@ -1,5 +1,17 @@
 [
   {
+    "version": "4.11.0",
+    "date": "2026-11-21",
+    "notes": [
+      "Onder de motorkap: opnemen en kijken via de doorgifte delen nu dezelfde code voor ffmpeg. Verder geen veranderingen te zien",
+      "Nieuw in de documentatie: een overzicht van hoe Kijkluister in elkaar zit"
+    ],
+    "notes_en": [
+      "Under the hood: recording and watching via the relay now share the same ffmpeg code. Nothing else changes visibly",
+      "New in the documentation: an overview of how Kijkluister is put together"
+    ]
+  },
+  {
     "version": "4.10.1",
     "date": "2026-11-21",
     "notes": [
