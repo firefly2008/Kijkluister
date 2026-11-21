@@ -46,6 +46,7 @@ public:
     // Automatisch: hooguit eens per week. manual = altijd, met melding als er niets nieuws is.
     Q_INVOKABLE void check(bool manual = false);
     Q_INVOKABLE void install();
+    Q_INVOKABLE QString releaseNotesJson() const;   // releasenotes.json uit de bronnen van het programma
     Q_INVOKABLE bool shouldOffer() const;   // nieuw én nog niet weggeklikt
     Q_INVOKABLE void dismiss();
 

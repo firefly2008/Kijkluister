@@ -16,19 +16,13 @@ FocusScope {
 
     function open(focusItem) {
         returnFocusTo = focusItem
-        // Asynchroon laden: synchroon lezen uit qrc gaf op sommige systemen een leeg scherm
-        const xhr = new XMLHttpRequest()
-        xhr.onreadystatechange = function() {
-            if (xhr.readyState !== XMLHttpRequest.DONE) return
-            try {
-                info.versions = JSON.parse(xhr.responseText)
-            } catch (e) {
-                info.versions = []
-            }
-            console.info("Release info:", info.versions.length, "versions")
+        // Uit de bronnen van het programma (C++): lezen via XMLHttpRequest uit qrc werkt niet
+        try {
+            versions = JSON.parse(updater.releaseNotesJson())
+        } catch (e) {
+            versions = []
         }
-        xhr.open("GET", "qrc:/releasenotes.json")
-        xhr.send()
+        console.info("Release info:", versions.length, "versions")
         flick.contentY = 0
         visible = true
         flick.forceActiveFocus()

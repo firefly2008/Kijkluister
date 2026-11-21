@@ -122,6 +122,16 @@ void Updater::installNow()
     QTimer::singleShot(2500, qApp, &QCoreApplication::quit);
 }
 
+QString Updater::releaseNotesJson() const
+{
+    QFile file(QStringLiteral(":/releasenotes.json"));
+    if (!file.open(QIODevice::ReadOnly)) {
+        qWarning() << "releasenotes.json niet gevonden in de bronnen";
+        return QStringLiteral("[]");
+    }
+    return QString::fromUtf8(file.readAll());
+}
+
 QString Updater::current() const
 {
     return QStringLiteral(KIJKLUISTER_VERSION);
