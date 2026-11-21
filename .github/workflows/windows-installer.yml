@@ -38,13 +38,11 @@ jobs:
       - name: Rooktest (start de app op de runner)
         shell: pwsh
         env:
-          # Alleen voor de tests: het programma zelf bevat geen sleutels meer
           BIGSCREEN_TEST_UNSPLASH: ${{ secrets.UNSPLASH_TOKEN }}
           BIGSCREEN_TEST_TMDB: ${{ secrets.TMDB_TOKEN }}
         run: |
           Add-Type -AssemblyName System.Windows.Forms, System.Drawing
           $log = "$env:LOCALAPPDATA\Kijkluister\kijkluister.log"
-          # Testbibliotheek: lege videobestanden met namen zoals ze in het echt voorkomen
           $films = "$env:RUNNER_TEMP\media\Films"; $series = "$env:RUNNER_TEMP\media\Series"
           New-Item -ItemType Directory -Force "$films\The.Matrix.1999.1080p.BluRay.x264", "$series\Westworld (2016)\Season 1", "$series\Breaking Bad\Seizoen 2" | Out-Null
           foreach ($f in "$films\The.Matrix.1999.1080p.BluRay.x264\The.Matrix.1999.1080p.BluRay.x264.mkv", "$films\Inception (2010).mkv",
@@ -52,14 +50,12 @@ jobs:
                          "$series\Westworld (2016)\Season 1\Westworld.S01E02.720p.mkv", "$series\Breaking Bad\Seizoen 2\Breaking.Bad.2x03.mp4") {
             New-Item -ItemType File -Force $f | Out-Null
           }
-          # Twee echte korte afleveringen (Breaking Bad 2x03 en 2x04) om MPC-HC mee te testen
           & build\ffmpeg\ffmpeg.exe -v error -y -f lavfi -i "testsrc2=size=1280x720:rate=25" -f lavfi -i "sine=frequency=440" -t 20 -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest "$series\Breaking Bad\Seizoen 2\Breaking.Bad.2x03.mp4"
           & build\ffmpeg\ffmpeg.exe -v error -y -f lavfi -i "smptebars=size=320x180:rate=5" -f lavfi -i "sine=frequency=660" -t 300 -c:v libx264 -pix_fmt yuv420p -c:a aac -shortest "$series\Breaking Bad\Seizoen 2\Breaking.Bad.2x04.mp4"
           New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\BigscreenHost" | Out-Null
           $films2 = "$env:RUNNER_TEMP\media2\Meer films"; New-Item -ItemType Directory -Force $films2 | Out-Null
           New-Item -ItemType File -Force "$films2\Blade.Runner.1982.Final.Cut.mkv" | Out-Null
           "[library]`r`nmoviesFolder=$($films -replace '\\','/')`r`nshowsFolder=$($series -replace '\\','/')`r`nmoviesFolders=$($films -replace '\\','/'), $($films2 -replace '\\','/')`r`n" | Set-Content "$env:LOCALAPPDATA\BigscreenHost\settings.ini"
-          # Gids-test: een paar echte zenders (iptv-org) met een eigen XMLTV-gids (gzip) rond dit moment
           $tv = "$env:RUNNER_TEMP\tv"; New-Item -ItemType Directory -Force $tv | Out-Null
           Invoke-WebRequest -UseBasicParsing https://iptv-org.github.io/iptv/countries/nl.m3u -OutFile "$tv\nl.m3u"
           $lines = @(Get-Content -Encoding UTF8 "$tv\nl.m3u" | ForEach-Object { $_.Trim() })
@@ -102,7 +98,6 @@ jobs:
           $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-unsplash', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel', 'librarysetup', 'iptvsources', 'iptvfreeguide', 'mpcplay', 'resume', 'epgrecord', 'welcome', 'radio', 'radiohome', 'search', 'radioadd', 'sleep', 'weather', 'update', 'cec', 'radiobg', 'regional', 'nowplaying', 'sections', 'homekey', 'releaseinfo', 'news', 'photo', 'settingsmenu', 'usage', 'help', 'night', 'collapse', 'libraryesc', 'nowtv', 'guidegrid', 'reminder', 'series', 'prevchannel', 'ambient', 'audio', 'remote', 'backup', 'kidslimit', 'profiles', 'okkey', 'whoswatching', 'english', 'security', 'cleanup', 'parental', 'tabs', 'tabs-apps', 'tabs-tv', 'keys', 'settingsgroups', 'radiodrift'
           $manual = '${{ github.ref }}' -like 'refs/heads/screenshots/*'
           if ($manual) {
-            # Schermafbeeldingen voor de handleiding, op Full HD
             $modes = 'm-home', 'm-channels', 'm-search', 'm-favorites', 'm-sources', 'm-xtream', 'm-bar', 'm-guide', 'm-guide2', 'm-guidelist'
             if ('${{ github.ref }}' -like 'refs/heads/screenshots/verbeteringen*') {
               $modes = 'u-library', 'u-home', 'u-header', 'u-quit', 'u-personalize', 'u-bigtext', 'u-welcome', 'u-sources', 'u-error', 'u-guiderecord', 'u-badge', 'u-recordpanel', 'u-libsetup'
@@ -125,19 +120,16 @@ jobs:
             $env:BIGSCREEN_SELFTEST = $mode
             if ($mode -eq 'english') { $env:BIGSCREEN_LANGUAGE = 'en' } else { Remove-Item Env:BIGSCREEN_LANGUAGE -ErrorAction SilentlyContinue }
             if ($mode -eq 'u-home' -or $mode -eq 'u-bigtext' -or $mode -like 'tabs*') {
-              # Verder kijken laten zien: geschiedenis zoals MPC-HC hem schrijft, plus de lengte van het bestand
               $ep = "$series\Breaking Bad\Seizoen 2\Breaking.Bad.2x04.mp4"
               New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\Kijkluister\mpc-hc" | Out-Null
               "[MediaHistory\TESTRESUME]`r`nFilename=$ep`r`nFilePosition=120000`r`nLastOpened=2099-01-01T00:00:00`r`n" | Set-Content -Encoding UTF8 "$env:LOCALAPPDATA\Kijkluister\mpc-hc\mpc-hc64.ini"
               @{ $ep = 300000 } | ConvertTo-Json -Compress | Set-Content -Encoding UTF8 "$env:LOCALAPPDATA\Kijkluister\resume-durations.json"
             }
             if ($mode -eq 'resume') {
-              # Nagemaakte MPC-HC-geschiedenis: 2x04 (5 min) gestopt na 2 minuten
               $ini = "$env:LOCALAPPDATA\Kijkluister\mpc-hc\mpc-hc64.ini"
               "`r`n[MediaHistory\TESTRESUME]`r`nFilename=$series\Breaking Bad\Seizoen 2\Breaking.Bad.2x04.mp4`r`nFilePosition=120000`r`nLastOpened=2099-01-01T00:00:00`r`n" | Add-Content -Encoding UTF8 $ini
             }
             if ($mode -eq 'cleanup') {
-              # Twee oude opnames (40 en 50 dagen) en een nieuwe
               New-Item -ItemType Directory -Force $env:BIGSCREEN_TEST_RECORD_DIR | Out-Null
               foreach ($d in 40, 50, 1) {
                 $f = "$env:BIGSCREEN_TEST_RECORD_DIR\NPO 1 - Journaal ($d dagen).mp4"
@@ -145,12 +137,10 @@ jobs:
                 (Get-Item $f).LastWriteTime = (Get-Date).AddDays(-$d)
               }
             }
-            # 'english' start ook met de opties van Starten met Windows en profiel wisselen (moeten geaccepteerd worden)
             if ($mode -eq 'english') { $p = Start-Process dist\Kijkluister.exe -ArgumentList '--autostart', '--profile-chosen' -PassThru }
             else { $p = Start-Process dist\Kijkluister.exe -PassThru }
             Start-Sleep $(if ($mode -eq 'u-guiderecord') { 13 } elseif ($mode -eq 'u-library') { 30 } elseif ($manual -or $mode -like 'frame*') { 20 } elseif ($mode -eq 'record') { 75 } elseif ($mode -eq 'iptvfreeguide' -or $mode -eq 'mpcplay') { 45 } elseif ($mode -eq 'epgrecord') { 30 } elseif ($mode -eq 'radio') { 75 } elseif ($mode -eq 'radioadd' -or $mode -eq 'sleep') { 22 } elseif ($mode -eq 'weather' -or $mode -eq 'search') { 16 } elseif ($mode -eq 'regional') { 25 } elseif ($mode -eq 'photo') { 18 } elseif ($mode -like 'tabs*') { 28 } else { 14 })
             if ($mode -like 'frame*esc' -or $mode -eq 'libraryesc') {
-              # Echte toetsaanslag Esc naar het venster sturen (zoals toetsenbord of gamepad-B)
               Add-Type -ErrorAction SilentlyContinue @"
           using System; using System.Runtime.InteropServices;
           public class Inp {
@@ -161,18 +151,15 @@ jobs:
           "@
               $p.Refresh(); [Inp]::SetForegroundWindow($p.MainWindowHandle) | Out-Null; Start-Sleep 1
               if ($mode -eq 'frame-mouseesc') {
-                # Muis bewegen over de tegels onder het schilderij (dit stal eerder de focus)
                 for ($k = 0; $k -lt 12; $k++) { [Inp]::SetCursorPos(200 + 60 * $k, 300 + 20 * $k) | Out-Null; Start-Sleep -Milliseconds 120 }
               }
               [Inp]::keybd_event(0x1B, 0, 0, [IntPtr]::Zero); Start-Sleep -Milliseconds 80; [Inp]::keybd_event(0x1B, 0, 2, [IntPtr]::Zero)
               Start-Sleep 3
             }
-            # Schermafdruk als base64 in het log, zodat het resultaat te bekijken is
             $b = [System.Windows.Forms.Screen]::PrimaryScreen.Bounds
             $bmp = New-Object System.Drawing.Bitmap $b.Width, $b.Height
             [System.Drawing.Graphics]::FromImage($bmp).CopyFromScreen(0, 0, 0, 0, $bmp.Size)
             $bmp.Save("$env:RUNNER_TEMP\shot.png", [System.Drawing.Imaging.ImageFormat]::Png)
-            # In het log als JPEG (kleiner), voor de handleiding blijft het PNG
             $bmp.Save("$env:RUNNER_TEMP\shot.jpg", [System.Drawing.Imaging.ImageFormat]::Jpeg)
             "SHOT-BEGIN-$mode"; [Convert]::ToBase64String([IO.File]::ReadAllBytes($(if ($manual) { "$env:RUNNER_TEMP\shot.png" } else { "$env:RUNNER_TEMP\shot.jpg" })), 'InsertLineBreaks'); "SHOT-END"
             if ($manual) { Copy-Item "$env:RUNNER_TEMP\shot.png" "shots\$mode.png"; if (-not $p.HasExited) { Stop-Process -Id $p.Id -Force }; Start-Sleep 2; continue }
@@ -180,7 +167,6 @@ jobs:
             if (Test-Path $log) { "--- log ---"; Get-Content $log } else { "NO LOG FILE" }
             if (-not (Test-Path $log) -or -not (Select-String -Path $log -Pattern "Window shown" -Quiet)) { throw "Rooktest mislukt: venster niet getoond" }
             if ($mode -like 'frame*esc' -and -not (Select-String -Path $log -Pattern "Frame closed" -Quiet)) { throw "Rooktest mislukt: Esc stopt het schilderij niet ($mode)" }
-            # Opnames die nog liepen (ffmpeg is een apart proces) niet laten doorlopen naar de volgende test
             Get-Process ffmpeg -ErrorAction SilentlyContinue | Stop-Process -Force
             if ($mode -eq 'epgrecord') {
               Select-String -Path $log -Pattern "Recorder: (scheduled|start)" | ForEach-Object { $_.Line }
