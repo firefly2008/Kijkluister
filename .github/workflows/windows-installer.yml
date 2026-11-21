@@ -174,7 +174,7 @@ jobs:
             }
             $checks = @{
               'search' = 'Search results'; 'radioadd' = 'Radio added'; 'sleep' = 'Sleep timer fired'; 'weather' = 'Weather:';
-              'update' = 'Update check'; 'cec' = 'CEC key'; 'radiobg' = 'Radio in background'; 'cleanup' = 'Cleanup suggested';
+              'update' = 'Update check'; 'cec' = 'CEC key'; 'radiobg' = 'Radio in background'; 'radiodrift' = 'Radio drift true'; 'cleanup' = 'Cleanup suggested';
               'parental' = 'Parental: unlocked'; 'regional' = 'IPTV playing:'; 'nowplaying' = 'Media first tile: Nu op de radio';
               'sections' = 'Section order moved:'; 'homekey' = 'Home screen'; 'releaseinfo' = 'Release info: '; 'photo' = 'Photo search';  'frame-unsplash' = 'Frame: Unsplash gave'; 'usage' = 'Usage count'; 'help' = 'Help opened'; 'night' = 'Night mode true';
               'collapse' = 'Collapsed Podcasts: true'; 'profiles' = 'Profiles count 2'; 'resume' = 'Resume screen: 1';
