@@ -1,5 +1,15 @@
 [
   {
+    "version": "4.10.1",
+    "date": "2026-11-21",
+    "notes": [
+      "Sleutels-scherm: de knoppen overlappen elkaar niet meer"
+    ],
+    "notes_en": [
+      "Keys screen: the buttons no longer overlap"
+    ]
+  },
+  {
     "version": "4.10.0",
     "date": "2026-11-21",
     "notes": [

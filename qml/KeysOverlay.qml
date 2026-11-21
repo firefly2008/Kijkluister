@@ -60,7 +60,7 @@ FocusScope {
         property Item upTarget: null
         property Item downTarget: null
         width: parent.width
-        height: overlay.unit * 24
+        height: Math.max(col.height, qr.height)
 
         Image {
             id: qr
@@ -72,6 +72,7 @@ FocusScope {
             source: apiKeys.qrFor(block.kind)
         }
         Column {
+            id: col
             anchors.left: parent.left
             anchors.right: qr.left
             anchors.rightMargin: overlay.unit * 2
