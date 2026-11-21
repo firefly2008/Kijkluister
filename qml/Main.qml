@@ -1665,6 +1665,7 @@ Rectangle {
         id: tabsHero
         visible: root.tabsMode
         anchors.top: tabBar.bottom
+        anchors.topMargin: root.tabsMode ? root.unit * 1.5 : 0
         anchors.left: parent.left
         anchors.right: parent.right
         anchors.leftMargin: root.unit * 4
@@ -2657,8 +2658,9 @@ Rectangle {
     function tabsTest(mode) {
         const focusOk = (what) => {
             const f = root.Window.window ? root.Window.window.activeFocusItem : null
-            const inGrid = f !== null && currentSection !== null && f === currentSection.grid
-            console.info("Tabs focus", what, "ok", f !== null && f.visible, "grid", inGrid, "tabs", tabsMode, "sections", sectionDefs.length)
+            const inGrid = currentSection !== null && currentSection.grid.activeFocus
+            console.info("Tabs focus", what, "ok", f !== null && f.visible, "grid", inGrid, "tabs", tabsMode, "sections", sectionDefs.length,
+                         "current", currentSection !== null, "item", f ? String(f).split("(")[0] : "none")
         }
         const tabIndex = (id) => visibleTabs.findIndex(t => t.id === id)
         console.info("Tabs visible:", visibleTabs.map(t => t.id).join(","), "first section", sectionDefs.length > 0 ? sectionDefs[0].title : "-")
