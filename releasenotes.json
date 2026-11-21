@@ -1,5 +1,23 @@
 [
   {
+    "version": "4.8.0",
+    "date": "2026-11-21",
+    "notes": [
+      "Nieuw, optioneel: layout met tabbladen (Voor jou, TV & Gids, Apps, Luisteren, Nieuws), een groot vlak met de gekozen tegel en rijen die zijwaarts scrollen met plaatjes. Standaard blijft alles zoals het was",
+      "Aanzetten: Instellingen → Layout (kies nogmaals om terug te gaan naar klassiek). De keuze geldt per profiel",
+      "Tabblad TV & Gids: knoppen voor Live tv en de Tv-gids, met daaronder Nu op tv",
+      "Tabblad Voor jou: Verder kijken, Nu op tv en Vaak gebruikt bij elkaar",
+      "Nog niet in deze layout: een klein live beeld in het grote vlak"
+    ],
+    "notes_en": [
+      "New, optional: a layout with tabs (For you, TV & Guide, Apps, Listen, News), a large panel showing the selected tile and rows that scroll sideways with pictures. Everything stays as it was by default",
+      "Turn it on: Settings → Layout (choose again to go back to classic). The choice is per profile",
+      "TV & Guide tab: buttons for Live TV and the TV guide, with Now on TV below",
+      "For you tab: Continue watching, Now on TV and Frequently used together",
+      "Not in this layout yet: a small live picture in the large panel"
+    ]
+  },
+  {
     "version": "4.7.0",
     "date": "2026-11-17",
     "notes": [

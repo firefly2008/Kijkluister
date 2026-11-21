@@ -98,7 +98,7 @@ jobs:
           $env:BIGSCREEN_TEST_M3U = "$tv\test.m3u"
           $env:BIGSCREEN_TEST_RECORD_DIR = "$env:RUNNER_TEMP\opnames"
           Get-Content "$tv\test.m3u"
-          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-unsplash', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel', 'librarysetup', 'iptvsources', 'iptvfreeguide', 'mpcplay', 'resume', 'epgrecord', 'welcome', 'libraryunlock', 'radio', 'radiohome', 'search', 'radioadd', 'sleep', 'weather', 'update', 'cec', 'radiobg', 'regional', 'nowplaying', 'sections', 'homekey', 'releaseinfo', 'news', 'photo', 'settingsmenu', 'usage', 'help', 'night', 'collapse', 'libraryesc', 'nowtv', 'guidegrid', 'reminder', 'series', 'prevchannel', 'ambient', 'audio', 'remote', 'backup', 'kidslimit', 'profiles', 'okkey', 'whoswatching', 'english', 'security', 'cleanup', 'parental'
+          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-unsplash', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel', 'librarysetup', 'iptvsources', 'iptvfreeguide', 'mpcplay', 'resume', 'epgrecord', 'welcome', 'libraryunlock', 'radio', 'radiohome', 'search', 'radioadd', 'sleep', 'weather', 'update', 'cec', 'radiobg', 'regional', 'nowplaying', 'sections', 'homekey', 'releaseinfo', 'news', 'photo', 'settingsmenu', 'usage', 'help', 'night', 'collapse', 'libraryesc', 'nowtv', 'guidegrid', 'reminder', 'series', 'prevchannel', 'ambient', 'audio', 'remote', 'backup', 'kidslimit', 'profiles', 'okkey', 'whoswatching', 'english', 'security', 'cleanup', 'parental', 'tabs', 'tabs-apps', 'tabs-tv'
           $manual = '${{ github.ref }}' -like 'refs/heads/screenshots/*'
           if ($manual) {
             # Schermafbeeldingen voor de handleiding, op Full HD
@@ -123,7 +123,7 @@ jobs:
           foreach ($mode in $modes) {
             $env:BIGSCREEN_SELFTEST = $mode
             if ($mode -eq 'english') { $env:BIGSCREEN_LANGUAGE = 'en' } else { Remove-Item Env:BIGSCREEN_LANGUAGE -ErrorAction SilentlyContinue }
-            if ($mode -eq 'u-home' -or $mode -eq 'u-bigtext') {
+            if ($mode -eq 'u-home' -or $mode -eq 'u-bigtext' -or $mode -like 'tabs*') {
               # Verder kijken laten zien: geschiedenis zoals MPC-HC hem schrijft, plus de lengte van het bestand
               $ep = "$series\Breaking Bad\Seizoen 2\Breaking.Bad.2x04.mp4"
               New-Item -ItemType Directory -Force "$env:LOCALAPPDATA\Kijkluister\mpc-hc" | Out-Null
@@ -147,7 +147,7 @@ jobs:
             # 'english' start ook met de opties van Starten met Windows en profiel wisselen (moeten geaccepteerd worden)
             if ($mode -eq 'english') { $p = Start-Process dist\Kijkluister.exe -ArgumentList '--autostart', '--profile-chosen' -PassThru }
             else { $p = Start-Process dist\Kijkluister.exe -PassThru }
-            Start-Sleep $(if ($mode -eq 'u-guiderecord') { 13 } elseif ($mode -eq 'u-library') { 30 } elseif ($manual -or $mode -like 'frame*') { 20 } elseif ($mode -eq 'record') { 75 } elseif ($mode -eq 'iptvfreeguide' -or $mode -eq 'mpcplay') { 45 } elseif ($mode -eq 'epgrecord') { 30 } elseif ($mode -eq 'radio') { 75 } elseif ($mode -eq 'radioadd' -or $mode -eq 'sleep') { 22 } elseif ($mode -eq 'weather' -or $mode -eq 'search') { 16 } elseif ($mode -eq 'regional') { 25 } elseif ($mode -eq 'photo') { 18 } else { 14 })
+            Start-Sleep $(if ($mode -eq 'u-guiderecord') { 13 } elseif ($mode -eq 'u-library') { 30 } elseif ($manual -or $mode -like 'frame*') { 20 } elseif ($mode -eq 'record') { 75 } elseif ($mode -eq 'iptvfreeguide' -or $mode -eq 'mpcplay') { 45 } elseif ($mode -eq 'epgrecord') { 30 } elseif ($mode -eq 'radio') { 75 } elseif ($mode -eq 'radioadd' -or $mode -eq 'sleep') { 22 } elseif ($mode -eq 'weather' -or $mode -eq 'search') { 16 } elseif ($mode -eq 'regional') { 25 } elseif ($mode -eq 'photo') { 18 } elseif ($mode -like 'tabs*') { 28 } else { 14 })
             if ($mode -like 'frame*esc' -or $mode -eq 'libraryesc') {
               # Echte toetsaanslag Esc naar het venster sturen (zoals toetsenbord of gamepad-B)
               Add-Type -ErrorAction SilentlyContinue @"
@@ -194,11 +194,19 @@ jobs:
               'libraryesc' = 'Library back; visible false'; 'nowtv' = 'Now tv count ok true'; 'guidegrid' = 'Guide grid opened'; 'reminder' = 'Reminder due';
               'series' = 'Series: checked'; 'prevchannel' = 'Previous channel 0'; 'ambient' = 'Ambient mode'; 'audio' = 'Audio outputs';
               'remote' = 'Remote test down right code 200'; 'backup' = 'Autostart off: false'; 'kidslimit' = 'Kids lock shown true';
-              'okkey' = 'Keyboard OK: Opslaan als'; 'whoswatching' = 'Who is watching:'; 'english' = 'English check: Settings / Now on TV'; 'security' = 'Remote test blocked 429'
+              'okkey' = 'Keyboard OK: Opslaan als'; 'whoswatching' = 'Who is watching:'; 'english' = 'English check: Settings / Now on TV'; 'security' = 'Remote test blocked 429'; 'tabs' = 'Tabs focus tabs-again ok true'; 'tabs-apps' = 'Tabs focus tabs-apps ok true'; 'tabs-tv' = 'Tabs focus tabs-tv ok true'
             }
             if ($checks.ContainsKey($mode)) {
-              Select-String -Path $log -Pattern "Search|Radio|Sleep|Weather|Update|CEC|Cleanup|Parental|Regional|IPTV play|Media first|Section order|Home|Usage|Help|Night|Collapsed|Profile|Library|Now tv|Guide|Reminder|Series|Previous|Ambient|Audio|Remote|Backup|Autostart|Kids|Keyboard|Who is|English|Translator|Security|SecureStore|blocked|TypeError|ReferenceError" | ForEach-Object { $_.Line }
+              Select-String -Path $log -Pattern "Search|Radio|Sleep|Weather|Update|CEC|Cleanup|Parental|Regional|IPTV play|Media first|Section order|Home|Usage|Help|Night|Collapsed|Profile|Library|Now tv|Guide|Reminder|Series|Previous|Ambient|Audio|Remote|Backup|Autostart|Kids|Keyboard|Who is|English|Translator|Security|SecureStore|blocked|Tabs|TypeError|ReferenceError" | ForEach-Object { $_.Line }
               if (-not (Select-String -Path $log -Pattern $checks[$mode] -SimpleMatch -Quiet)) { throw "Rooktest mislukt: $mode ($($checks[$mode]) niet in het log)" }
+              if ($mode -like 'tabs*' -and (Select-String -Path $log -Pattern "Tabs focus .* ok false" -Quiet)) { throw "Rooktest mislukt: focus op een onzichtbaar item in de tabbladen-layout ($mode)" }
+              if ($mode -eq 'tabs') {
+                foreach ($w in 'content', 'after-menu', 'classic', 'tabs-again') {
+                  if (-not (Select-String -Path $log -Pattern "Tabs focus $w ok true" -Quiet)) { throw "Rooktest mislukt: tabbladen-layout, focus-controle '$w' ontbreekt of mislukt" }
+                }
+                if (-not (Select-String -Path $log -Pattern "Tabs focus after-menu ok true grid true" -SimpleMatch -Quiet)) { throw "Rooktest mislukt: na een menu staat de focus niet terug op de tegel (tabbladen)" }
+                if (-not (Select-String -Path $log -Pattern "Tabs focus classic ok true grid true tabs false" -SimpleMatch -Quiet) -and -not (Select-String -Path $log -Pattern "Tabs focus classic ok true" -SimpleMatch -Quiet)) { throw "Rooktest mislukt: na terug naar klassiek geen focus" }
+              }
               if ($mode -eq 'parental' -and -not (Select-String -Path $log -Pattern "Parental: wrong pin" -Quiet)) { throw "Rooktest mislukt: verkeerde pincode werd geaccepteerd" }
               if ($mode -eq 'remote' -and -not (Select-String -Path $log -Pattern "Remote test up wrong code 403" -SimpleMatch -Quiet)) { throw "Rooktest mislukt: telefoon met verkeerde code werd geaccepteerd" }
               if ($mode -eq 'remote' -and -not (Select-String -Path $log -Pattern "Remote manifest 200 standalone" -SimpleMatch -Quiet)) { throw "Rooktest mislukt: app-manifest voor de telefoon ontbreekt" }

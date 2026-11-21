@@ -65,14 +65,83 @@ Rectangle {
         { title: "Nieuws", label: qsTr("Nieuws"), model: webNews },
         { title: "Media", label: qsTr("Media"), model: appModel }
     ]
+    // Layout: "classic" (rijen onder elkaar) of "tabs" (tabbladen bovenin, rijen die zijwaarts scrollen).
+    // Per profiel instelbaar via Instellingen; in de rooktests gebruiken alleen de tabs-tests de tabbladen.
+    property string layoutName: appModel.setting("layout", "classic")
+    readonly property bool tabsMode: (selfTest === "" || selfTest.indexOf("tabs") === 0) && layoutName === "tabs"
+    property int tab: 0
+    readonly property var tabDefs: [
+        { id: "foryou", label: qsTr("Voor jou"), titles: ["Verder kijken", "Nu op tv", "Vaak gebruikt"] },
+        { id: "tv", label: qsTr("TV & Gids"), titles: ["Nu op tv"] },
+        { id: "apps", label: qsTr("Apps"), titles: ["Video", "Media"] },
+        { id: "listen", label: qsTr("Luisteren"), titles: ["Radio", "Muziek", "Podcasts"] },
+        { id: "news", label: qsTr("Nieuws"), titles: ["Nieuws"] }
+    ]
+    readonly property var tabPool: allSectionDefs.concat([{ title: "Verder kijken", label: qsTr("Verder kijken"), model: resume }])
+    function sectionShown(d) {
+        return d.model === usage ? usage.count >= 3 && (selfTest === "" || selfTest === "usage")
+             : d.model === nowTv ? nowTv.count > 0 && (selfTest === "" || selfTest === "nowtv" || selfTest.indexOf("tabs") === 0)
+             : d.model.count > 0
+    }
+    function tabSections(t) {
+        const pick = (titles) => titles.map(n => tabPool.find(d => d.title === n)).filter(d => d && sectionShown(d))
+        const list = pick(t.titles)
+        // Voor jou nog leeg (geen geschiedenis, geen favoriete zenders): dan de eigen tegels
+        return list.length === 0 && t.id === "foryou" ? pick(["Media"]) : list
+    }
+    // Tabs zonder inhoud verdwijnen (TV & Gids blijft: daar staan de knoppen Live tv en Tv-gids)
+    readonly property var visibleTabs: tabDefs.filter(t => t.id === "foryou" || t.id === "tv" || tabSections(t).length > 0)
     readonly property var sectionDefs: {
+        if (tabsMode) {
+            const t = visibleTabs[Math.min(tab, visibleTabs.length - 1)]
+            return t ? tabSections(t) : []
+        }
         const order = appModel.sectionOrder
         // (In de rooktests alleen bij de test "usage", zodat de rijvolgorde van andere tests klopt)
-        const defs = allSectionDefs.filter(d => d.model === usage ? usage.count >= 3 && (selfTest === "" || selfTest === "usage")
-                                               : d.model === nowTv ? nowTv.count > 0 && (selfTest === "" || selfTest === "nowtv")
-                                               : d.model.count > 0)
+        const defs = allSectionDefs.filter(d => sectionShown(d) && !(d.model === nowTv && selfTest.indexOf("tabs") === 0))
         const rank = (d) => { const i = order.indexOf(d.title); return i >= 0 ? i : 100 + allSectionDefs.indexOf(d) }
         return defs.slice().sort((a, b) => rank(a) - rank(b))
+    }
+    function selectTab(i) {
+        if (i === tab || i < 0 || i >= visibleTabs.length) return
+        // De rijen worden opnieuw gemaakt: eerst loslaten, de focus blijft op de tabbalk
+        currentSection = null
+        tab = i
+        page.contentY = 0
+    }
+    function tabId() {
+        const t = visibleTabs[Math.min(tab, visibleTabs.length - 1)]
+        return t ? t.id : ""
+    }
+    // Van de tabbalk naar de inhoud van het tabblad
+    function enterTabContent() {
+        if (tabId() === "tv") liveButton.forceActiveFocus()
+        else focusSection(0, 0, false)
+    }
+    // Boven de eerste rij: terug naar de tabbalk (of de knoppen op het tv-tabblad)
+    function focusTabTop() {
+        if (tabId() === "tv") liveButton.forceActiveFocus()
+        else tabList.forceActiveFocus()
+    }
+    function openLiveTv() {
+        const go = () => { radioPlayer.stopPlayback(); iptvScreen.open(liveButton) }
+        if (parental.needsPin("bigscreen:iptv")) {
+            pinPad.ask(qsTr("Live tv is vergrendeld"), qsTr("Vul de pincode van het kinderslot in."), (pin) => { if (!parental.check(pin)) return false; go(); return true }, liveButton)
+        } else {
+            go()
+        }
+    }
+    function openTvGuide() {
+        const go = () => {
+            radioPlayer.stopPlayback()
+            iptvScreen.open(liveButton)
+            if (iptv.sources.length > 0) iptvScreen.openGrid()
+        }
+        if (parental.needsPin("bigscreen:iptv")) {
+            pinPad.ask(qsTr("Live tv is vergrendeld"), qsTr("Vul de pincode van het kinderslot in."), (pin) => { if (!parental.check(pin)) return false; go(); return true }, liveButton)
+        } else {
+            go()
+        }
     }
     function moveSection(model, step) {
         const titles = allSectionDefs.slice().sort((a, b) => {
@@ -136,7 +205,8 @@ Rectangle {
     // Rij "Verder kijken" verschijnt of verdwijnt: de rijen worden opnieuw gemaakt, focus terugzetten
     onSectionDefsChanged: Qt.callLater(() => {
         if (!frameScreen.visible && !iptvScreen.visible && !libraryScreen.visible && !radioPlayer.visible && root.currentSection === null
-                && !quickRow.activeFocus && !menu.visible && !welcomeOverlay.visible && !addOverlay.visible) {
+                && !quickRow.activeFocus && !tabList.activeFocus && !liveButton.activeFocus && !guideButton.activeFocus
+                && !menu.visible && !welcomeOverlay.visible && !addOverlay.visible) {
             focusSection(0, 0, false)
         }
     })
@@ -267,7 +337,8 @@ Rectangle {
             i += fromBelow ? -1 : 1
         }
         if (i < 0) {
-            quickRow.forceActiveFocus()
+            if (root.tabsMode) root.focusTabTop()
+            else quickRow.forceActiveFocus()
             page.contentY = 0
         }
     }
@@ -275,7 +346,7 @@ Rectangle {
     // Pagina zo scrollen dat de gekozen tegel (en bij de eerste rij de titel) in beeld is
     function scrollTo(section) {
         const g = section.grid
-        const row = Math.floor(Math.max(0, g.currentIndex) / root.columns)
+        const row = section.strip ? 0 : Math.floor(Math.max(0, g.currentIndex) / root.columns)
         const top = row === 0 ? section.y : section.y + g.y + g.topMargin + row * g.cellHeight - root.unit * 2
         const bottom = section.y + g.y + g.topMargin + (row + 1) * g.cellHeight + root.unit * 2
         if (top < page.contentY) {
@@ -466,6 +537,7 @@ Rectangle {
             { label: qsTr("Achtergrond wijzigen…"), action: "background-menu" },
             { label: appModel.showHero ? qsTr("Grote naam en logo linksboven verbergen") : qsTr("Grote naam en logo linksboven tonen"), action: "toggle-hero" },
             { label: appModel.fontScale > 1 ? qsTr("Tekst normaal") : qsTr("Tekst groter (kijken op afstand)"), action: "font-scale" },
+            { label: root.layoutName === "tabs" ? qsTr("Layout: tabbladen (kies om terug te gaan naar klassiek)") : qsTr("Layout: klassiek (kies om tabbladen te proberen)"), action: "layout" },
             { label: qsTr("Diensten kiezen…"), action: "welcome" },
             { label: qsTr("Meer instellingen…"), action: "more" }
         ]
@@ -658,6 +730,16 @@ Rectangle {
                       photos.source === "Unsplash" ? qsTr("Gratis foto's van Unsplash.") : qsTr("Gratis foto's met een vrije licentie (Openverse)."))
         } else if (action === "background-photo") {
             openPicker("photo", qsTr("Gratis foto als achtergrond"), root.menuFocus(), "landschap")
+        } else if (action === "layout") {
+            const next = root.layoutName === "tabs" ? "classic" : "tabs"
+            // De rijen worden opnieuw gemaakt: eerst loslaten, daarna de focus expliciet zetten
+            root.currentSection = null
+            appModel.setSetting("layout", next)
+            root.layoutName = next
+            root.tab = 0
+            page.contentY = 0
+            root.showToast(next === "tabs" ? qsTr("Layout: tabbladen") : qsTr("Layout: klassiek"))
+            Qt.callLater(() => { if (root.tabsMode) tabList.forceActiveFocus(); else root.focusSection(0, 0, false) })
         } else if (action === "release-info") {
             releaseInfo.open(root.menuFocus())
         } else if (action === "section-collapse") {
@@ -973,6 +1055,7 @@ Rectangle {
     }
 
     Component.onCompleted: {
+        if (selfTest.indexOf("tabs") === 0) layoutName = "tabs"
         focusSection(0, 0, false)
         startWhereLeft.start()
         // Eerste keer: welkomststap (diensten kiezen)
@@ -1226,6 +1309,16 @@ Rectangle {
                     testStep.run(3000, () => iptvScreen.previousChannel())
                 })
             }
+        } else if (selfTest.indexOf("tabs") === 0) {
+            // Test: tabbladen-layout met favoriete zenders (Nu op tv) en Verder kijken
+            iptv.group = "Alle zenders"
+            if (iptv.sources.length === 0) iptv.addSource("m3u-file", "Gids-test", selfTestM3u, "", "")
+            testStep.run(4000, () => {
+                for (let r = 0; r < 3; ++r) if (!iptv.isFavorite(r)) iptv.toggleFavorite(r)
+                nowTv.refresh()
+                resume.refresh()
+                Qt.callLater(() => root.tabsTest(selfTest))
+            })
         } else if (selfTest === "ambient") {
             Qt.callLater(() => focusSection(0, 0, false))
         } else if (selfTest === "audio") {
@@ -1492,7 +1585,199 @@ Rectangle {
 
         Keys.onReturnPressed: trigger(currentIndex)
         Keys.onEnterPressed: trigger(currentIndex)
-        Keys.onDownPressed: root.focusSection(0, 0, false)
+        Keys.onDownPressed: { if (root.tabsMode) tabList.forceActiveFocus(); else root.focusSection(0, 0, false) }
+    }
+
+    // --- Tabbladen (alleen in de tabbladen-layout) ---
+    Item {
+        id: tabBar
+        anchors.top: header.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.leftMargin: root.unit * 4
+        anchors.rightMargin: root.unit * 4
+        height: root.tabsMode ? root.unit * 6.5 : 0
+        visible: root.tabsMode
+
+        ListView {
+            id: tabList
+            anchors.left: parent.left
+            anchors.verticalCenter: parent.verticalCenter
+            width: Math.min(parent.width, contentWidth)
+            height: parent.height
+            orientation: ListView.Horizontal
+            spacing: root.unit * 1.2
+            interactive: false
+            keyNavigationEnabled: false
+            model: root.visibleTabs
+            currentIndex: root.tab
+            Keys.onLeftPressed: root.selectTab(root.tab - 1)
+            Keys.onRightPressed: root.selectTab(root.tab + 1)
+            Keys.onUpPressed: quickRow.forceActiveFocus()
+            Keys.onDownPressed: root.enterTabContent()
+            Keys.onReturnPressed: root.enterTabContent()
+            Keys.onEnterPressed: root.enterTabContent()
+
+            delegate: Item {
+                id: tabItem
+                required property int index
+                required property var modelData
+                readonly property bool current: index === root.tab
+                width: tabLabel.implicitWidth + root.unit * 4
+                height: tabList.height
+                Rectangle {
+                    anchors.fill: parent
+                    anchors.margins: root.unit * 0.5
+                    radius: height / 2
+                    color: tabList.activeFocus && tabItem.current ? "#40ffffff" : "transparent"
+                }
+                Text {
+                    id: tabLabel
+                    textFormat: Text.PlainText
+                    anchors.centerIn: parent
+                    color: tabItem.current ? "white" : "#aab0b8"
+                    font.pixelSize: (root.unit * 2.7) * appModel.fontScale
+                    font.weight: tabItem.current ? Font.DemiBold : Font.Normal
+                    text: tabItem.modelData.label
+                }
+                Rectangle {
+                    visible: tabItem.current
+                    anchors.horizontalCenter: parent.horizontalCenter
+                    anchors.bottom: parent.bottom
+                    anchors.bottomMargin: root.unit * 0.3
+                    width: parent.width - root.unit * 3
+                    height: Math.max(3, root.unit * 0.35)
+                    radius: height / 2
+                    color: "white"
+                }
+                MouseArea {
+                    anchors.fill: parent
+                    hoverEnabled: true
+                    onClicked: { tabList.forceActiveFocus(); root.selectTab(tabItem.index) }
+                    onEntered: { if (root.mouseActive() && !menu.visible) { tabList.forceActiveFocus(); root.selectTab(tabItem.index) } }
+                }
+            }
+        }
+    }
+
+    // --- Groot vlak boven de rijen in de tabbladen-layout: wat heeft focus (of de eerste tegel) ---
+    Item {
+        id: tabsHero
+        visible: root.tabsMode
+        anchors.top: tabBar.bottom
+        anchors.left: parent.left
+        anchors.right: parent.right
+        anchors.leftMargin: root.unit * 4
+        anchors.rightMargin: root.unit * 4
+        height: root.tabsMode ? root.unit * 22 : 0
+        clip: true
+
+        readonly property var heroModel: root.focusModel ? root.focusModel : (root.sectionDefs.length > 0 ? root.sectionDefs[0].model : null)
+        readonly property int heroRow: root.focusModel ? root.focusRow : (heroModel && heroModel.count > 0 ? 0 : -1)
+        readonly property string heroName: heroModel && heroRow >= 0 ? (heroModel.revision, heroModel.nameAt(heroRow)) : ""
+        readonly property string heroKind: root.focusModel ? root.focusKind : (root.sectionDefs.length > 0 ? (root.sectionDefs[0].label || root.sectionDefs[0].title) : "")
+        readonly property string heroSub: heroModel && heroRow >= 0 && heroModel.subtitleAt ? (heroModel.revision, heroModel.subtitleAt(heroRow)) : ""
+        readonly property string ownBackdrop: heroModel && heroRow >= 0 && heroModel.backdropAt ? (heroModel.revision, heroModel.backdropAt(heroRow)) : ""
+        // Geen eigen plaatje: bij Voor jou het plaatje van het laatste wat je keek
+        readonly property string heroBackdrop: ownBackdrop !== "" ? ownBackdrop
+                                              : (root.tabId() === "foryou" && resume.count > 0 ? resume.backdropAt(0) : "")
+        readonly property bool tvTab: root.tabId() === "tv"
+
+        // Plaatje rechts
+        Rectangle {
+            id: heroCard
+            visible: heroImage.status === Image.Ready
+            anchors.right: parent.right
+            anchors.verticalCenter: parent.verticalCenter
+            height: parent.height - root.unit * 2
+            width: height * 1.7778
+            radius: root.unit * 1
+            color: "#22000000"
+            clip: true
+            Image {
+                id: heroImage
+                anchors.fill: parent
+                source: tabsHero.heroBackdrop
+                sourceSize.width: 960
+                fillMode: Image.PreserveAspectCrop
+                asynchronous: true
+            }
+        }
+
+        Column {
+            anchors.left: parent.left
+            anchors.leftMargin: root.unit * 1.5
+            anchors.verticalCenter: parent.verticalCenter
+            width: parent.width * (heroCard.visible ? 0.5 : 0.8)
+            spacing: root.unit * 1.2
+
+            Text {
+                textFormat: Text.PlainText
+                width: parent.width
+                color: "#c4c7cc"
+                font.pixelSize: (root.unit * 2.2) * appModel.fontScale
+                elide: Text.ElideRight
+                text: tabsHero.tvTab ? qsTr("TV & Gids") : tabsHero.heroKind
+            }
+            Text {
+                textFormat: Text.PlainText
+                width: parent.width
+                color: "white"
+                font.pixelSize: (root.unit * 6.2) * appModel.fontScale
+                font.weight: Font.DemiBold
+                elide: Text.ElideRight
+                text: tabsHero.tvTab ? qsTr("Kijk live of bekijk de gids") : tabsHero.heroName
+            }
+            Text {
+                textFormat: Text.PlainText
+                width: parent.width
+                visible: text !== "" && !tabsHero.tvTab
+                color: "#d5d8dc"
+                font.pixelSize: (root.unit * 2.4) * appModel.fontScale
+                elide: Text.ElideRight
+                text: tabsHero.heroSub
+            }
+            // Op elk tabblad behalve TV & Gids: aanwijzing dat Enter de tegel opent
+            Rectangle {
+                visible: !tabsHero.tvTab && tabsHero.heroName !== ""
+                width: openLabel.implicitWidth + root.unit * 5
+                height: root.unit * 5.4
+                radius: height / 2
+                color: "#3d6fb4"
+                Text {
+                    id: openLabel
+                    textFormat: Text.PlainText
+                    anchors.centerIn: parent
+                    color: "white"
+                    font.pixelSize: (root.unit * 2.4) * appModel.fontScale
+                    font.weight: Font.DemiBold
+                    text: qsTr("Openen")
+                }
+            }
+            // Tabblad TV & Gids: live tv en de gids
+            Row {
+                visible: tabsHero.tvTab
+                spacing: root.unit * 1.5
+                FocusButton {
+                    id: liveButton
+                    unit: root.unit
+                    text: qsTr("Live tv kijken")
+                    onClicked: root.openLiveTv()
+                    KeyNavigation.right: guideButton
+                    Keys.onUpPressed: tabList.forceActiveFocus()
+                    Keys.onDownPressed: root.focusSection(0, 0, false)
+                }
+                FocusButton {
+                    id: guideButton
+                    unit: root.unit
+                    text: qsTr("Tv-gids")
+                    onClicked: root.openTvGuide()
+                    KeyNavigation.left: liveButton
+                    Keys.onUpPressed: tabList.forceActiveFocus()
+                    Keys.onDownPressed: root.focusSection(0, 0, false)
+                }
+            }
+        }
     }
 
     // --- Groot tekstvlak: wat heeft nu focus ---
@@ -1504,7 +1789,7 @@ Rectangle {
         anchors.leftMargin: root.unit * 4
         anchors.rightMargin: root.unit * 4
         // Ingeklapt als er (nog) niets te tonen is, zodat er geen leeg vlak boven de rijen staat
-        readonly property bool filled: root.heroShown && root.focusName !== ""
+        readonly property bool filled: !root.tabsMode && root.heroShown && root.focusName !== ""
         height: filled ? root.unit * 21 : root.unit * 1
         opacity: filled ? 1 : 0
         clip: true
@@ -1553,7 +1838,7 @@ Rectangle {
     // --- Rijen onder elkaar: Video, Muziek, Podcasts, Media (scrollt) ---
     Flickable {
         id: page
-        anchors.top: hero.bottom
+        anchors.top: root.tabsMode ? tabsHero.bottom : hero.bottom
         anchors.bottom: hint.top
         anchors.left: parent.left
         anchors.right: parent.right
@@ -1584,7 +1869,8 @@ Rectangle {
                     width: sectionColumn.width
                     title: modelData.label || modelData.title
                     model: modelData.model
-                    collapsed: root.isCollapsed(modelData.title, modelData.model)
+                    collapsed: !root.tabsMode && root.isCollapsed(modelData.title, modelData.model)
+                    strip: root.tabsMode
                     columns: root.columns
                     unit: root.unit
                     canHover: () => !menu.visible && !addOverlay.visible && !placesPicker.visible && !picker.visible && !pinPad.visible && root.mouseActive()
@@ -2367,6 +2653,58 @@ Rectangle {
         target: gamepad
         function onHomeRequested() { root.goHomeScreen() }
     }
+    // Alleen voor de tests van de tabbladen-layout: na menu's en omschakelen moet de focus op een zichtbaar item staan
+    function tabsTest(mode) {
+        const focusOk = (what) => {
+            const f = root.Window.window ? root.Window.window.activeFocusItem : null
+            const inGrid = f !== null && currentSection !== null && f === currentSection.grid
+            console.info("Tabs focus", what, "ok", f !== null && f.visible, "grid", inGrid, "tabs", tabsMode, "sections", sectionDefs.length)
+        }
+        const tabIndex = (id) => visibleTabs.findIndex(t => t.id === id)
+        console.info("Tabs visible:", visibleTabs.map(t => t.id).join(","), "first section", sectionDefs.length > 0 ? sectionDefs[0].title : "-")
+        if (mode === "tabs-apps" || mode === "tabs-tv") {
+            tabList.forceActiveFocus()
+            selectTab(tabIndex(mode === "tabs-apps" ? "apps" : "tv"))
+            Qt.callLater(() => {
+                if (mode === "tabs-tv") liveButton.forceActiveFocus()
+                else focusSection(0, 0, false)
+                testStep.run(1500, () => focusOk(mode))
+            })
+            return
+        }
+        focusSection(0, 0, false)
+        testStep.run(1200, () => {
+            focusOk("content")
+            // Tabblad wisselen en terug
+            tabList.forceActiveFocus()
+            selectTab(1)
+            selectTab(0)
+            Qt.callLater(() => {
+                focusSection(0, 0, false)
+                // Tegelmenu openen en sluiten
+                testStep.run(800, () => {
+                    openTileMenu(sectionDefs[0].model, 0, currentSection.grid)
+                    testStep.run(1000, () => {
+                        menu.close()
+                        testStep.run(800, () => {
+                            focusOk("after-menu")
+                            // Terug naar klassiek en weer naar tabbladen
+                            handleMenuAction("layout")
+                            testStep.run(1500, () => {
+                                focusOk("classic")
+                                handleMenuAction("layout")
+                                testStep.run(1500, () => {
+                                    focusSection(0, 0, false)
+                                    testStep.run(800, () => focusOk("tabs-again"))
+                                })
+                            })
+                        })
+                    })
+                })
+            })
+        })
+    }
+
     function goHomeScreen() {
         console.info("Home screen")
         if (menu.visible) menu.close()
