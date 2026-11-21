@@ -30,6 +30,19 @@ FocusScope {
     property real maxVolume: 1.0
     onMaxVolumeChanged: if (audio.volume > maxVolume) audio.volume = maxVolume
     property string sleepText: ""
+    // Schermbeveiliging: na een minuut zonder bediening zweeft de tegel over het scherm
+    // en de rest van het scherm wordt vaag (tegen inbranden en voor een rustig beeld)
+    property int idleMs: 60000
+    property bool drifting: false
+    property real driftX: 0
+    property real driftY: 0
+    property real driftVx: unit * 0.16
+    property real driftVy: unit * 0.11
+    function wake() {
+        if (drifting) console.info("Radio drift", false)
+        drifting = false
+        idleTimer.restart()
+    }
 
     anchors.fill: parent
     visible: false
@@ -38,6 +51,37 @@ FocusScope {
     onActiveFocusChanged: {
         if (visible && !activeFocus) {
             Qt.callLater(() => { if (radioPlayer.visible && !radioPlayer.activeFocus && !menu.visible) radioPlayer.forceActiveFocus() })
+        }
+    }
+
+    onVisibleChanged: { drifting = false; if (visible) idleTimer.restart(); else idleTimer.stop() }
+
+    Timer {
+        id: idleTimer
+        interval: radioPlayer.idleMs
+        onTriggered: {
+            if (radioPlayer.visible && radioPlayer.active && !menu.visible) {
+                radioPlayer.drifting = true
+                console.info("Radio drift", true)
+            }
+        }
+    }
+    Timer {
+        interval: 33
+        repeat: true
+        running: radioPlayer.drifting
+        onTriggered: {
+            const maxX = Math.max(0, (radioPlayer.width - tileBox.width) / 2 - radioPlayer.unit * 2)
+            const maxY = Math.max(0, (radioPlayer.height - tileBox.height) / 2 - radioPlayer.unit * 8)
+            let x = radioPlayer.driftX + radioPlayer.driftVx
+            let y = radioPlayer.driftY + radioPlayer.driftVy
+            if (x > maxX) { x = maxX; radioPlayer.driftVx = -Math.abs(radioPlayer.driftVx) }
+            if (x < -maxX) { x = -maxX; radioPlayer.driftVx = Math.abs(radioPlayer.driftVx) }
+            // De tegel staat standaard iets boven het midden (-6): daar hoort de bodem bij
+            if (y > maxY) { y = maxY; radioPlayer.driftVy = -Math.abs(radioPlayer.driftVy) }
+            if (y < -maxY) { y = -maxY; radioPlayer.driftVy = Math.abs(radioPlayer.driftVy) }
+            radioPlayer.driftX = x
+            radioPlayer.driftY = y
         }
     }
 
@@ -161,11 +205,12 @@ FocusScope {
         onTriggered: if (radioPlayer.visible && radioPlayer.loading) radioPlayer.tryNext("timeout")
     }
 
-    Keys.onLeftPressed: tune(radio.nextStation(row, -1))
-    Keys.onRightPressed: tune(radio.nextStation(row, 1))
-    Keys.onUpPressed: changeVolume(0.05)
-    Keys.onDownPressed: changeVolume(-0.05)
+    Keys.onLeftPressed: { wake(); tune(radio.nextStation(row, -1)) }
+    Keys.onRightPressed: { wake(); tune(radio.nextStation(row, 1)) }
+    Keys.onUpPressed: { wake(); changeVolume(0.05) }
+    Keys.onDownPressed: { wake(); changeVolume(-0.05) }
     Keys.onPressed: (event) => {
+        wake()
         if (event.key === Qt.Key_Escape || event.key === Qt.Key_Back || event.key === Qt.Key_Backspace) {
             close()
             event.accepted = true
@@ -204,9 +249,19 @@ FocusScope {
         Behavior on gradient { enabled: false }
     }
 
+    // Schermbeveiliging: achtergrond vervaagt naar bijna zwart
+    Rectangle {
+        anchors.fill: parent
+        color: "#0b0c0f"
+        opacity: radioPlayer.drifting ? 0.82 : 0
+        Behavior on opacity { NumberAnimation { duration: 1500 } }
+    }
+
     MouseArea {
         anchors.fill: parent
-        onClicked: radioPlayer.forceActiveFocus()
+        hoverEnabled: true
+        onPositionChanged: radioPlayer.wake()
+        onClicked: { radioPlayer.wake(); radioPlayer.forceActiveFocus() }
     }
 
     // Titel linksboven
@@ -215,6 +270,8 @@ FocusScope {
         x: radioPlayer.unit * 4
         y: radioPlayer.unit * 4
         text: qsTr("Radio")
+        opacity: radioPlayer.drifting ? 0 : 1
+        Behavior on opacity { NumberAnimation { duration: 1500 } }
         color: "#ffffff"
         font.pixelSize: radioPlayer.unit * 4 * appModel.fontScale
         font.weight: Font.DemiBold
@@ -222,9 +279,15 @@ FocusScope {
 
     // Midden: logo, naam, status
     Column {
-        anchors.centerIn: parent
-        anchors.verticalCenterOffset: -radioPlayer.unit * 6
+        id: tileBox
+        anchors.horizontalCenter: parent.horizontalCenter
+        anchors.horizontalCenterOffset: radioPlayer.driftX
+        anchors.verticalCenter: parent.verticalCenter
+        anchors.verticalCenterOffset: -radioPlayer.unit * 6 + radioPlayer.driftY
         spacing: radioPlayer.unit * 2.4
+        // Terug naar het midden na het wakker worden
+        Behavior on anchors.horizontalCenterOffset { enabled: !radioPlayer.drifting; NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
+        Behavior on anchors.verticalCenterOffset { enabled: !radioPlayer.drifting; NumberAnimation { duration: 500; easing.type: Easing.OutCubic } }
 
         Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
@@ -324,7 +387,7 @@ FocusScope {
         height: radioPlayer.unit * 34
         radius: radioPlayer.unit * 1.4
         color: "#cc16181d"
-        opacity: volumeFlash.running ? 1 : 0
+        opacity: volumeFlash.running && !radioPlayer.drifting ? 1 : 0
         Behavior on opacity { NumberAnimation { duration: 200 } }
         Rectangle {
             anchors.horizontalCenter: parent.horizontalCenter
@@ -357,6 +420,8 @@ FocusScope {
     // Onderaan: alle zenders, de huidige uitgelicht
     Row {
         id: strip
+        opacity: radioPlayer.drifting ? 0 : 1
+        Behavior on opacity { NumberAnimation { duration: 1500 } }
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: hints.top
         anchors.bottomMargin: radioPlayer.unit * 3
@@ -409,6 +474,8 @@ FocusScope {
 
     HintBar {
         id: hints
+        opacity: radioPlayer.drifting ? 0 : 1
+        Behavior on opacity { NumberAnimation { duration: 1500 } }
         anchors.horizontalCenter: parent.horizontalCenter
         anchors.bottom: parent.bottom
         anchors.bottomMargin: radioPlayer.unit * 3

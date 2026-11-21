@@ -1261,7 +1261,10 @@ Rectangle {
                 radioPlayer.close()
                 Qt.callLater(() => focusSection(sectionDefs.findIndex(d => d.model === appModel), 0, false))
             })
-        } else if (selfTest === "regional") {
+        } else if (selfTest === "radiodrift") {
+            radioPlayer.idleMs = 2000
+            radioPlayer.open(0, mediaGrid())
+                } else if (selfTest === "regional") {
             // Tegel Regionale tv: lijst, daarna eerste zender afspelen
             testStep.run(1500, () => {
                 for (let r = 0; r < appModel.count; ++r) if (appModel.pathAt(r) === "bigscreen:regional") root.launch(appModel, r)
