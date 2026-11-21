@@ -545,6 +545,16 @@ void RadioModel::fetchLogos()
             QImage image;
             if (reply->error() != QNetworkReply::NoError || !image.loadFromData(reply->readAll()) || image.width() < 32) {
                 qInfo() << "No radio logo for" << name;
+                if (reply->error() == QNetworkReply::NoError && name == QLatin1String("Simone FM")) {
+                    QFile::copy(QStringLiteral(":/assets/logos/simone-fm.png"), file);
+                    QFile::setPermissions(file, QFile::ReadOwner | QFile::WriteOwner);
+                    const int r = rowOfName(name);
+                    if (r >= 0) {
+                        Q_EMIT dataChanged(index(r), index(r), {IconRole});
+                    }
+                    ++m_revision;
+                    Q_EMIT revisionChanged();
+                }
                 return;
             }
             image.save(file, "PNG");

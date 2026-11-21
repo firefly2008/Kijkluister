@@ -1,5 +1,23 @@
 [
   {
+    "version": "4.9.0",
+    "date": "2026-11-21",
+    "notes": [
+      "Live tv: bij zappen wordt de vorige zender eerst echt losgelaten, zodat aanbieders met één verbinding minder vaak 'geweigerd' zeggen",
+      "Weigert de aanbieder een zender (403), dan probeert Kijkluister het zelf nog een keer en daarna via een doorgifte die zich als VLC meldt",
+      "Duidelijke meldingen: 'Je aanbieder weigert deze zender' en 'Zender reageert niet' in plaats van technische tekst (die staat klein eronder)",
+      "Zenderlogo's die niet laden worden onthouden en niet steeds opnieuw geprobeerd",
+      "Eigen logo's voor NLZIET en Simone FM als de site er zelf geen levert"
+    ],
+    "notes_en": [
+      "Live TV: when zapping, the previous channel is fully released first, so single-connection providers refuse less often",
+      "If the provider refuses a channel (403), Kijkluister retries once by itself and then via a relay that identifies as VLC",
+      "Clear messages: 'Your provider refuses this channel' and 'The channel is not responding' instead of technical text (which is shown small underneath)",
+      "Channel logos that fail to load are remembered and not retried over and over",
+      "Own logos for NLZIET and Simone FM when the site provides none"
+    ]
+  },
+  {
     "version": "4.8.0",
     "date": "2026-11-21",
     "notes": [

@@ -145,9 +145,10 @@ FocusScope {
             Image {
                 anchors.fill: parent
                 anchors.margins: panel.unit * 0.8
-                source: panel.channel.logo || ""
+                source: iptv.logoSource(panel.channel.logo || "")
                 fillMode: Image.PreserveAspectFit
                 asynchronous: true
+                onStatusChanged: if (status === Image.Error) iptv.markLogoFailed(panel.channel.logo || "")
             }
         }
         Column {

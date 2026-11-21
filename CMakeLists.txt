@@ -35,6 +35,8 @@ qt_add_executable(bigscreen-host WIN32
     src/mpcplayer.h
     src/recorder.cpp
     src/recorder.h
+    src/streamrelay.cpp
+    src/streamrelay.h
     src/artframe.cpp
     src/artframe.h
     src/iptvmodel.cpp
@@ -72,7 +74,7 @@ set(KIJKLUISTER_VERSION "0.0.0" CACHE STRING "Versie van Kijkluister (voor bijwe
 target_compile_definitions(bigscreen-host PRIVATE KIJKLUISTER_VERSION="${KIJKLUISTER_VERSION}")
 
 # Pictogram (getekend door assets/make_icon.py)
-qt_add_resources(bigscreen-host "icons" PREFIX "/" FILES assets/kijkluister-256.png assets/web-192.png assets/web-512.png assets/web-maskable-512.png)
+qt_add_resources(bigscreen-host "icons" PREFIX "/" FILES assets/kijkluister-256.png assets/web-192.png assets/web-512.png assets/web-maskable-512.png assets/logos/nlziet.png assets/logos/simone-fm.png)
 # Release-info (Aanpassen → Release-info); bij elke nieuwe versie bovenaan aanvullen
 qt_add_resources(bigscreen-host "releasenotes" PREFIX "/" FILES releasenotes.json)
 qt_add_resources(bigscreen-host "i18n" PREFIX "/" FILES i18n/kijkluister_en.qm)

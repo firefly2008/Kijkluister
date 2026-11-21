@@ -14,6 +14,11 @@ FocusScope {
     property int playingRow: -1
     property var channel: ({})
     property string errorText: ""
+    property int attempt: 0            // 0 = eerste poging, 1 = nogmaals na 403, 2 = via doorgifte met VLC-agent
+    property bool viaRelay: false
+    property string relayUrl: ""
+    property bool retrying: false
+    property string errorRaw: ""       // technische tekst van de speler, klein onderaan getoond
     property bool pinInfo: false           // test: balk blijft staan
     property bool autoGuide: false         // test: gids openen na afspelen
     property string demo: ""               // schermafbeeldingen voor de handleiding
@@ -143,15 +148,18 @@ FocusScope {
             pinRequired(row)
             return
         }
+        const wasPlaying = playing && player !== null && String(player.source) !== ""
         playingRow = row
         channel = ch
         errorText = ""
+        errorRaw = ""
+        attempt = 0
+        viaRelay = false
+        relayUrl = ""
+        streamRelay.stop()
         playing = true
-        if (player) {
-            player.stop()
-            player.source = sourceFor(ch.url)
-            player.play()
-        }
+        // Bij zappen eerst de oude stream echt loslaten: veel aanbieders staan maar één verbinding toe
+        startPlayback(wasPlaying ? 500 : 0)
         iptv.requestEpg(row)
         showInfo()
         playerView.forceActiveFocus()
@@ -165,6 +173,64 @@ FocusScope {
             recordTestTimer.mode = mode
             recordTestTimer.start()
         }
+    }
+    function startPlayback(delay) {
+        if (!player) {
+            return
+        }
+        player.stop()
+        if (delay <= 0) {
+            player.source = sourceFor(channel.url)
+            player.play()
+            return
+        }
+        player.source = ""
+        retrying = true
+        startTimer.url = channel.url
+        startTimer.interval = delay
+        startTimer.restart()
+    }
+    Timer {
+        id: startTimer
+        property string url: ""
+        onTriggered: {
+            tv.retrying = false
+            if (!tv.playing || !tv.player || tv.channel.url !== url) {
+                return
+            }
+            tv.player.source = tv.sourceFor(url)
+            tv.player.play()
+        }
+    }
+    // Foutmelding van de speler: 403 eerst nog een keer proberen, dan via de doorgifte met een
+    // VLC-User-Agent; daarna een begrijpelijke melding in plaats van technische tekst
+    function handleError(msg) {
+        errorRaw = msg
+        const forbidden = /403|forbidden/i.test(msg)
+        const timeout = /-138|-110|time-?out|timed out/i.test(msg)
+        if (forbidden && attempt === 0) {
+            attempt = 1
+            errorText = ""
+            startPlayback(2000)
+            return
+        }
+        if (forbidden && attempt === 1 && !recorder.recording) {
+            const r = streamRelay.start(channel.url)
+            if (r !== "") {
+                attempt = 2
+                viaRelay = true
+                relayUrl = r
+                errorText = ""
+                startPlayback(1500)
+                return
+            }
+        }
+        retrying = false
+        errorText = forbidden ? qsTr("Je aanbieder weigert deze zender (misschien kijkt er al iemand anders).")
+                  : timeout ? qsTr("Zender reageert niet.")
+                  : qsTr("Soms zendt een zender even niet uit, of is hij alleen in een ander land te zien.")
+        // Meteen een uitweg aanbieden: knop "Volgende zender" krijgt focus
+        if (playing) errorNext.forceActiveFocus()
     }
     Timer {
         id: guideTestTimer
@@ -206,6 +272,9 @@ FocusScope {
     // Wordt deze zender opgenomen, dan kijken we via de lokale doorgifte van de opname
     // (één verbinding met de aanbieder; veel abonnementen staan er maar één toe)
     function sourceFor(url) {
+        if (viaRelay && relayUrl !== "" && !(recorder.recording && recorder.url === url)) {
+            return relayUrl
+        }
         return recorder.recording && recorder.url === url && recorder.relayUrl !== ""
                ? recorder.relayUrl + "?overrun_nonfatal=1&fifo_size=1000000&timeout=15000000" : url
     }
@@ -242,6 +311,9 @@ FocusScope {
     }
 
     function stop() {
+        startTimer.stop()
+        retrying = false
+        streamRelay.stop()
         if (player) {
             player.stop()
         }
@@ -651,10 +723,8 @@ FocusScope {
                     audioOutput: AudioOutput {}
                     videoOutput: video
                     onErrorOccurred: (error, errorString) => {
-                        tv.errorText = errorString !== "" ? errorString : qsTr("Deze zender kan niet worden afgespeeld")
-                        console.warn("IPTV play error:", errorString, tv.channel.url)
-                        // Meteen een uitweg aanbieden: knop "Volgende zender" krijgt focus
-                        if (tv.playing) errorNext.forceActiveFocus()
+                        console.warn("IPTV play error:", errorString, tv.channel.url, "attempt", tv.attempt)
+                        tv.handleError(errorString)
                     }
                     onMediaStatusChanged: {
                         if (mediaStatus === MediaPlayer.BufferedMedia) {
@@ -674,7 +744,7 @@ FocusScope {
         Column {
             anchors.centerIn: parent
             spacing: tv.unit * 1.5
-            visible: tv.errorText !== "" || (tv.player !== null && (tv.player.mediaStatus === MediaPlayer.LoadingMedia
+            visible: tv.errorText !== "" || tv.retrying || (tv.player !== null && (tv.player.mediaStatus === MediaPlayer.LoadingMedia
                      || tv.player.mediaStatus === MediaPlayer.StalledMedia
                      || (tv.player.mediaStatus === MediaPlayer.BufferingMedia && !tv.player.hasVideo)))
             Text {
@@ -694,7 +764,7 @@ FocusScope {
                 visible: tv.errorText !== ""
                 color: "#d5d8dc"
                 font.pixelSize: (tv.unit * 2.4) * appModel.fontScale
-                text: qsTr("Soms zendt een zender even niet uit, of is hij alleen in een ander land te zien.")
+                text: tv.errorText
             }
             Row {
                 anchors.horizontalCenter: parent.horizontalCenter
@@ -718,10 +788,10 @@ FocusScope {
             Text {
                 textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
                 anchors.horizontalCenter: parent.horizontalCenter
-                visible: tv.errorText !== ""
+                visible: tv.errorText !== "" && tv.errorRaw !== ""
                 color: "#a8acb3"
                 font.pixelSize: (tv.unit * 1.7) * appModel.fontScale
-                text: qsTr("Technische melding: ") + tv.errorText
+                text: qsTr("Technische melding: ") + tv.errorRaw
             }
         }
 
@@ -755,9 +825,10 @@ FocusScope {
                     Image {
                         anchors.fill: parent
                         anchors.margins: tv.unit
-                        source: tv.channel.logo || ""
+                        source: iptv.logoSource(tv.channel.logo || "")
                         fillMode: Image.PreserveAspectFit
                         asynchronous: true
+                        onStatusChanged: if (status === Image.Error) iptv.markLogoFailed(tv.channel.logo || "")
                     }
                 }
                 Column {

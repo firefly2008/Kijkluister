@@ -238,9 +238,10 @@ FocusScope {
                         Image {
                             anchors.verticalCenter: parent.verticalCenter
                             width: gg.unit * 5; height: gg.unit * 3.5
-                            source: rowItem.modelData.logo || ""
+                            source: iptv.logoSource(rowItem.modelData.logo || "")
                             fillMode: Image.PreserveAspectFit
                             asynchronous: true
+                            onStatusChanged: if (status === Image.Error) iptv.markLogoFailed(rowItem.modelData.logo || "")
                         }
                         Text {
                             textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren

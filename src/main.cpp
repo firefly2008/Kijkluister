@@ -35,6 +35,7 @@
 #include "artframe.h"
 #include "paths.h"
 #include "recorder.h"
+#include "streamrelay.h"
 #include "components.h"
 #include "radiomodel.h"
 #include "parental.h"
@@ -286,6 +287,7 @@ int main(int argc, char *argv[])
     IptvModel iptv(appDataDir());
     ArtFrame frame(appDataDir());
     Recorder recorder(appDataDir());
+    StreamRelay streamRelay;
     Components components(appDataDir());
     MpcPlayer mpc(appDataDir());
 
@@ -315,6 +317,7 @@ int main(int argc, char *argv[])
     view.rootContext()->setContextProperty(QStringLiteral("iptv"), &iptv);
     view.rootContext()->setContextProperty(QStringLiteral("frame"), &frame);
     view.rootContext()->setContextProperty(QStringLiteral("recorder"), &recorder);
+    view.rootContext()->setContextProperty(QStringLiteral("streamRelay"), &streamRelay);
     view.rootContext()->setContextProperty(QStringLiteral("mpc"), &mpc);
     view.rootContext()->setContextProperty(QStringLiteral("components"), &components);
     RadioModel radio(appDataDir());

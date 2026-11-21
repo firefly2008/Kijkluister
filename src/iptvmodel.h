@@ -103,6 +103,9 @@ public:
     // Herinneringen: melding 2 minuten voor het begin (signaal reminderDue)
     QVariantList reminders() const { return m_reminders; }
     Q_INVOKABLE bool isReminder(const QString &url, double start) const;
+    // Zenderlogo's die niet laden: onthouden en deze sessie niet opnieuw proberen
+    Q_INVOKABLE QString logoSource(const QString &url) const { return m_badLogos.contains(url) ? QString() : url; }
+    Q_INVOKABLE void markLogoFailed(const QString &url) { if (!url.isEmpty()) m_badLogos.insert(url); }
     Q_INVOKABLE void toggleReminder(const QString &channel, const QString &url, const QString &logo, const QString &title, double start);
     Q_INVOKABLE void checkReminders();
 
@@ -175,6 +178,7 @@ private:
     QList<int> m_visible;
     QStringList m_groups;
     QSet<QString> m_favorites;
+    QSet<QString> m_badLogos;
     QString m_group;
     QString m_search;
     int m_loadIndex = -1;

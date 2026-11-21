@@ -233,6 +233,18 @@ void AppModel::fetchFavicons()
             QImage image;
             if (reply->error() != QNetworkReply::NoError || !image.loadFromData(bytes) || image.width() < 32) {
                 qInfo() << "No site icon for" << target << reply->errorString();
+                // Site geeft geen bruikbaar pictogram (verbinding wel in orde): meegeleverd logo gebruiken
+                if (reply->error() == QNetworkReply::NoError && QUrl(target).host().contains(QLatin1String("nlziet.nl"))) {
+                    QFile::copy(QStringLiteral(":/assets/logos/nlziet.png"), file);
+                    QFile::setPermissions(file, QFile::ReadOwner | QFile::WriteOwner);
+                    ++m_revision;
+                    Q_EMIT revisionChanged();
+                    for (int row = 0; row < m_apps.size(); ++row) {
+                        if (m_apps.at(row).path == target) {
+                            Q_EMIT dataChanged(index(row), index(row), {IconRole, AccentRole});
+                        }
+                    }
+                }
                 return;
             }
             image.save(file, "PNG");
