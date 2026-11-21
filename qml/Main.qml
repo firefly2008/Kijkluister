@@ -531,53 +531,101 @@ Rectangle {
         }
     }
 
-    function openPersonalizeMenu() {
-        const entries = [
-            { label: qsTr("Tegel toevoegen…"), action: "add" },
-            { label: qsTr("Achtergrond wijzigen…"), action: "background-menu" },
-            { label: appModel.showHero ? qsTr("Grote naam en logo linksboven verbergen") : qsTr("Grote naam en logo linksboven tonen"), action: "toggle-hero" },
-            { label: appModel.fontScale > 1 ? qsTr("Tekst normaal") : qsTr("Tekst groter (kijken op afstand)"), action: "font-scale" },
-            { label: root.layoutName === "tabs" ? qsTr("Layout: tabbladen (kies om terug te gaan naar klassiek)") : qsTr("Layout: klassiek (kies om tabbladen te proberen)"), action: "layout" },
-            { label: qsTr("Diensten kiezen…"), action: "welcome" },
-            { label: qsTr("Meer instellingen…"), action: "more" }
-        ]
-        let hidden = appModel.hiddenCount
-        for (const m of webModels) {
-            hidden += m.hiddenCount
-        }
-        hidden += radio.hiddenCount
-        if (hidden > 0) {
-            entries.push({ label: qsTr("Verwijderde tegels terugzetten (") + hidden + ")", action: "unhide" })
-        }
-        entries.push({ label: qsTr("Release-info (versie ") + updater.current + ")", action: "release-info" })
-        entries.push({ label: qsTr("Sluiten"), action: "" })
-        menu.open(qsTr("Instellingen"), entries, root.menuFocus())
+    // --- Instellingen: één menu met zes groepen (zie docs/volgende-versie.md) ---
+    // Toestand altijd als "Naam:  waarde"; "Terug" gaat naar de groepenlijst, Esc sluit alles.
+    property string settingsGroup: ""
+
+    function onOff(v) { return v ? qsTr("aan") : qsTr("uit") }
+    function escModeLabel() {
+        const m = systemTools.globalSetting("escMode", "hold")
+        return m === "double" ? qsTr("twee keer indrukken") : m === "direct" ? qsTr("direct") : qsTr("vasthouden")
     }
 
-    // --- Meer instellingen: kinderslot, weer, opnames, tv-afstandsbediening, bijwerken ---
+    function openPersonalizeMenu() {
+        // Met kinderslot aan zijn de instellingen alleen met de pincode te openen
+        if (parental.enabled && !parental.unlocked) {
+            withPin(qsTr("Instellingen"), () => Qt.callLater(() => root.openSettings("")))
+            return
+        }
+        openSettings("")
+    }
+
+    function openSettings(group) {
+        settingsGroup = group
+        console.info("Settings group", group === "" ? "top" : group)
+        const back = { label: qsTr("Terug"), action: "personalize-menu" }
+        if (group === "") {
+            menu.open(qsTr("Instellingen"), [
+                { label: qsTr("Startpagina…"), action: "grp:home" },
+                { label: qsTr("Uiterlijk…"), action: "grp:look" },
+                { label: qsTr("Gezin en veiligheid…"), action: "grp:family" },
+                { label: qsTr("Geluid en apparaten…"), action: "grp:devices" },
+                { label: qsTr("Opnames en sleutels…"), action: "grp:tv" },
+                { label: qsTr("Onderhoud en hulp…"), action: "grp:system" },
+                { label: qsTr("Sluiten"), action: "" }
+            ], root.menuFocus(), qsTr("Kies een onderwerp"))
+        } else if (group === "home") {
+            const entries = [{ label: qsTr("Tegel toevoegen…"), action: "add" }]
+            let hidden = appModel.hiddenCount
+            for (const m of webModels) hidden += m.hiddenCount
+            hidden += radio.hiddenCount
+            if (hidden > 0) entries.push({ label: qsTr("Verwijderde tegels terugzetten (") + hidden + ")", action: "unhide" })
+            entries.push({ label: qsTr("Weinig gebruikte rijen inklappen: ") + onOff(appModel.setting("autoCollapse", true)), action: "auto-collapse" })
+            entries.push({ label: qsTr("Radio hervatten bij opstarten: ") + onOff(appModel.setting("resumeRadio", false)), action: "resume-radio" })
+            entries.push({ label: qsTr("Weer: ") + (weather.enabled ? (weather.place || qsTr("aan")) : qsTr("uit")), action: "weather" })
+            entries.push({ label: qsTr("Welkomsthulp: diensten en apps kiezen…"), action: "welcome" })
+            entries.push(back)
+            menu.open(qsTr("Startpagina"), entries, root.menuFocus())
+        } else if (group === "look") {
+            menu.open(qsTr("Uiterlijk"), [
+                { label: qsTr("Layout: ") + (root.layoutName === "tabs" ? qsTr("tabbladen") : qsTr("klassiek")), action: "layout" },
+                { label: qsTr("Achtergrond wijzigen…"), action: "background-menu" },
+                { label: qsTr("Tekstgrootte: ") + (appModel.fontScale > 1 ? qsTr("groter") : qsTr("normaal")), action: "font-scale" },
+                { label: qsTr("Grote naam en logo linksboven: ") + (appModel.showHero ? qsTr("tonen") : qsTr("verbergen")), action: "toggle-hero" },
+                { label: qsTr("Nachtmodus: ") + nightModeLabel(), action: "night" },
+                { label: qsTr("Sfeerstand (Schilderij als je niets doet): ") + ambientLabel(), action: "ambient" },
+                { label: "Taal / Language: " + (uiLanguage === "en" ? "English" : "Nederlands"), action: "language" },
+                back
+            ], root.menuFocus())
+        } else if (group === "family") {
+            menu.open(qsTr("Gezin en veiligheid"), [
+                { label: qsTr("Profielen: ") + profiles.currentName, action: "profiles" },
+                { label: qsTr("Bij opstarten vragen wie er kijkt: ") + onOff(systemTools.globalSetting("askProfile", true)), action: "ask-profile" },
+                { label: qsTr("Kinderslot: ") + onOff(parental.enabled), action: "parental" },
+                { label: qsTr("Kijktijd per dag") + (profiles.kids ? "" : qsTr(" (kinderprofiel)")) + ": " + kidsLimitLabel(), action: "kids-limit" },
+                back
+            ], root.menuFocus(), qsTr("Met kinderslot aan vragen deze instellingen de pincode."))
+        } else if (group === "devices") {
+            menu.open(qsTr("Geluid en apparaten"), [
+                { label: qsTr("Geluid via: ") + (systemTools.audioOutputName() || qsTr("standaard")), action: "audio" },
+                { label: qsTr("Tv-afstandsbediening (HDMI-CEC)…"), action: "cec" },
+                { label: qsTr("Telefoon als afstandsbediening: ") + onOff(remote.enabled), action: "remote" },
+                { label: qsTr("Terug naar de startpagina met Esc: ") + escModeLabel(), action: "esc-mode" },
+                { label: qsTr("Windows: wifi, bluetooth, beeld en geluid…"), action: "windows" },
+                back
+            ], root.menuFocus())
+        } else if (group === "tv") {
+            menu.open(qsTr("Opnames en sleutels"), [
+                { label: qsTr("Opnames opruimen…"), action: "cleanup-settings" },
+                { label: qsTr("Sleutels voor films en foto's (TMDB, Unsplash)…"), action: "keys" },
+                back
+            ], root.menuFocus())
+        } else {
+            menu.open(qsTr("Onderhoud en hulp"), [
+                { label: qsTr("Zoeken naar een nieuwe versie"), action: "update-check" },
+                { label: qsTr("Release-info (versie ") + updater.current + ")", action: "release-info" },
+                { label: qsTr("Back-up maken of terugzetten…"), action: "backup" },
+                { label: qsTr("Starten bij opstarten van Windows: ") + onOff(systemTools.autostart), action: "autostart" },
+                { label: qsTr("Sneltoetsen en hulp"), action: "help-open" },
+                { label: qsTr("Logbestand delen (voor hulp aan de maker)"), action: "share-log" },
+                back
+            ], root.menuFocus(), "Kijkluister " + updater.current)
+        }
+    }
+
+    // Opent de groep waar je net in zat (na een schakelaar blijft het menu zo open)
     function openMoreMenu() {
-        menu.open(qsTr("Meer instellingen"), [
-            { label: qsTr("Profielen…  (") + profiles.currentName + ")", action: "profiles" },
-            { label: qsTr("Kinderslot…  (") + (parental.enabled ? qsTr("aan") : qsTr("uit")) + ")", action: "parental" },
-            { label: qsTr("Nachtmodus: ") + nightModeLabel(), action: "night" },
-            { label: qsTr("Bij opstarten radio hervatten: ") + (appModel.setting("resumeRadio", false) ? qsTr("aan") : qsTr("uit")), action: "resume-radio" },
-            { label: qsTr("Weinig gebruikte rijen inklappen: ") + (appModel.setting("autoCollapse", true) ? qsTr("aan") : qsTr("uit")), action: "auto-collapse" },
-            { label: qsTr("Weer…  (") + (weather.enabled ? (weather.place || "aan") : qsTr("uit")) + ")", action: "weather" },
-            { label: "Taal / Language: " + (uiLanguage === "en" ? "English" : "Nederlands"), action: "language" },
-            { label: qsTr("Starten bij opstarten van Windows: ") + (systemTools.autostart ? qsTr("aan") : qsTr("uit")), action: "autostart" },
-            { label: qsTr("Geluid via…  (") + (systemTools.audioOutputName() || qsTr("standaard")) + ")", action: "audio" },
-            { label: qsTr("Telefoon als afstandsbediening…  (") + (remote.enabled ? qsTr("aan") : qsTr("uit")) + ")", action: "remote" },
-            { label: qsTr("Sfeerstand (Schilderij als je niets doet): ") + ambientLabel(), action: "ambient" },
-            { label: qsTr("Bij opstarten vragen wie er kijkt: ") + (systemTools.globalSetting("askProfile", true) ? qsTr("aan") : qsTr("uit")), action: "ask-profile" },
-            { label: qsTr("Kijktijd per dag") + (profiles.kids ? "" : qsTr(" (kinderprofiel)")) + ": " + kidsLimitLabel(), action: "kids-limit" },
-            { label: qsTr("Back-up maken of terugzetten…"), action: "backup" },
-            { label: qsTr("Logbestand delen (voor hulp)"), action: "share-log" },
-            { label: qsTr("Opnames opruimen…"), action: "cleanup-settings" },
-            { label: qsTr("Tv-afstandsbediening (HDMI-CEC)…"), action: "cec" },
-            { label: qsTr("Windows: wifi, bluetooth, beeld en geluid…"), action: "windows" },
-            { label: qsTr("Zoeken naar een nieuwe versie"), action: "update-check" },
-            { label: qsTr("Sluiten"), action: "" }
-        ], root.menuFocus(), "Kijkluister " + updater.current)
+        openSettings(settingsGroup)
     }
 
     function ambientLabel() {
@@ -585,7 +633,7 @@ Rectangle {
         return m === 0 ? qsTr("uit") : qsTr("na ") + m + qsTr(" minuten")
     }
     function kidsLimitLabel() {
-        const m = appModel.setting("kidsMinutes", 0)
+        const m = parental.kidsMinutes()
         return m === 0 ? qsTr("onbeperkt") : m < 60 ? m + qsTr(" minuten") : (m / 60) + qsTr(" uur")
     }
     function openAudioMenu(focusItem) {
@@ -804,10 +852,10 @@ Rectangle {
                 return
             }
             withPin(qsTr("Kijktijd instellen"), () => Qt.callLater(() => menu.open(qsTr("Kijktijd per dag"), [0, 30, 60, 90, 120, 180].map(m => ({
-                label: (m === appModel.setting("kidsMinutes", 0) ? "✓  " : "      ") + (m === 0 ? qsTr("Onbeperkt") : m < 60 ? m + qsTr(" minuten") : (m / 60) + qsTr(" uur")),
+                label: (m === parental.kidsMinutes() ? "✓  " : "      ") + (m === 0 ? qsTr("Onbeperkt") : m < 60 ? m + qsTr(" minuten") : (m / 60) + qsTr(" uur")),
                 action: "kids-limit-" + m })), root.menuFocus(), qsTr("Daarna vraagt Kijkluister de pincode."))))
         } else if (action.startsWith("kids-limit-")) {
-            appModel.setSetting("kidsMinutes", parseInt(action.substring(11)))
+            parental.setKidsMinutes(parseInt(action.substring(11)))
             kidsTimer.check()
             showToast(qsTr("Kijktijd: ") + kidsLimitLabel())
         } else if (action === "backup") {
@@ -845,7 +893,27 @@ Rectangle {
         } else if (action === "sleep-menu") {
             openSleepMenu(currentSection ? currentSection.grid : quickRow)
         } else if (action === "personalize-menu") {
-            openPersonalizeMenu()
+            openSettings("")
+        } else if (action.startsWith("grp:")) {
+            openSettings(action.substring(4))
+        } else if (action === "keys") {
+            keysOverlay.open(root.menuFocus())
+        } else if (action === "help-open") {
+            helpOverlay.open(root.menuFocus())
+        } else if (action === "esc-mode") {
+            const cur = systemTools.globalSetting("escMode", "hold")
+            menu.open(qsTr("Terug naar de startpagina met Esc"), [
+                { label: (cur === "hold" ? "✓  " : "      ") + qsTr("Esc vasthouden (standaard)"), action: "esc-set:hold" },
+                { label: (cur === "double" ? "✓  " : "      ") + qsTr("Esc twee keer snel indrukken"), action: "esc-set:double" },
+                { label: (cur === "direct" ? "✓  " : "      ") + qsTr("Esc direct (sluit de app meteen)"), action: "esc-set:direct" },
+                { label: qsTr("Terug"), action: "grp:devices" }
+            ], root.menuFocus(), qsTr("Geldt voor apps en websites die Kijkluister opent. Bij 'direct' verlaat Esc ook geen volledig scherm meer in de app zelf."))
+        } else if (action.startsWith("esc-set:")) {
+            const mode = action.substring(8)
+            systemTools.setGlobalSetting("escMode", mode)
+            homeBridge.setEscMode(mode)
+            showToast(qsTr("Esc: ") + escModeLabel())
+            openSettings("devices")
         } else if (action === "windows") {
             menu.open(qsTr("Windows-instellingen"), [
                 { label: qsTr("Wifi"), action: "uri:ms-settings:network-wifi" },
@@ -1036,7 +1104,6 @@ Rectangle {
         } else if (mode === "u-libsetup") {
             libraryScreen.open("movies", mediaGrid())
             libraryScreen.openSetup()
-            libraryScreen.demoPin()
         }
     }
 
@@ -1227,6 +1294,22 @@ Rectangle {
             Qt.callLater(() => focusSection(sectionDefs.findIndex(d => d.model === webNews), 0, false))
         } else if (selfTest === "photo") {
             Qt.callLater(() => root.openPicker("photo", qsTr("Gratis foto als achtergrond"), quickRow, "bos"))
+        } else if (selfTest === "keys") {
+            Qt.callLater(() => {
+                keysOverlay.open(quickRow)
+                apiKeys.setUnsplashKey("test-only")
+                console.info("Keys overlay opened", keysOverlay.visible, "set", apiKeys.unsplashSet)
+                apiKeys.setUnsplashKey("")
+            })
+        } else if (selfTest === "settingsgroups") {
+            const groups = ["home", "look", "family", "devices", "tv", "system"]
+            let n = 0
+            const next = () => {
+                if (n >= groups.length) return
+                root.openSettings(groups[n++])
+                testStep.run(1200, next)
+            }
+            Qt.callLater(next)
         } else if (selfTest === "settingsmenu") {
             Qt.callLater(() => root.openPersonalizeMenu())
         } else if (selfTest === "usage") {
@@ -1353,8 +1436,8 @@ Rectangle {
         } else if (selfTest === "whoswatching") {
             // startWhereLeft vraagt het (er zijn 2+ profielen uit eerdere tests)
         } else if (selfTest === "kidslimit") {
-            appModel.setSetting("kidsMinutes", 30)
-            appModel.setSetting("kidsUsed/" + kidsTimer.today(), 40)
+            parental.setKidsMinutes(30)
+            parental.setKidsUsed(kidsTimer.today(), 40)
             testStep.run(2000, () => { kidsLock.open(); console.info("Kids lock shown", kidsLock.visible) })
         } else if (selfTest === "backup") {
             console.info("Backup made:", systemTools.makeBackup(), "log:", systemTools.shareLog(), "autostart", systemTools.autostart)
@@ -1390,13 +1473,9 @@ Rectangle {
             // Test: eerste serie openen en vanaf de eerste aflevering afspelen in MPC-HC
             libraryScreen.autoOpen = "play"
             libraryScreen.open("shows", mediaGrid())
-        } else if (selfTest === "librarysetup" || selfTest === "libraryunlock") {
+        } else if (selfTest === "librarysetup") {
             libraryScreen.open("movies", mediaGrid())
             libraryScreen.openSetup()
-            if (selfTest === "libraryunlock") {
-                // Test: verkeerde en juiste pincode
-                console.info("Unlock test wrong:", library.unlock("0000"), "right:", library.unlock("1973"))
-            }
         }
     }
 
@@ -1971,6 +2050,10 @@ Rectangle {
         onChosen: (action) => root.handleMenuAction(action)
     }
 
+    KeysOverlay {
+        id: keysOverlay
+    }
+
     AddTileOverlay {
         id: addOverlay
         onAccepted: (name, target) => root.addTile(name, target)
@@ -2410,11 +2493,14 @@ Rectangle {
         running: profiles.kids
         property bool warned: false
         function today() { return Qt.formatDate(new Date(), "yyyy-MM-dd") }
-        function used() { return appModel.setting("kidsUsed/" + today(), 0) }
+        function used() { return parental.kidsUsed(today()) }
         function check() {
-            const limit = appModel.setting("kidsMinutes", 0)
+            // Oudere versies bewaarden de kijktijd per profiel in settings.ini: eenmalig overnemen
+            const old = appModel.setting("kidsMinutes", 0)
+            if (old > 0 && parental.kidsMinutes() === 0) { parental.setKidsMinutes(old); appModel.setSetting("kidsMinutes", 0) }
+            const limit = parental.kidsMinutes()
             if (!profiles.kids || limit <= 0) return
-            const left = limit - used() + (appModel.setting("kidsExtra/" + today(), 0))
+            const left = limit - used() + parental.kidsExtra(today())
             if (left <= 5 && left > 0 && !warned) {
                 warned = true
                 if (homeBridge.external) homeBridge.raiseWindow()
@@ -2432,7 +2518,7 @@ Rectangle {
         onTriggered: {
             // Alleen tellen als er iets gebeurt: Kijkluister voorop of een dienst/film open
             if (Qt.application.state === Qt.ApplicationActive || homeBridge.external || mpc.running) {
-                appModel.setSetting("kidsUsed/" + today(), used() + 1)
+                parental.setKidsUsed(today(), used() + 1)
             }
             check()
         }
@@ -2471,7 +2557,7 @@ Rectangle {
                     text: qsTr("Pincode: half uur erbij")
                     onClicked: pinPad.ask(qsTr("Nog een half uur"), qsTr("Vul de pincode van het kinderslot in."), (pin) => {
                         if (!parental.check(pin)) return false
-                        appModel.setSetting("kidsExtra/" + kidsTimer.today(), appModel.setting("kidsExtra/" + kidsTimer.today(), 0) + 30)
+                        parental.setKidsExtra(kidsTimer.today(), parental.kidsExtra(kidsTimer.today()) + 30)
                         kidsTimer.warned = false
                         kidsLock.visible = false
                         root.menuFocus().forceActiveFocus()
@@ -2496,7 +2582,7 @@ Rectangle {
     function askWhoIsWatching() {
         const entries = profiles.list.map(p => ({ label: p.name + (p.kids ? qsTr("  (kind)") : "") + (p.current ? "   ✓" : ""),
                                                   action: p.current ? "" : "profile-switch:" + p.id }))
-        menu.open(qsTr("Wie kijkt er?"), entries, root.menuFocus(), qsTr("Uitzetten kan in Instellingen → Meer instellingen."))
+        menu.open(qsTr("Wie kijkt er?"), entries, root.menuFocus(), qsTr("Uitzetten kan in Instellingen → Gezin en veiligheid."))
         console.info("Who is watching:", profiles.count)
     }
 

@@ -34,7 +34,6 @@ class MediaLibrary : public QObject
     Q_PROPERTY(QStringList moviesFolders READ moviesFolders NOTIFY settingsChanged)
     Q_PROPERTY(QStringList showsFolders READ showsFolders NOTIFY settingsChanged)
     Q_PROPERTY(QString apiKey READ apiKey NOTIFY settingsChanged)          // eigen sleutel (leeg = ingebouwde)
-    Q_PROPERTY(bool keyLocked READ keyLocked NOTIFY settingsChanged)       // ingebouwde sleutel, vergrendeld met pincode
     Q_PROPERTY(bool configured READ configured NOTIFY settingsChanged)
     Q_PROPERTY(bool busy READ busy NOTIFY statusChanged)
     Q_PROPERTY(QString status READ status NOTIFY statusChanged)
@@ -49,11 +48,8 @@ public:
     QStringList moviesFolders() const;
     QStringList showsFolders() const;
     QString apiKey() const { return m_userKey; }
-    bool keyLocked() const { return !m_unlocked; }
     // Ontgrendelen met de pincode; daarna is de sleutel te zien en te wijzigen
-    Q_INVOKABLE bool unlock(const QString &pin);
-    Q_INVOKABLE void lock();
-    Q_INVOKABLE QString effectiveKey() const { return m_unlocked ? m_apiKey : QString(); }
+    Q_INVOKABLE void setApiKey(const QString &key);   // eigen TMDB-sleutel (leeg = geen)
     bool configured() const { return !m_moviesFolders.isEmpty() || !m_showsFolders.isEmpty(); }
     bool busy() const { return m_busy; }
     QString status() const { return m_status; }
@@ -95,7 +91,6 @@ private:
     QStringList m_showsFolders;
     QString m_apiKey;       // de sleutel die gebruikt wordt
     QString m_userKey;      // zelf ingevulde sleutel (leeg: de ingebouwde)
-    bool m_unlocked = false;
     QJsonObject m_cache; // sleutel: pad van film of seriemap
     QStringList m_queue;
     int m_total = 0;

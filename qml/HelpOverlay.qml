@@ -12,7 +12,7 @@ FocusScope {
         { what: qsTr("Openen"), pad: "A", remote: "OK", key: qsTr("Enter") },
         { what: qsTr("Terug"), pad: "B", remote: qsTr("Terug"), key: qsTr("Esc") },
         { what: qsTr("Opties van een tegel (verplaatsen, kinderslot, ...)"), pad: qsTr("A vasthouden of ☰"), remote: qsTr("Menu / blauw"), key: qsTr("Enter vasthouden of F2") },
-        { what: qsTr("Naar het startscherm, vanuit elke app of website"), pad: qsTr("Home / Xbox-knop"), remote: qsTr("Home"), key: qsTr("Esc 1 seconde vasthouden") },
+        { what: qsTr("Naar het startscherm, vanuit elke app of website"), pad: qsTr("Home / Xbox-knop"), remote: qsTr("Home"), key: qsTr("Esc vasthouden (instelbaar)") },
         { what: qsTr("Website: vorige pagina"), pad: "B", remote: qsTr("Terug"), key: qsTr("Alt + ←") },
         { what: qsTr("Tegel 1 t/m 9 van de bovenste rij openen"), pad: "—", remote: qsTr("Cijfers 1–9"), key: "1–9" },
         { what: qsTr("Live tv: zender kiezen op nummer"), pad: "—", remote: qsTr("Cijfers"), key: qsTr("Cijfers") },

@@ -141,7 +141,7 @@ HomeBridge::HomeBridge(QWindow *main, QObject *parent)
     m_poll.setInterval(250);
     connect(&m_poll, &QTimer::timeout, this, &HomeBridge::poll);
     m_escHold.setSingleShot(true);
-    m_escHold.setInterval(1000);
+    m_escHold.setInterval(800);
     connect(&m_escHold, &QTimer::timeout, this, [this] {
         if (m_escDown && m_external) {
             qInfo() << "Home: Esc held";
@@ -220,7 +220,7 @@ void HomeBridge::keyEvent(unsigned long vk, bool down, bool &swallow)
     if (vk == VK_ESCAPE) {
         if (down && !m_escDown) {
             m_escDown = true;
-            QMetaObject::invokeMethod(&m_escHold, qOverload<>(&QTimer::start), Qt::QueuedConnection);
+            QMetaObject::invokeMethod(this, &HomeBridge::escPressed, Qt::QueuedConnection);
         } else if (!down) {
             m_escDown = false;
             QMetaObject::invokeMethod(&m_escHold, &QTimer::stop, Qt::QueuedConnection);
@@ -231,6 +231,35 @@ void HomeBridge::keyEvent(unsigned long vk, bool down, bool &swallow)
     Q_UNUSED(down)
     Q_UNUSED(swallow)
 #endif
+}
+
+void HomeBridge::setEscMode(const QString &mode)
+{
+    m_escMode = (mode == QLatin1String("double") || mode == QLatin1String("direct")) ? mode : QStringLiteral("hold");
+    qInfo() << "Home: Esc mode" << m_escMode;
+}
+
+// Esc ingedrukt (hoofdthread). Alleen in een app die wij openden telt het.
+void HomeBridge::escPressed()
+{
+    if (!m_external) {
+        return;
+    }
+    if (m_escMode == QLatin1String("direct")) {
+        qInfo() << "Home: Esc direct";
+        goHome();
+    } else if (m_escMode == QLatin1String("double")) {
+        const qint64 now = QDateTime::currentMSecsSinceEpoch();
+        if (now - m_escLastMs < 600) {
+            m_escLastMs = 0;
+            qInfo() << "Home: Esc double";
+            goHome();
+        } else {
+            m_escLastMs = now;
+        }
+    } else {
+        m_escHold.start();
+    }
 }
 
 void HomeBridge::goHome()

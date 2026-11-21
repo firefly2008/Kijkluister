@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "photosearch.h"
-#include "photokey.h"
+#include "apikeys.h"
 
 #include <QCryptographicHash>
 #include <QDir>
@@ -21,12 +21,12 @@ PhotoSearch::PhotoSearch(const QString &dataDir, QObject *parent)
 
 QString PhotoSearch::source() const
 {
-    return UnsplashKey::key().isEmpty() ? QStringLiteral("Openverse") : QStringLiteral("Unsplash");
+    return (ApiKeys::instance() ? ApiKeys::instance()->unsplashKey() : QString()).isEmpty() ? QStringLiteral("Openverse") : QStringLiteral("Unsplash");
 }
 
 void PhotoSearch::search(const QString &query)
 {
-    searchWith(query, !UnsplashKey::key().isEmpty());
+    searchWith(query, !(ApiKeys::instance() ? ApiKeys::instance()->unsplashKey() : QString()).isEmpty());
 }
 
 void PhotoSearch::searchWith(const QString &query, bool useUnsplash)
@@ -39,7 +39,7 @@ void PhotoSearch::searchWith(const QString &query, bool useUnsplash)
         Q_EMIT resultsChanged();
         return;
     }
-    const QString key = useUnsplash ? UnsplashKey::key() : QString();
+    const QString key = useUnsplash ? (ApiKeys::instance() ? ApiKeys::instance()->unsplashKey() : QString()) : QString();
     QNetworkRequest request;
     if (!key.isEmpty()) {
         QUrl url(QStringLiteral("https://api.unsplash.com/search/photos"));
@@ -126,9 +126,9 @@ void PhotoSearch::download(int index)
     request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("Kijkluister"));
     const QString credit = r.value(QStringLiteral("credit")).toString();
     const QString track = r.value(QStringLiteral("track")).toString();
-    if (!track.isEmpty() && !UnsplashKey::key().isEmpty()) {
+    if (!track.isEmpty() && !(ApiKeys::instance() ? ApiKeys::instance()->unsplashKey() : QString()).isEmpty()) {
         QNetworkRequest t{QUrl(track)};
-        t.setRawHeader("Authorization", "Client-ID " + UnsplashKey::key().toLatin1());
+        t.setRawHeader("Authorization", "Client-ID " + (ApiKeys::instance() ? ApiKeys::instance()->unsplashKey() : QString()).toLatin1());
         QNetworkReply *ping = m_network.get(t);
         connect(ping, &QNetworkReply::finished, ping, &QObject::deleteLater);
     }

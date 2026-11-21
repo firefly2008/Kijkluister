@@ -24,7 +24,8 @@ qt_add_executable(bigscreen-host WIN32
     src/gamepadnavigator.h
     src/medialibrary.cpp
     src/medialibrary.h
-    src/builtinkey.h
+    src/apikeys.cpp
+    src/apikeys.h
     src/radiomodel.cpp
     src/radiomodel.h
     src/resumemodel.cpp
@@ -67,7 +68,6 @@ qt_add_executable(bigscreen-host WIN32
     src/usagemodel.cpp
     src/usagemodel.h
     src/photosearch.h
-    src/photokey.h
 )
 
 set(KIJKLUISTER_VERSION "0.0.0" CACHE STRING "Versie van Kijkluister (voor bijwerken)")
@@ -96,7 +96,8 @@ else()
 endif()
 
 # Zonder alias komt het bestand in de resources onder .../host/qml/Main.qml terecht
-set(BIGSCREEN_QML_FILES qml/Main.qml qml/BannerTile.qml qml/ThumbTile.qml qml/QuickTile.qml qml/MenuOverlay.qml qml/PlacesPicker.qml qml/SectionGrid.qml qml/AddTileOverlay.qml qml/LibraryScreen.qml qml/LibrarySetup.qml qml/FocusButton.qml qml/PosterTile.qml qml/IptvScreen.qml qml/IptvSources.qml qml/EpgPanel.qml qml/FrameScreen.qml qml/RecordPanel.qml qml/HintBar.qml qml/WelcomeOverlay.qml qml/RadioPlayer.qml qml/PinPad.qml qml/OnScreenKeyboard.qml qml/SearchPicker.qml qml/HomeButton.qml qml/ReleaseInfo.qml qml/ResumeScreen.qml qml/HelpOverlay.qml qml/GuideGrid.qml qml/RemoteOverlay.qml)
+set(BIGSCREEN_QML_FILES qml/Main.qml qml/BannerTile.qml qml/ThumbTile.qml
+    qml/KeysOverlay.qml qml/QuickTile.qml qml/MenuOverlay.qml qml/PlacesPicker.qml qml/SectionGrid.qml qml/AddTileOverlay.qml qml/LibraryScreen.qml qml/LibrarySetup.qml qml/FocusButton.qml qml/PosterTile.qml qml/IptvScreen.qml qml/IptvSources.qml qml/EpgPanel.qml qml/FrameScreen.qml qml/RecordPanel.qml qml/HintBar.qml qml/WelcomeOverlay.qml qml/RadioPlayer.qml qml/PinPad.qml qml/OnScreenKeyboard.qml qml/SearchPicker.qml qml/HomeButton.qml qml/ReleaseInfo.qml qml/ResumeScreen.qml qml/HelpOverlay.qml qml/GuideGrid.qml qml/RemoteOverlay.qml)
 foreach(qml_file IN LISTS BIGSCREEN_QML_FILES)
     get_filename_component(qml_name ${qml_file} NAME)
     set_source_files_properties(${qml_file} PROPERTIES QT_RESOURCE_ALIAS ${qml_name})

@@ -34,6 +34,34 @@
     </message>
 </context>
 <context>
+    <name>ApiKeys</name>
+    <message>
+        <location filename="../src/apikeys.cpp" line="64" />
+        <source>Vul eerst een sleutel in</source>
+        <translation>Enter a key first</translation>
+    </message>
+    <message>
+        <location filename="../src/apikeys.cpp" line="89" />
+        <source>Sleutel werkt</source>
+        <translation>Key works</translation>
+    </message>
+    <message>
+        <location filename="../src/apikeys.cpp" line="91" />
+        <source>Sleutel geweigerd: controleer of je hem goed hebt overgenomen</source>
+        <translation>Key refused: check that you copied it correctly</translation>
+    </message>
+    <message>
+        <location filename="../src/apikeys.cpp" line="93" />
+        <source>Geen verbinding om te testen</source>
+        <translation>No connection to test</translation>
+    </message>
+    <message>
+        <location filename="../src/apikeys.cpp" line="95" />
+        <source>De dienst gaf een fout (%1)</source>
+        <translation>The service returned an error (%1)</translation>
+    </message>
+</context>
+<context>
     <name>AppModel</name>
     <message>
         <location filename="../src/appmodel.cpp" line="406" />
@@ -125,8 +153,8 @@
     </message>
     <message>
         <location filename="../src/artframe.cpp" line="486" />
-        <source>Unsplash is in deze versie niet beschikbaar</source>
-        <translation>Unsplash is not available in this version</translation>
+        <source>Unsplash heeft een eigen sleutel nodig: Instellingen → Sleutels</source>
+        <translation>Unsplash needs your own key: Settings → Keys</translation>
     </message>
     <message>
         <location filename="../src/artframe.cpp" line="498" />
@@ -668,8 +696,8 @@ Leave Kijkluister running. You will find the recording under Live TV → Record.
     </message>
     <message>
         <location filename="../qml/HelpOverlay.qml" line="15" />
-        <source>Esc 1 seconde vasthouden</source>
-        <translation>Hold Esc for 1 second</translation>
+        <source>Esc vasthouden (instelbaar)</source>
+        <translation>Hold Esc (adjustable)</translation>
     </message>
     <message>
         <location filename="../qml/HelpOverlay.qml" line="16" />
@@ -1313,114 +1341,177 @@ Leave Kijkluister running. You will find the recording under Live TV → Record.
     </message>
 </context>
 <context>
+    <name>KeysOverlay</name>
+    <message>
+        <location filename="../qml/KeysOverlay.qml" line="100" />
+        <source>Sleutel aanmaken: </source>
+        <translation>Create a key: </translation>
+    </message>
+    <message>
+        <location filename="../qml/KeysOverlay.qml" line="131" />
+        <source>Plak hier je sleutel of token</source>
+        <translation>Paste your key or token here</translation>
+    </message>
+    <message>
+        <location filename="../qml/KeysOverlay.qml" line="139" />
+        <source>Testen</source>
+        <translation>Test</translation>
+    </message>
+    <message>
+        <location filename="../qml/KeysOverlay.qml" line="140" />
+        <source>Testen…</source>
+        <translation>Testing…</translation>
+    </message>
+    <message>
+        <location filename="../qml/KeysOverlay.qml" line="177" />
+        <source>Sleutels</source>
+        <translation>Keys</translation>
+    </message>
+    <message>
+        <location filename="../qml/KeysOverlay.qml" line="185" />
+        <source>Kijkluister heeft geen eigen sleutels meer. Maak gratis een eigen sleutel aan (scan de QR-code met je telefoon). Ze worden versleuteld op deze pc bewaard.</source>
+        <translation>Kijkluister no longer contains keys of its own. Create your own free key (scan the QR code with your phone). Keys are stored encrypted on this PC.</translation>
+    </message>
+    <message>
+        <location filename="../qml/KeysOverlay.qml" line="190" />
+        <source>TMDB: posters en gegevens bij films en series</source>
+        <translation>TMDB: posters and details for movies and series</translation>
+    </message>
+    <message>
+        <location filename="../qml/KeysOverlay.qml" line="191" />
+        <source>Zonder sleutel komen series van TVmaze en tonen films alleen hun titel.</source>
+        <translation>Without a key, series come from TVmaze and movies only show their title.</translation>
+    </message>
+    <message>
+        <location filename="../qml/KeysOverlay.qml" line="197" />
+        <source>Unsplash: natuurfoto's voor achtergrond en schilderij</source>
+        <translation>Unsplash: nature photos for background and art frame</translation>
+    </message>
+    <message>
+        <location filename="../qml/KeysOverlay.qml" line="198" />
+        <source>Zonder sleutel zoekt Achtergrond → Gratis foto via Openverse, en is de bron Unsplash in Schilderij niet beschikbaar.</source>
+        <translation>Without a key, Background → Free photo searches Openverse, and the Unsplash source in Art frame is unavailable.</translation>
+    </message>
+    <message>
+        <location filename="../qml/KeysOverlay.qml" line="207" />
+        <source>Bewaren</source>
+        <translation>Save</translation>
+    </message>
+    <message>
+        <location filename="../qml/KeysOverlay.qml" line="215" />
+        <source>Terug</source>
+        <translation>Back</translation>
+    </message>
+</context>
+<context>
     <name>LibraryScreen</name>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="94" />
-        <location filename="../qml/LibraryScreen.qml" line="105" />
+        <location filename="../qml/LibraryScreen.qml" line="89" />
+        <location filename="../qml/LibraryScreen.qml" line="100" />
         <source>Afspelen…</source>
         <translation>Playing…</translation>
     </message>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="94" />
-        <location filename="../qml/LibraryScreen.qml" line="105" />
+        <location filename="../qml/LibraryScreen.qml" line="89" />
+        <location filename="../qml/LibraryScreen.qml" line="100" />
         <source>Bestand niet gevonden</source>
         <translation>File not found</translation>
     </message>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="133" />
+        <location filename="../qml/LibraryScreen.qml" line="128" />
         <source> aflevering</source>
         <translation> episode</translation>
     </message>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="133" />
+        <location filename="../qml/LibraryScreen.qml" line="128" />
         <source> afleveringen</source>
         <translation> episodes</translation>
     </message>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="240" />
+        <location filename="../qml/LibraryScreen.qml" line="235" />
         <source>Bibliotheek</source>
         <translation>Library</translation>
     </message>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="255" />
-        <location filename="../qml/LibraryScreen.qml" line="398" />
+        <location filename="../qml/LibraryScreen.qml" line="250" />
+        <location filename="../qml/LibraryScreen.qml" line="393" />
         <source>Films</source>
         <translation>Movies</translation>
     </message>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="256" />
-        <location filename="../qml/LibraryScreen.qml" line="398" />
+        <location filename="../qml/LibraryScreen.qml" line="251" />
+        <location filename="../qml/LibraryScreen.qml" line="393" />
         <source>Series</source>
         <translation>Series</translation>
     </message>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="257" />
+        <location filename="../qml/LibraryScreen.qml" line="252" />
         <source>Bijwerken</source>
         <translation>Update</translation>
     </message>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="258" />
+        <location filename="../qml/LibraryScreen.qml" line="253" />
         <source>Mappen kiezen</source>
         <translation>Choose folders</translation>
     </message>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="259" />
-        <location filename="../qml/LibraryScreen.qml" line="584" />
+        <location filename="../qml/LibraryScreen.qml" line="254" />
+        <location filename="../qml/LibraryScreen.qml" line="579" />
         <source>Terug</source>
         <translation>Back</translation>
     </message>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="333" />
+        <location filename="../qml/LibraryScreen.qml" line="328" />
         <source>Gegevens: TMDB en TVmaze. Dit product gebruikt de TMDB API, maar is niet door TMDB goedgekeurd of gecertificeerd.</source>
         <translation>Data: TMDB and TVmaze. This product uses the TMDB API but is not endorsed or certified by TMDB.</translation>
     </message>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="466" />
+        <location filename="../qml/LibraryScreen.qml" line="461" />
         <source>Bezig met zoeken…</source>
         <translation>Searching…</translation>
     </message>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="468" />
+        <location filename="../qml/LibraryScreen.qml" line="463" />
         <source>Geen films gevonden in </source>
         <translation>No movies found in </translation>
     </message>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="468" />
+        <location filename="../qml/LibraryScreen.qml" line="463" />
         <source>Nog geen map met films gekozen: kies "Mappen kiezen"</source>
         <translation>No movie folder chosen yet: choose "Choose folders"</translation>
     </message>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="469" />
+        <location filename="../qml/LibraryScreen.qml" line="464" />
         <source>Geen series gevonden in </source>
         <translation>No series found in </translation>
     </message>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="469" />
+        <location filename="../qml/LibraryScreen.qml" line="464" />
         <source>Nog geen map met series gekozen: kies "Mappen kiezen"</source>
         <translation>No series folder chosen yet: choose "Choose folders"</translation>
     </message>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="557" />
+        <location filename="../qml/LibraryScreen.qml" line="552" />
         <source>Geen beschrijving gevonden.</source>
         <translation>No description found.</translation>
     </message>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="565" />
+        <location filename="../qml/LibraryScreen.qml" line="560" />
         <source>Eerste aflevering afspelen</source>
         <translation>Play first episode</translation>
     </message>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="565" />
+        <location filename="../qml/LibraryScreen.qml" line="560" />
         <source>Afspelen</source>
         <translation>Play</translation>
     </message>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="635" />
+        <location filename="../qml/LibraryScreen.qml" line="630" />
         <source>Aflevering </source>
         <translation>Episode </translation>
     </message>
     <message>
-        <location filename="../qml/LibraryScreen.qml" line="670" />
+        <location filename="../qml/LibraryScreen.qml" line="665" />
         <source>Cast</source>
         <translation>Cast</translation>
     </message>
@@ -1428,118 +1519,98 @@ Leave Kijkluister running. You will find the recording under Live TV → Record.
 <context>
     <name>LibrarySetup</name>
     <message>
-        <location filename="../qml/LibrarySetup.qml" line="62" />
+        <location filename="../qml/LibrarySetup.qml" line="59" />
         <source>Nog geen map gekozen (mag leeg blijven)</source>
         <translation>No folder chosen yet (may be left empty)</translation>
     </message>
     <message>
-        <location filename="../qml/LibrarySetup.qml" line="89" />
+        <location filename="../qml/LibrarySetup.qml" line="86" />
         <source>Weg</source>
         <translation>Remove</translation>
     </message>
     <message>
-        <location filename="../qml/LibrarySetup.qml" line="114" />
-        <source>Pincode klopt niet.</source>
-        <translation>Wrong PIN.</translation>
-    </message>
-    <message>
-        <location filename="../qml/LibrarySetup.qml" line="122" />
+        <location filename="../qml/LibrarySetup.qml" line="99" />
         <source>Kies minstens één map.</source>
         <translation>Choose at least one folder.</translation>
     </message>
     <message>
-        <location filename="../qml/LibrarySetup.qml" line="138" />
+        <location filename="../qml/LibrarySetup.qml" line="115" />
         <source>Map met films kiezen</source>
         <translation>Choose movie folder</translation>
     </message>
     <message>
-        <location filename="../qml/LibrarySetup.qml" line="143" />
+        <location filename="../qml/LibrarySetup.qml" line="120" />
         <source>Map met series kiezen</source>
         <translation>Choose series folder</translation>
     </message>
     <message>
-        <location filename="../qml/LibrarySetup.qml" line="176" />
+        <location filename="../qml/LibrarySetup.qml" line="153" />
         <source>Waar staan je films en series?</source>
         <translation>Where are your movies and series?</translation>
     </message>
     <message>
-        <location filename="../qml/LibrarySetup.qml" line="176" />
+        <location filename="../qml/LibrarySetup.qml" line="153" />
         <source>Mappen kiezen</source>
         <translation>Choose folders</translation>
     </message>
     <message>
-        <location filename="../qml/LibrarySetup.qml" line="184" />
+        <location filename="../qml/LibrarySetup.qml" line="161" />
         <source>Kies de map met je films en de map met je series. Meer mappen mag ook, bijvoorbeeld op een </source>
         <translation>Choose the folder with your movies and the folder with your series. More folders are fine too, for example on an </translation>
     </message>
     <message>
-        <location filename="../qml/LibrarySetup.qml" line="185" />
+        <location filename="../qml/LibrarySetup.qml" line="162" />
         <source>externe schijf. Kijkluister zoekt er zelf de titels, plaatjes en beschrijvingen bij.</source>
         <translation>external drive. Kijkluister finds the titles, pictures and descriptions by itself.</translation>
     </message>
     <message>
-        <location filename="../qml/LibrarySetup.qml" line="191" />
+        <location filename="../qml/LibrarySetup.qml" line="168" />
         <source>Mappen met films</source>
         <translation>Movie folders</translation>
     </message>
     <message>
-        <location filename="../qml/LibrarySetup.qml" line="195" />
-        <location filename="../qml/LibrarySetup.qml" line="209" />
+        <location filename="../qml/LibrarySetup.qml" line="172" />
+        <location filename="../qml/LibrarySetup.qml" line="186" />
         <source>+ Map toevoegen…</source>
         <translation>+ Add folder…</translation>
     </message>
     <message>
-        <location filename="../qml/LibrarySetup.qml" line="205" />
+        <location filename="../qml/LibrarySetup.qml" line="182" />
         <source>Mappen met series</source>
         <translation>Series folders</translation>
     </message>
     <message>
-        <location filename="../qml/LibrarySetup.qml" line="226" />
-        <source>🔒  Gegevens bij films: ingebouwde sleutel (vergrendeld)</source>
-        <translation>🔒  Movie data: built-in key (locked)</translation>
+        <location filename="../qml/LibrarySetup.qml" line="200" />
+        <source>Eigen sleutel van TMDB (voor posters en gegevens bij films en series). Leeg laten mag.</source>
+        <translation>Your own TMDB key (for posters and details of movies and series). You may leave it empty.</translation>
     </message>
     <message>
-        <location filename="../qml/LibrarySetup.qml" line="232" />
-        <source>Ontgrendelen…</source>
-        <translation>Unlock…</translation>
+        <location filename="../qml/LibrarySetup.qml" line="238" />
+        <source>Sleutel aanvragen: themoviedb.org/settings/api (gratis account). </source>
+        <translation>Get a key: themoviedb.org/settings/api (free account). </translation>
     </message>
     <message>
-        <location filename="../qml/LibrarySetup.qml" line="271" />
-        <source>Pincode</source>
-        <translation>PIN</translation>
-    </message>
-    <message>
-        <location filename="../qml/LibrarySetup.qml" line="291" />
-        <source>Sleutel van TMDB (ontgrendeld). Leeg laten = de ingebouwde sleutel gebruiken.</source>
-        <translation>TMDB key (unlocked). Leave empty = use the built-in key.</translation>
-    </message>
-    <message>
-        <location filename="../qml/LibrarySetup.qml" line="321" />
+        <location filename="../qml/LibrarySetup.qml" line="229" />
         <source>Plak hier je sleutel of token</source>
         <translation>Paste your key or token here</translation>
     </message>
     <message>
-        <location filename="../qml/LibrarySetup.qml" line="331" />
-        <source>Sleutel aanvragen: maak een gratis account op themoviedb.org en ga naar Instellingen → API. </source>
-        <translation>Request a key: create a free account on themoviedb.org and go to Settings → API. </translation>
-    </message>
-    <message>
-        <location filename="../qml/LibrarySetup.qml" line="332" />
+        <location filename="../qml/LibrarySetup.qml" line="239" />
         <source>Zonder sleutel komen series van TVmaze en tonen films alleen hun titel. </source>
         <translation>Without a key, series come from TVmaze and movies only show their title. </translation>
     </message>
     <message>
-        <location filename="../qml/LibrarySetup.qml" line="333" />
+        <location filename="../qml/LibrarySetup.qml" line="240" />
         <source>Dit product gebruikt de TMDB API, maar is niet door TMDB goedgekeurd of gecertificeerd.</source>
         <translation>This product uses the TMDB API but is not endorsed or certified by TMDB.</translation>
     </message>
     <message>
-        <location filename="../qml/LibrarySetup.qml" line="349" />
+        <location filename="../qml/LibrarySetup.qml" line="256" />
         <source>Opslaan en zoeken</source>
         <translation>Save and search</translation>
     </message>
     <message>
-        <location filename="../qml/LibrarySetup.qml" line="357" />
+        <location filename="../qml/LibrarySetup.qml" line="264" />
         <source>Annuleren</source>
         <translation>Cancel</translation>
     </message>
@@ -1549,9 +1620,9 @@ Leave Kijkluister running. You will find the recording under Live TV → Record.
     <message>
         <location filename="../qml/Main.qml" line="34" />
         <location filename="../qml/Main.qml" line="50" />
-        <location filename="../qml/Main.qml" line="1154" />
-        <location filename="../qml/Main.qml" line="1433" />
-        <location filename="../qml/Main.qml" line="1564" />
+        <location filename="../qml/Main.qml" line="1221" />
+        <location filename="../qml/Main.qml" line="1512" />
+        <location filename="../qml/Main.qml" line="1643" />
         <source>Zoeken</source>
         <translation>Search</translation>
     </message>
@@ -1562,8 +1633,8 @@ Leave Kijkluister running. You will find the recording under Live TV → Record.
     </message>
     <message>
         <location filename="../qml/Main.qml" line="60" />
-        <location filename="../qml/Main.qml" line="1268" />
-        <location filename="../qml/Main.qml" line="2166" />
+        <location filename="../qml/Main.qml" line="1351" />
+        <location filename="../qml/Main.qml" line="2249" />
         <source>Nu op tv</source>
         <translation>Now on TV</translation>
     </message>
@@ -1579,7 +1650,7 @@ Leave Kijkluister running. You will find the recording under Live TV → Record.
     </message>
     <message>
         <location filename="../qml/Main.qml" line="63" />
-        <location filename="../qml/Main.qml" line="2150" />
+        <location filename="../qml/Main.qml" line="2233" />
         <source>Radio</source>
         <translation>Radio</translation>
     </message>
@@ -1650,7 +1721,7 @@ Leave Kijkluister running. You will find the recording under Live TV → Record.
         <location filename="../qml/Main.qml" line="129" />
         <location filename="../qml/Main.qml" line="141" />
         <location filename="../qml/Main.qml" line="319" />
-        <location filename="../qml/Main.qml" line="2295" />
+        <location filename="../qml/Main.qml" line="2378" />
         <source>Live tv is vergrendeld</source>
         <translation>Live TV is locked</translation>
     </message>
@@ -1659,17 +1730,17 @@ Leave Kijkluister running. You will find the recording under Live TV → Record.
         <location filename="../qml/Main.qml" line="141" />
         <location filename="../qml/Main.qml" line="319" />
         <location filename="../qml/Main.qml" line="392" />
-        <location filename="../qml/Main.qml" line="660" />
-        <location filename="../qml/Main.qml" line="2283" />
-        <location filename="../qml/Main.qml" line="2295" />
-        <location filename="../qml/Main.qml" line="2472" />
+        <location filename="../qml/Main.qml" line="708" />
+        <location filename="../qml/Main.qml" line="2366" />
+        <location filename="../qml/Main.qml" line="2378" />
+        <location filename="../qml/Main.qml" line="2558" />
         <source>Vul de pincode van het kinderslot in.</source>
         <translation>Enter the parental lock PIN.</translation>
     </message>
     <message>
         <location filename="../qml/Main.qml" line="392" />
-        <location filename="../qml/Main.qml" line="1982" />
-        <location filename="../qml/Main.qml" line="2283" />
+        <location filename="../qml/Main.qml" line="2065" />
+        <location filename="../qml/Main.qml" line="2366" />
         <source> is vergrendeld</source>
         <translation> is locked</translation>
     </message>
@@ -1713,9 +1784,9 @@ Leave Kijkluister running. You will find the recording under Live TV → Record.
     </message>
     <message>
         <location filename="../qml/Main.qml" line="461" />
-        <location filename="../qml/Main.qml" line="1755" />
-        <location filename="../qml/Main.qml" line="1899" />
-        <location filename="../qml/Main.qml" line="2123" />
+        <location filename="../qml/Main.qml" line="1834" />
+        <location filename="../qml/Main.qml" line="1978" />
+        <location filename="../qml/Main.qml" line="2206" />
         <source>Openen</source>
         <translation>Open</translation>
     </message>
@@ -1727,7 +1798,7 @@ Leave Kijkluister running. You will find the recording under Live TV → Record.
     <message>
         <location filename="../qml/Main.qml" line="80" />
         <location filename="../qml/Main.qml" line="468" />
-        <location filename="../qml/Main.qml" line="2596" />
+        <location filename="../qml/Main.qml" line="2682" />
         <source>Verder kijken</source>
         <translation>Continue watching</translation>
     </message>
@@ -1738,7 +1809,7 @@ Leave Kijkluister running. You will find the recording under Live TV → Record.
     </message>
     <message>
         <location filename="../qml/Main.qml" line="75" />
-        <location filename="../qml/Main.qml" line="1721" />
+        <location filename="../qml/Main.qml" line="1800" />
         <source>TV &amp; Gids</source>
         <translation>TV &amp; Guide</translation>
     </message>
@@ -1784,11 +1855,11 @@ Leave Kijkluister running. You will find the recording under Live TV → Record.
     </message>
     <message>
         <location filename="../qml/Main.qml" line="505" />
-        <location filename="../qml/Main.qml" line="715" />
-        <location filename="../qml/Main.qml" line="728" />
-        <location filename="../qml/Main.qml" line="826" />
-        <location filename="../qml/Main.qml" line="1549" />
-        <location filename="../qml/Main.qml" line="2598" />
+        <location filename="../qml/Main.qml" line="763" />
+        <location filename="../qml/Main.qml" line="776" />
+        <location filename="../qml/Main.qml" line="874" />
+        <location filename="../qml/Main.qml" line="1628" />
+        <location filename="../qml/Main.qml" line="2684" />
         <source>Annuleren</source>
         <translation>Cancel</translation>
     </message>
@@ -1813,584 +1884,495 @@ Leave Kijkluister running. You will find the recording under Live TV → Record.
         <translation>Down</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="536" />
+        <location filename="../qml/Main.qml" line="568" />
         <source>Tegel toevoegen…</source>
         <translation>Add tile…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="537" />
+        <location filename="../qml/Main.qml" line="582" />
         <source>Achtergrond wijzigen…</source>
         <translation>Change background…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="538" />
-        <source>Grote naam en logo linksboven verbergen</source>
-        <translation>Hide large name and logo at top left</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="538" />
-        <source>Grote naam en logo linksboven tonen</source>
-        <translation>Show large name and logo at top left</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="539" />
-        <source>Tekst normaal</source>
-        <translation>Normal text</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="539" />
-        <source>Tekst groter (kijken op afstand)</source>
-        <translation>Larger text (viewing from a distance)</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="540" />
-        <source>Layout: tabbladen (kies om terug te gaan naar klassiek)</source>
-        <translation>Layout: tabs (choose to go back to classic)</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="540" />
-        <source>Layout: klassiek (kies om tabbladen te proberen)</source>
-        <translation>Layout: classic (choose to try tabs)</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="541" />
-        <source>Diensten kiezen…</source>
-        <translation>Choose services…</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="542" />
-        <source>Meer instellingen…</source>
-        <translation>More settings…</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="550" />
+        <location filename="../qml/Main.qml" line="572" />
         <source>Verwijderde tegels terugzetten (</source>
         <translation>Restore removed tiles (</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="552" />
+        <location filename="../qml/Main.qml" line="616" />
         <source>Release-info (versie </source>
         <translation>Release info (version </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="553" />
-        <location filename="../qml/Main.qml" line="579" />
-        <location filename="../qml/Main.qml" line="599" />
-        <location filename="../qml/Main.qml" line="621" />
-        <location filename="../qml/Main.qml" line="630" />
-        <location filename="../qml/Main.qml" line="638" />
-        <location filename="../qml/Main.qml" line="674" />
-        <location filename="../qml/Main.qml" line="704" />
-        <location filename="../qml/Main.qml" line="817" />
-        <location filename="../qml/Main.qml" line="856" />
-        <location filename="../qml/Main.qml" line="883" />
-        <location filename="../qml/Main.qml" line="1437" />
-        <location filename="../qml/Main.qml" line="1548" />
-        <location filename="../qml/Main.qml" line="2377" />
+        <location filename="../qml/Main.qml" line="565" />
+        <location filename="../qml/Main.qml" line="647" />
+        <location filename="../qml/Main.qml" line="669" />
+        <location filename="../qml/Main.qml" line="678" />
+        <location filename="../qml/Main.qml" line="686" />
+        <location filename="../qml/Main.qml" line="722" />
+        <location filename="../qml/Main.qml" line="752" />
+        <location filename="../qml/Main.qml" line="865" />
+        <location filename="../qml/Main.qml" line="924" />
+        <location filename="../qml/Main.qml" line="951" />
+        <location filename="../qml/Main.qml" line="1516" />
+        <location filename="../qml/Main.qml" line="1627" />
+        <location filename="../qml/Main.qml" line="2460" />
         <source>Sluiten</source>
         <translation>Close</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="554" />
-        <location filename="../qml/Main.qml" line="1268" />
-        <location filename="../qml/Main.qml" line="1436" />
+        <location filename="../qml/Main.qml" line="547" />
+        <location filename="../qml/Main.qml" line="558" />
+        <location filename="../qml/Main.qml" line="1351" />
+        <location filename="../qml/Main.qml" line="1515" />
         <source>Instellingen</source>
         <translation>Settings</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="559" />
-        <source>Meer instellingen</source>
-        <translation>More settings</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="560" />
-        <source>Profielen…  (</source>
-        <translation>Profiles…  (</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="561" />
-        <source>Kinderslot…  (</source>
-        <translation>Parental lock…  (</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="561" />
-        <location filename="../qml/Main.qml" line="563" />
-        <location filename="../qml/Main.qml" line="564" />
-        <location filename="../qml/Main.qml" line="567" />
-        <location filename="../qml/Main.qml" line="569" />
-        <location filename="../qml/Main.qml" line="571" />
+        <location filename="../qml/Main.qml" line="538" />
+        <location filename="../qml/Main.qml" line="575" />
         <source>aan</source>
         <translation>on</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="561" />
-        <location filename="../qml/Main.qml" line="563" />
-        <location filename="../qml/Main.qml" line="564" />
-        <location filename="../qml/Main.qml" line="565" />
-        <location filename="../qml/Main.qml" line="567" />
-        <location filename="../qml/Main.qml" line="569" />
-        <location filename="../qml/Main.qml" line="571" />
-        <location filename="../qml/Main.qml" line="585" />
-        <location filename="../qml/Main.qml" line="605" />
-        <location filename="../qml/Main.qml" line="672" />
+        <location filename="../qml/Main.qml" line="538" />
+        <location filename="../qml/Main.qml" line="575" />
+        <location filename="../qml/Main.qml" line="633" />
+        <location filename="../qml/Main.qml" line="653" />
+        <location filename="../qml/Main.qml" line="720" />
         <source>uit</source>
         <translation>off</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="562" />
+        <location filename="../qml/Main.qml" line="585" />
         <source>Nachtmodus: </source>
         <translation>Night mode: </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="563" />
-        <source>Bij opstarten radio hervatten: </source>
-        <translation>Resume radio at start-up: </translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="564" />
+        <location filename="../qml/Main.qml" line="573" />
         <source>Weinig gebruikte rijen inklappen: </source>
         <translation>Collapse rarely used rows: </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="565" />
-        <source>Weer…  (</source>
-        <translation>Weather…  (</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="567" />
+        <location filename="../qml/Main.qml" line="618" />
         <source>Starten bij opstarten van Windows: </source>
         <translation>Start when Windows starts: </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="568" />
-        <source>Geluid via…  (</source>
-        <translation>Sound through…  (</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="568" />
+        <location filename="../qml/Main.qml" line="600" />
         <source>standaard</source>
         <translation>default</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="569" />
-        <source>Telefoon als afstandsbediening…  (</source>
-        <translation>Phone as remote control…  (</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="570" />
+        <location filename="../qml/Main.qml" line="586" />
         <source>Sfeerstand (Schilderij als je niets doet): </source>
         <translation>Ambient mode (art frame when idle): </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="571" />
+        <location filename="../qml/Main.qml" line="593" />
         <source>Bij opstarten vragen wie er kijkt: </source>
         <translation>Ask who is watching at start-up: </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="572" />
-        <location filename="../qml/Main.qml" line="806" />
+        <location filename="../qml/Main.qml" line="595" />
+        <location filename="../qml/Main.qml" line="854" />
         <source>Kijktijd per dag</source>
         <translation>Screen time per day</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="572" />
+        <location filename="../qml/Main.qml" line="595" />
         <source> (kinderprofiel)</source>
         <translation> (child profile)</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="573" />
+        <location filename="../qml/Main.qml" line="617" />
         <source>Back-up maken of terugzetten…</source>
         <translation>Make or restore backup…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="574" />
-        <source>Logbestand delen (voor hulp)</source>
-        <translation>Share log file (for help)</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="575" />
+        <location filename="../qml/Main.qml" line="609" />
         <source>Opnames opruimen…</source>
         <translation>Clean up recordings…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="576" />
+        <location filename="../qml/Main.qml" line="601" />
         <source>Tv-afstandsbediening (HDMI-CEC)…</source>
         <translation>TV remote control (HDMI-CEC)…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="577" />
+        <location filename="../qml/Main.qml" line="604" />
         <source>Windows: wifi, bluetooth, beeld en geluid…</source>
         <translation>Windows: Wi-Fi, Bluetooth, display and sound…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="578" />
+        <location filename="../qml/Main.qml" line="615" />
         <source>Zoeken naar een nieuwe versie</source>
         <translation>Check for a new version</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="585" />
+        <location filename="../qml/Main.qml" line="633" />
         <source>na </source>
         <translation>after </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="585" />
-        <location filename="../qml/Main.qml" line="589" />
-        <location filename="../qml/Main.qml" line="711" />
-        <location filename="../qml/Main.qml" line="807" />
+        <location filename="../qml/Main.qml" line="633" />
+        <location filename="../qml/Main.qml" line="637" />
+        <location filename="../qml/Main.qml" line="759" />
+        <location filename="../qml/Main.qml" line="855" />
         <source> minuten</source>
         <translation> minutes</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="589" />
+        <location filename="../qml/Main.qml" line="637" />
         <source>onbeperkt</source>
         <translation>unlimited</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="589" />
-        <location filename="../qml/Main.qml" line="807" />
+        <location filename="../qml/Main.qml" line="637" />
+        <location filename="../qml/Main.qml" line="855" />
         <source> uur</source>
         <translation> hours</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="595" />
+        <location filename="../qml/Main.qml" line="643" />
         <source>Geen geluidsuitgangen gevonden</source>
         <translation>No sound outputs found</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="598" />
+        <location filename="../qml/Main.qml" line="646" />
         <source>Geluid via</source>
         <translation>Sound through</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="599" />
+        <location filename="../qml/Main.qml" line="647" />
         <source>Windows-instellingen voor geluid…</source>
         <translation>Windows sound settings…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="600" />
+        <location filename="../qml/Main.qml" line="648" />
         <source>Geldt voor alles: Kijkluister, Netflix, YouTube en de rest.</source>
         <translation>Applies to everything: Kijkluister, Netflix, YouTube and the rest.</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="605" />
+        <location filename="../qml/Main.qml" line="653" />
         <source>altijd aan</source>
         <translation>always on</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="605" />
+        <location filename="../qml/Main.qml" line="653" />
         <source>automatisch (22–7 uur)</source>
         <translation>automatic (10 pm–7 am)</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="612" />
-        <location filename="../qml/Main.qml" line="2497" />
+        <location filename="../qml/Main.qml" line="660" />
+        <location filename="../qml/Main.qml" line="2583" />
         <source>  (kind)</source>
         <translation>  (child)</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="615" />
+        <location filename="../qml/Main.qml" line="663" />
         <source>Profiel toevoegen…</source>
         <translation>Add profile…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="616" />
+        <location filename="../qml/Main.qml" line="664" />
         <source>Kinderprofiel toevoegen…</source>
         <translation>Add child profile…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="622" />
+        <location filename="../qml/Main.qml" line="670" />
         <source>Profielen</source>
         <translation>Profiles</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="623" />
+        <location filename="../qml/Main.qml" line="671" />
         <source>Nu: </source>
         <translation>Now: </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="623" />
+        <location filename="../qml/Main.qml" line="671" />
         <source>. Elk profiel heeft eigen tegels, rijen, radiozenders en Vaak gebruikt. Wisselen herstart Kijkluister.</source>
         <translation>. Each profile has its own tiles, rows, radio stations and Frequently used. Switching restarts Kijkluister.</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="628" />
-        <location filename="../qml/Main.qml" line="634" />
+        <location filename="../qml/Main.qml" line="676" />
+        <location filename="../qml/Main.qml" line="682" />
         <source>Kinderslot</source>
         <translation>Parental lock</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="629" />
+        <location filename="../qml/Main.qml" line="677" />
         <source>Kinderslot aanzetten…</source>
         <translation>Turn on parental lock…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="631" />
+        <location filename="../qml/Main.qml" line="679" />
         <source>Met een eigen pincode vergrendel je Live tv, Films, Series en tegels die je kiest. Zenders voor volwassenen zijn dan altijd vergrendeld.</source>
         <translation>With your own PIN you lock Live TV, Movies, Series and tiles you choose. Adult channels are then always locked.</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="635" />
+        <location filename="../qml/Main.qml" line="683" />
         <source>Nu vergrendelen</source>
         <translation>Lock now</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="636" />
+        <location filename="../qml/Main.qml" line="684" />
         <source>Pincode wijzigen…</source>
         <translation>Change PIN…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="637" />
+        <location filename="../qml/Main.qml" line="685" />
         <source>Kinderslot uitzetten…</source>
         <translation>Turn off parental lock…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="639" />
+        <location filename="../qml/Main.qml" line="687" />
         <source>Nu ontgrendeld (een uur na de pincode). </source>
         <translation>Unlocked now (for an hour after the PIN). </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="640" />
+        <location filename="../qml/Main.qml" line="688" />
         <source>Vergrendelde tegels: kies een tegel, druk op Menu en kies Kinderslot.</source>
         <translation>Locked tiles: choose a tile, press Menu and choose Parental lock.</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="644" />
+        <location filename="../qml/Main.qml" line="692" />
         <source>Nieuwe pincode</source>
         <translation>New PIN</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="644" />
+        <location filename="../qml/Main.qml" line="692" />
         <source>Kies vier cijfers die kinderen niet weten.</source>
         <translation>Choose four digits children don't know.</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="645" />
+        <location filename="../qml/Main.qml" line="693" />
         <source>Pincode herhalen</source>
         <translation>Repeat PIN</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="645" />
+        <location filename="../qml/Main.qml" line="693" />
         <source>Vul dezelfde vier cijfers nog een keer in.</source>
         <translation>Enter the same four digits again.</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="647" />
+        <location filename="../qml/Main.qml" line="695" />
         <source>De pincodes waren niet gelijk. Probeer het opnieuw.</source>
         <translation>The PINs did not match. Please try again.</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="652" />
+        <location filename="../qml/Main.qml" line="700" />
         <source>Nieuwe pincode ingesteld</source>
         <translation>New PIN set</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="652" />
+        <location filename="../qml/Main.qml" line="700" />
         <source>Kinderslot staat aan: Live tv, Films en Series vragen nu om de pincode</source>
         <translation>Parental lock is on: Live TV, Movies and Series now ask for the PIN</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="670" />
+        <location filename="../qml/Main.qml" line="718" />
         <source>Opnames opruimen</source>
         <translation>Clean up recordings</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="671" />
+        <location filename="../qml/Main.qml" line="719" />
         <source>Bewaren: </source>
         <translation>Keep: </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="671" />
-        <location filename="../qml/Main.qml" line="892" />
+        <location filename="../qml/Main.qml" line="719" />
+        <location filename="../qml/Main.qml" line="960" />
         <source> dagen</source>
         <translation> days</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="671" />
-        <location filename="../qml/Main.qml" line="672" />
+        <location filename="../qml/Main.qml" line="719" />
+        <location filename="../qml/Main.qml" line="720" />
         <source>  (wijzigen)</source>
         <translation>  (change)</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="672" />
+        <location filename="../qml/Main.qml" line="720" />
         <source>Ruimte vrijhouden: </source>
         <translation>Keep space free: </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="672" />
-        <location filename="../qml/Main.qml" line="687" />
-        <location filename="../qml/Main.qml" line="897" />
+        <location filename="../qml/Main.qml" line="720" />
+        <location filename="../qml/Main.qml" line="735" />
+        <location filename="../qml/Main.qml" line="965" />
         <source> GB</source>
         <translation> GB</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="673" />
+        <location filename="../qml/Main.qml" line="721" />
         <source>Nu opruimen…</source>
         <translation>Clean up now…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="675" />
+        <location filename="../qml/Main.qml" line="723" />
         <source>. Kijkluister vraagt het altijd eerst voordat er iets wordt gewist.</source>
         <translation>. Kijkluister always asks first before anything is deleted.</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="681" />
+        <location filename="../qml/Main.qml" line="729" />
         <source>Er hoeft niets opgeruimd te worden</source>
         <translation>Nothing needs to be cleaned up</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="687" />
+        <location filename="../qml/Main.qml" line="735" />
         <source> MB</source>
         <translation> MB</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="689" />
+        <location filename="../qml/Main.qml" line="737" />
         <source>1 opname opruimen?</source>
         <translation>Clean up 1 recording?</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="689" />
+        <location filename="../qml/Main.qml" line="737" />
         <source> opnames opruimen?</source>
         <translation> recordings to clean up?</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="690" />
+        <location filename="../qml/Main.qml" line="738" />
         <source>Wissen (</source>
         <translation>Delete (</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="691" />
+        <location filename="../qml/Main.qml" line="739" />
         <source>Laten staan</source>
         <translation>Keep</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="693" />
+        <location filename="../qml/Main.qml" line="741" />
         <source>Reden: </source>
         <translation>Reason: </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="693" />
+        <location filename="../qml/Main.qml" line="741" />
         <source>
 … en </source>
         <translation>
 … and </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="693" />
+        <location filename="../qml/Main.qml" line="741" />
         <source> meer</source>
         <translation> more</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="700" />
+        <location filename="../qml/Main.qml" line="748" />
         <source>libCEC ophalen en installeren</source>
         <translation>Download and install libCEC</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="702" />
+        <location filename="../qml/Main.qml" line="750" />
         <source>Opnieuw verbinden</source>
         <translation>Reconnect</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="705" />
+        <location filename="../qml/Main.qml" line="753" />
         <source>Tv-afstandsbediening</source>
         <translation>TV remote control</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="707" />
+        <location filename="../qml/Main.qml" line="755" />
         <source>Bedien Kijkluister met de afstandsbediening van je tv. Nodig: een USB-CEC-adapter van Pulse-Eight tussen computer en tv (HDMI).</source>
         <translation>Control Kijkluister with your TV's remote. Required: a Pulse-Eight USB CEC adapter between computer and TV (HDMI).</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="713" />
+        <location filename="../qml/Main.qml" line="761" />
         <source>Slaaptimer uitzetten</source>
         <translation>Turn off sleep timer</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="716" />
-        <location filename="../qml/Main.qml" line="2531" />
+        <location filename="../qml/Main.qml" line="764" />
+        <location filename="../qml/Main.qml" line="2617" />
         <source>Slaaptimer</source>
         <translation>Sleep timer</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="718" />
+        <location filename="../qml/Main.qml" line="766" />
         <source>Radio, tv en films stoppen vanzelf na de gekozen tijd.</source>
         <translation>Radio, TV and movies stop by themselves after the chosen time.</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="724" />
+        <location filename="../qml/Main.qml" line="772" />
         <source>Gratis foto zoeken…</source>
         <translation>Search free photo…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="725" />
+        <location filename="../qml/Main.qml" line="773" />
         <source>Eigen afbeelding kiezen…</source>
         <translation>Choose your own image…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="727" />
+        <location filename="../qml/Main.qml" line="775" />
         <source>Standaardachtergrond herstellen</source>
         <translation>Restore default background</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="729" />
+        <location filename="../qml/Main.qml" line="777" />
         <source>Achtergrond wijzigen</source>
         <translation>Change background</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="730" />
+        <location filename="../qml/Main.qml" line="778" />
         <source>Gratis foto's van Unsplash.</source>
         <translation>Free photos from Unsplash.</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="730" />
+        <location filename="../qml/Main.qml" line="778" />
         <source>Gratis foto's met een vrije licentie (Openverse).</source>
         <translation>Free photos with an open licence (Openverse).</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="732" />
-        <location filename="../qml/Main.qml" line="1229" />
+        <location filename="../qml/Main.qml" line="780" />
+        <location filename="../qml/Main.qml" line="1296" />
         <source>Gratis foto als achtergrond</source>
         <translation>Free photo as background</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="741" />
+        <location filename="../qml/Main.qml" line="789" />
         <source>Layout: tabbladen</source>
         <translation>Layout: tabs</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="741" />
+        <location filename="../qml/Main.qml" line="789" />
         <source>Layout: klassiek</source>
         <translation>Layout: classic</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="756" />
-        <location filename="../qml/Main.qml" line="2554" />
+        <location filename="../qml/Main.qml" line="804" />
+        <location filename="../qml/Main.qml" line="2640" />
         <source>Ander profiel kiezen</source>
         <translation>Choose another profile</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="763" />
+        <location filename="../qml/Main.qml" line="811" />
         <source>Stel eerst een pincode in voor het kinderslot</source>
         <translation>First set a PIN for the parental lock</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="767" />
+        <location filename="../qml/Main.qml" line="815" />
         <source>Naam van het kinderprofiel</source>
         <translation>Name of the child profile</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="767" />
-        <location filename="../qml/Main.qml" line="1274" />
+        <location filename="../qml/Main.qml" line="815" />
+        <location filename="../qml/Main.qml" line="1357" />
         <source>Naam van het nieuwe profiel</source>
         <translation>Name of the new profile</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="929" />
-        <location filename="../qml/Main.qml" line="964" />
+        <location filename="../qml/Main.qml" line="997" />
+        <location filename="../qml/Main.qml" line="1032" />
         <source> verwijderd</source>
         <translation> removed</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="784" />
+        <location filename="../qml/Main.qml" line="832" />
         <source>Kijkluister start voortaan met Windows</source>
         <translation>Kijkluister will now start with Windows</translation>
     </message>
@@ -2400,793 +2382,1014 @@ Leave Kijkluister running. You will find the recording under Live TV → Record.
         <translation>  (%1 left)</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="618" />
+        <location filename="../qml/Main.qml" line="541" />
+        <source>twee keer indrukken</source>
+        <translation>press twice</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="541" />
+        <source>direct</source>
+        <translation>immediately</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="541" />
+        <source>vasthouden</source>
+        <translation>hold</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="556" />
+        <location filename="../qml/Main.qml" line="909" />
+        <source>Terug</source>
+        <translation>Back</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="559" />
+        <source>Startpagina…</source>
+        <translation>Home page…</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="560" />
+        <source>Uiterlijk…</source>
+        <translation>Appearance…</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="561" />
+        <source>Gezin en veiligheid…</source>
+        <translation>Family and safety…</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="562" />
+        <source>Geluid en apparaten…</source>
+        <translation>Sound and devices…</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="563" />
+        <source>Opnames en sleutels…</source>
+        <translation>Recordings and keys…</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="564" />
+        <source>Onderhoud en hulp…</source>
+        <translation>Maintenance and help…</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="566" />
+        <source>Kies een onderwerp</source>
+        <translation>Choose a topic</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="574" />
+        <source>Radio hervatten bij opstarten: </source>
+        <translation>Resume radio at startup: </translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="575" />
+        <source>Weer: </source>
+        <translation>Weather: </translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="576" />
+        <source>Welkomsthulp: diensten en apps kiezen…</source>
+        <translation>Welcome guide: choose services and apps…</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="578" />
+        <source>Startpagina</source>
+        <translation>Home page</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="580" />
+        <source>Uiterlijk</source>
+        <translation>Appearance</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="581" />
+        <source>Layout: </source>
+        <translation>Layout: </translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="581" />
+        <source>tabbladen</source>
+        <translation>tabs</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="581" />
+        <source>klassiek</source>
+        <translation>classic</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="583" />
+        <source>Tekstgrootte: </source>
+        <translation>Text size: </translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="583" />
+        <source>groter</source>
+        <translation>larger</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="583" />
+        <source>normaal</source>
+        <translation>normal</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="584" />
+        <source>Grote naam en logo linksboven: </source>
+        <translation>Large name and logo top left: </translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="584" />
+        <source>tonen</source>
+        <translation>show</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="584" />
+        <source>verbergen</source>
+        <translation>hide</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="591" />
+        <source>Gezin en veiligheid</source>
+        <translation>Family and safety</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="592" />
+        <source>Profielen: </source>
+        <translation>Profiles: </translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="594" />
+        <source>Kinderslot: </source>
+        <translation>Parental lock: </translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="597" />
+        <source>Met kinderslot aan vragen deze instellingen de pincode.</source>
+        <translation>With the parental lock on, these settings ask for the PIN.</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="599" />
+        <source>Geluid en apparaten</source>
+        <translation>Sound and devices</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="600" />
+        <source>Geluid via: </source>
+        <translation>Sound via: </translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="602" />
+        <source>Telefoon als afstandsbediening: </source>
+        <translation>Phone as remote control: </translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="603" />
+        <source>Terug naar de startpagina met Esc: </source>
+        <translation>Back to the home page with Esc: </translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="608" />
+        <source>Opnames en sleutels</source>
+        <translation>Recordings and keys</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="610" />
+        <source>Sleutels voor films en foto's (TMDB, Unsplash)…</source>
+        <translation>Keys for movies and photos (TMDB, Unsplash)…</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="614" />
+        <source>Onderhoud en hulp</source>
+        <translation>Maintenance and help</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="619" />
+        <source>Sneltoetsen en hulp</source>
+        <translation>Shortcuts and help</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="620" />
+        <source>Logbestand delen (voor hulp aan de maker)</source>
+        <translation>Share log file (for help from the maker)</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="666" />
         <source>Profiel %1 verwijderen</source>
         <translation>Remove profile %1</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="717" />
+        <location filename="../qml/Main.qml" line="765" />
         <source>Nog %1. Daarna stoppen radio, tv en films vanzelf.</source>
         <translation>%1 left. Then radio, TV and movies stop by themselves.</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="772" />
+        <location filename="../qml/Main.qml" line="820" />
         <source>Profiel %1 verwijderd</source>
         <translation>Profile %1 removed</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="784" />
+        <location filename="../qml/Main.qml" line="832" />
         <source>Kijkluister start niet meer met Windows</source>
         <translation>Kijkluister will no longer start with Windows</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="790" />
+        <location filename="../qml/Main.qml" line="838" />
         <source>🔊 Geluid via </source>
         <translation>🔊 Sound through </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="790" />
+        <location filename="../qml/Main.qml" line="838" />
         <source>Wisselen lukte niet; kies het in Windows-instellingen → Geluid</source>
         <translation>Switching failed; choose it in Windows Settings → Sound</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="803" />
+        <location filename="../qml/Main.qml" line="851" />
         <source>Stel dit in vanuit het kinderprofiel (met de pincode)</source>
         <translation>Set this from the child profile (with the PIN)</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="806" />
+        <location filename="../qml/Main.qml" line="854" />
         <source>Kijktijd instellen</source>
         <translation>Set screen time</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="807" />
+        <location filename="../qml/Main.qml" line="855" />
         <source>Onbeperkt</source>
         <translation>Unlimited</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="808" />
+        <location filename="../qml/Main.qml" line="856" />
         <source>Daarna vraagt Kijkluister de pincode.</source>
         <translation>After that Kijkluister asks for the PIN.</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="812" />
+        <location filename="../qml/Main.qml" line="860" />
         <source>Kijktijd: </source>
         <translation>Screen time: </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="815" />
+        <location filename="../qml/Main.qml" line="863" />
         <source>Back-up maken (op het bureaublad)</source>
         <translation>Make backup (on the desktop)</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="816" />
-        <location filename="../qml/Main.qml" line="1365" />
+        <location filename="../qml/Main.qml" line="864" />
+        <location filename="../qml/Main.qml" line="1448" />
         <source>Terugzetten: </source>
         <translation>Restore: </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="816" />
+        <location filename="../qml/Main.qml" line="864" />
         <source>Kijkluister-backup </source>
         <translation>Kijkluister-backup </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="818" />
-        <location filename="../qml/Main.qml" line="1365" />
+        <location filename="../qml/Main.qml" line="866" />
+        <location filename="../qml/Main.qml" line="1448" />
         <source>Back-up</source>
         <translation>Backup</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="818" />
+        <location filename="../qml/Main.qml" line="866" />
         <source>Bevat zenders, profielen, tegels en instellingen, ook inloggegevens van je tv-aanbieder. Bewaar hem goed.</source>
         <translation>Contains channels, profiles, tiles and settings, including login details of your TV provider. Keep it safe.</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="821" />
+        <location filename="../qml/Main.qml" line="869" />
         <source>Back-up op het bureaublad: </source>
         <translation>Backup on the desktop: </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="821" />
+        <location filename="../qml/Main.qml" line="869" />
         <source>Back-up maken lukte niet</source>
         <translation>Making the backup failed</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="824" />
+        <location filename="../qml/Main.qml" line="872" />
         <source>Back-up terugzetten?</source>
         <translation>Restore backup?</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="825" />
+        <location filename="../qml/Main.qml" line="873" />
         <source>Terugzetten en opnieuw starten</source>
         <translation>Restore and restart</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="827" />
+        <location filename="../qml/Main.qml" line="875" />
         <source>De huidige instellingen worden vervangen door </source>
         <translation>The current settings will be replaced by </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="829" />
+        <location filename="../qml/Main.qml" line="877" />
         <source>Dit bestand is geen geldige back-up</source>
         <translation>This file is not a valid backup</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="832" />
+        <location filename="../qml/Main.qml" line="880" />
         <source>Logbestand op het bureaublad: </source>
         <translation>Log file on the desktop: </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="832" />
+        <location filename="../qml/Main.qml" line="880" />
         <source>Logbestand maken lukte niet</source>
         <translation>Making the log file failed</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="850" />
+        <location filename="../qml/Main.qml" line="905" />
+        <source>Terug naar de startpagina met Esc</source>
+        <translation>Back to the home page with Esc</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="906" />
+        <source>Esc vasthouden (standaard)</source>
+        <translation>Hold Esc (default)</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="907" />
+        <source>Esc twee keer snel indrukken</source>
+        <translation>Press Esc twice quickly</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="908" />
+        <source>Esc direct (sluit de app meteen)</source>
+        <translation>Esc immediately (closes the app at once)</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="910" />
+        <source>Geldt voor apps en websites die Kijkluister opent. Bij 'direct' verlaat Esc ook geen volledig scherm meer in de app zelf.</source>
+        <translation>Applies to apps and websites that Kijkluister opens. With 'immediately', Esc no longer exits full screen inside the app itself.</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="915" />
+        <source>Esc: </source>
+        <translation>Esc: </translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="918" />
         <source>Windows-instellingen</source>
         <translation>Windows settings</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="851" />
+        <location filename="../qml/Main.qml" line="919" />
         <source>Wifi</source>
         <translation>Wi-Fi</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="852" />
+        <location filename="../qml/Main.qml" line="920" />
         <source>Bluetooth (koptelefoon, controller, afstandsbediening)</source>
         <translation>Bluetooth (headphones, controller, remote)</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="853" />
+        <location filename="../qml/Main.qml" line="921" />
         <source>Beeldscherm</source>
         <translation>Display</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="854" />
-        <location filename="../qml/Main.qml" line="1435" />
+        <location filename="../qml/Main.qml" line="922" />
+        <location filename="../qml/Main.qml" line="1514" />
         <source>Geluid</source>
         <translation>Sound</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="855" />
+        <location filename="../qml/Main.qml" line="923" />
         <source>Alle instellingen</source>
         <translation>All settings</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="867" />
+        <location filename="../qml/Main.qml" line="935" />
         <source>Pincode wijzigen</source>
         <translation>Change PIN</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="869" />
+        <location filename="../qml/Main.qml" line="937" />
         <source>Kinderslot uitzetten</source>
         <translation>Turn off parental lock</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="869" />
+        <location filename="../qml/Main.qml" line="937" />
         <source>Kinderslot staat uit</source>
         <translation>Parental lock is off</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="872" />
+        <location filename="../qml/Main.qml" line="940" />
         <source>Vergrendeld</source>
         <translation>Locked</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="875" />
+        <location filename="../qml/Main.qml" line="943" />
         <source> vraagt nu om de pincode</source>
         <translation> now asks for the PIN</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="878" />
+        <location filename="../qml/Main.qml" line="946" />
         <source> is niet meer vergrendeld</source>
         <translation> is no longer locked</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="878" />
+        <location filename="../qml/Main.qml" line="946" />
         <source>Kinderslot van %1 halen</source>
         <translation>Remove parental lock from %1</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="880" />
+        <location filename="../qml/Main.qml" line="948" />
         <source>Weer</source>
         <translation>Weather</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="881" />
+        <location filename="../qml/Main.qml" line="949" />
         <source>Plaats kiezen…</source>
         <translation>Choose place…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="882" />
+        <location filename="../qml/Main.qml" line="950" />
         <source>Weer niet tonen</source>
         <translation>Hide weather</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="882" />
+        <location filename="../qml/Main.qml" line="950" />
         <source>Weer tonen</source>
         <translation>Show weather</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="884" />
+        <location filename="../qml/Main.qml" line="952" />
         <source>Het weer staat naast de klok (Open-Meteo).</source>
         <translation>The weather is shown next to the clock (Open-Meteo).</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="886" />
+        <location filename="../qml/Main.qml" line="954" />
         <source>Plaats voor het weer</source>
         <translation>Place for the weather</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="892" />
+        <location filename="../qml/Main.qml" line="960" />
         <source>Opnames bewaren</source>
         <translation>Keep recordings</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="892" />
+        <location filename="../qml/Main.qml" line="960" />
         <source>Altijd</source>
         <translation>Always</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="897" />
+        <location filename="../qml/Main.qml" line="965" />
         <source>Ruimte vrijhouden op de schijf</source>
         <translation>Keep disk space free</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="897" />
+        <location filename="../qml/Main.qml" line="965" />
         <source>Uit</source>
         <translation>Off</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="898" />
+        <location filename="../qml/Main.qml" line="966" />
         <source>Is de schijf voller, dan stelt Kijkluister voor de oudste opnames te wissen.</source>
         <translation>If the disk gets fuller, Kijkluister suggests deleting the oldest recordings.</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="906" />
+        <location filename="../qml/Main.qml" line="974" />
         <source>1 opname gewist</source>
         <translation>1 recording deleted</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="906" />
+        <location filename="../qml/Main.qml" line="974" />
         <source> opnames gewist</source>
         <translation> recordings deleted</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="911" />
+        <location filename="../qml/Main.qml" line="979" />
         <source>libCEC wordt opgehaald…</source>
         <translation>Downloading libCEC…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="916" />
+        <location filename="../qml/Main.qml" line="984" />
         <source>Zoeken naar een nieuwe versie…</source>
         <translation>Checking for a new version…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="940" />
+        <location filename="../qml/Main.qml" line="1008" />
         <source>Pictogram kiezen voor </source>
         <translation>Choose icon for </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="956" />
+        <location filename="../qml/Main.qml" line="1024" />
         <source>Tekst is nu groter</source>
         <translation>Text is now larger</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="956" />
+        <location filename="../qml/Main.qml" line="1024" />
         <source>Tekst is weer normaal</source>
         <translation>Text is normal again</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="969" />
+        <location filename="../qml/Main.qml" line="1037" />
         <source>Achtergrond kiezen</source>
         <translation>Choose background</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="979" />
+        <location filename="../qml/Main.qml" line="1047" />
         <source>Alle tegels staan weer op de startpagina</source>
         <translation>All tiles are back on the home screen</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1051" />
+        <location filename="../qml/Main.qml" line="1118" />
         <source>Toevoegen mislukt: controleer het adres of pad (of de tegel bestaat al)</source>
         <translation>Adding failed: check the address or path (or the tile already exists)</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1053" />
+        <location filename="../qml/Main.qml" line="1120" />
         <source>Tegel toegevoegd</source>
         <translation>Tile added</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1274" />
+        <location filename="../qml/Main.qml" line="1357" />
         <source>Kees</source>
         <translation>Kees</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1365" />
+        <location filename="../qml/Main.qml" line="1448" />
         <source>Back-up maken</source>
         <translation>Make backup</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1433" />
+        <location filename="../qml/Main.qml" line="1512" />
         <source>Zoek apps, zenders, programma's, films en radio</source>
         <translation>Search apps, channels, programmes, movies and radio</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1434" />
+        <location filename="../qml/Main.qml" line="1513" />
         <source>Hulp</source>
         <translation>Help</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1434" />
+        <location filename="../qml/Main.qml" line="1513" />
         <source>Welke knop doet wat?</source>
         <translation>Which button does what?</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1435" />
+        <location filename="../qml/Main.qml" line="1514" />
         <source>Tv, soundbar of koptelefoon</source>
         <translation>TV, soundbar or headphones</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1436" />
+        <location filename="../qml/Main.qml" line="1515" />
         <source>Tegels, achtergrond, kinderslot en meer</source>
         <translation>Tiles, background, parental lock and more</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1437" />
+        <location filename="../qml/Main.qml" line="1516" />
         <source>Kijkluister sluiten (de computer blijft aan)</source>
         <translation>Close Kijkluister (the computer stays on)</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1468" />
+        <location filename="../qml/Main.qml" line="1547" />
         <source>Kijkluister</source>
         <translation>Kijkluister</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1523" />
+        <location filename="../qml/Main.qml" line="1602" />
         <source>HH:mm</source>
         <translation>HH:mm</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1524" />
+        <location filename="../qml/Main.qml" line="1603" />
         <source>nl_NL</source>
         <translation>en_GB</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1524" />
+        <location filename="../qml/Main.qml" line="1603" />
         <source>dddd d MMMM</source>
         <translation>dddd d MMMM</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1547" />
+        <location filename="../qml/Main.qml" line="1626" />
         <source>Kijkluister sluiten?</source>
         <translation>Close Kijkluister?</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1551" />
+        <location filename="../qml/Main.qml" line="1630" />
         <source>Je computer blijft aan. Geplande opnames gaan niet door zolang Kijkluister dicht is.</source>
         <translation>Your computer stays on. Scheduled recordings won't happen while Kijkluister is closed.</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1552" />
+        <location filename="../qml/Main.qml" line="1631" />
         <source>Je computer blijft aan.</source>
         <translation>Your computer stays on.</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1571" />
+        <location filename="../qml/Main.qml" line="1650" />
         <source> openen…</source>
         <translation> open…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1730" />
+        <location filename="../qml/Main.qml" line="1809" />
         <source>Kijk live of bekijk de gids</source>
         <translation>Watch live or open the guide</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1765" />
+        <location filename="../qml/Main.qml" line="1844" />
         <source>Live tv kijken</source>
         <translation>Watch live TV</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1898" />
+        <location filename="../qml/Main.qml" line="1977" />
         <source>Pijltjes</source>
         <translation>Arrows</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1898" />
-        <location filename="../qml/Main.qml" line="2123" />
+        <location filename="../qml/Main.qml" line="1977" />
+        <location filename="../qml/Main.qml" line="2206" />
         <source>Kiezen</source>
         <translation>Choose</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1899" />
+        <location filename="../qml/Main.qml" line="1978" />
         <source>Enter</source>
         <translation>Enter</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1900" />
+        <location filename="../qml/Main.qml" line="1979" />
         <source>Menu</source>
         <translation>Menu</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1900" />
-        <location filename="../qml/Main.qml" line="1901" />
+        <location filename="../qml/Main.qml" line="1979" />
+        <location filename="../qml/Main.qml" line="1980" />
         <source>Opties</source>
         <translation>Options</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1901" />
+        <location filename="../qml/Main.qml" line="1980" />
         <source>Rechtermuisknop</source>
         <translation>Right mouse button</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1936" />
+        <location filename="../qml/Main.qml" line="2015" />
         <source>Tip: houd </source>
         <translation>Tip: hold </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1936" />
+        <location filename="../qml/Main.qml" line="2015" />
         <source> ingedrukt om een tegel te verplaatsen of te verwijderen</source>
         <translation> to move or remove a tile</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1944" />
+        <location filename="../qml/Main.qml" line="2023" />
         <source>Afbeeldingen (*.png *.jpg *.jpeg *.bmp *.gif *.webp *.ico *.svg)</source>
         <translation>Images (*.png *.jpg *.jpeg *.bmp *.gif *.webp *.ico *.svg)</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1949" />
+        <location filename="../qml/Main.qml" line="2028" />
         <source>Deze afbeelding kon niet gebruikt worden</source>
         <translation>This image could not be used</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1956" />
+        <location filename="../qml/Main.qml" line="2035" />
         <source>Programma kiezen</source>
         <translation>Choose programme</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1957" />
+        <location filename="../qml/Main.qml" line="2036" />
         <source>Programma's en snelkoppelingen (*.exe *.lnk *.bat *.cmd *.url)</source>
         <translation>Programs and shortcuts (*.exe *.lnk *.bat *.cmd *.url)</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1957" />
+        <location filename="../qml/Main.qml" line="2036" />
         <source>Alle bestanden (*)</source>
         <translation>All files (*)</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1982" />
+        <location filename="../qml/Main.qml" line="2065" />
         <source>Zender voor volwassenen. Vul de pincode van het kinderslot in.</source>
         <translation>Adult channel. Enter the parental lock PIN.</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1995" />
+        <location filename="../qml/Main.qml" line="2078" />
         <source>Klaar! Kies een tegel en druk op </source>
         <translation>Done! Choose a tile and press </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1995" />
+        <location filename="../qml/Main.qml" line="2078" />
         <source> om te beginnen</source>
         <translation> to start</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2070" />
+        <location filename="../qml/Main.qml" line="2153" />
         <source> min</source>
         <translation> min</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2074" />
+        <location filename="../qml/Main.qml" line="2157" />
         <source>Slaaptimer: over </source>
         <translation>Sleep timer: in </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2074" />
+        <location filename="../qml/Main.qml" line="2157" />
         <source> minuten stopt alles</source>
         <translation> minutes everything stops</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2074" />
+        <location filename="../qml/Main.qml" line="2157" />
         <source>Slaaptimer staat uit</source>
         <translation>Sleep timer is off</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2093" />
+        <location filename="../qml/Main.qml" line="2176" />
         <source>Slaaptimer: over een minuut stopt alles</source>
         <translation>Sleep timer: everything stops in one minute</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2108" />
+        <location filename="../qml/Main.qml" line="2191" />
         <source>Slaaptimer: alles is gestopt. Welterusten!</source>
         <translation>Sleep timer: everything has stopped. Good night!</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2119" />
+        <location filename="../qml/Main.qml" line="2202" />
         <source>Naam van de zender, bv. Omroep Gelderland</source>
         <translation>Name of the station, e.g. Omroep Gelderland</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2120" />
+        <location filename="../qml/Main.qml" line="2203" />
         <source>Waar wil je een foto van? Bv. bos, zee, bergen</source>
         <translation>What do you want a photo of? E.g. forest, sea, mountains</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2121" />
+        <location filename="../qml/Main.qml" line="2204" />
         <source>Naam van je woonplaats</source>
         <translation>Name of your town</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2122" />
+        <location filename="../qml/Main.qml" line="2205" />
         <source>Zoek een app, zender, programma, film of radiozender</source>
         <translation>Search for an app, channel, programme, movie or radio station</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2123" />
+        <location filename="../qml/Main.qml" line="2206" />
         <source>Toevoegen</source>
         <translation>Add</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2124" />
+        <location filename="../qml/Main.qml" line="2207" />
         <source>Geen zender gevonden. Probeer een ander woord.</source>
         <translation>No station found. Try another word.</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2124" />
+        <location filename="../qml/Main.qml" line="2207" />
         <source>Niets gevonden</source>
         <translation>Nothing found</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2130" />
+        <location filename="../qml/Main.qml" line="2213" />
         <source>Radiozender toevoegen</source>
         <translation>Add radio station</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2143" />
+        <location filename="../qml/Main.qml" line="2226" />
         <source>Apps en diensten</source>
         <translation>Apps and services</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2156" />
+        <location filename="../qml/Main.qml" line="2239" />
         <source>Serie</source>
         <translation>Series</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2156" />
+        <location filename="../qml/Main.qml" line="2239" />
         <source>Film</source>
         <translation>Movie</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2157" />
+        <location filename="../qml/Main.qml" line="2240" />
         <source>Films en series</source>
         <translation>Movies and series</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="1774" />
-        <location filename="../qml/Main.qml" line="2165" />
+        <location filename="../qml/Main.qml" line="2585" />
+        <source>Uitzetten kan in Instellingen → Gezin en veiligheid.</source>
+        <translation>You can turn this off in Settings → Family and safety.</translation>
+    </message>
+    <message>
+        <location filename="../qml/Main.qml" line="1853" />
+        <location filename="../qml/Main.qml" line="2248" />
         <source>Tv-gids</source>
         <translation>TV guide</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2165" />
+        <location filename="../qml/Main.qml" line="2248" />
         <source>Live tv</source>
         <translation>Live TV</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2166" />
-        <location filename="../qml/Main.qml" line="2265" />
+        <location filename="../qml/Main.qml" line="2249" />
+        <location filename="../qml/Main.qml" line="2348" />
         <source>● Opname gepland</source>
         <translation>● Recording scheduled</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2166" />
-        <location filename="../qml/Main.qml" line="2265" />
+        <location filename="../qml/Main.qml" line="2249" />
+        <location filename="../qml/Main.qml" line="2348" />
         <source>Menu: opnemen</source>
         <translation>Menu: record</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2179" />
+        <location filename="../qml/Main.qml" line="2262" />
         <source>Opslaan als “</source>
         <translation>Save as “</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2179" />
+        <location filename="../qml/Main.qml" line="2262" />
         <source>Enter om het profiel te maken</source>
         <translation>Enter to create the profile</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2197" />
-        <location filename="../qml/Main.qml" line="2229" />
+        <location filename="../qml/Main.qml" line="2280" />
+        <location filename="../qml/Main.qml" line="2312" />
         <source>✓ Toegevoegd</source>
         <translation>✓ Added</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2210" />
+        <location filename="../qml/Main.qml" line="2293" />
         <source>Nieuwe achtergrond. </source>
         <translation>New background. </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2227" />
+        <location filename="../qml/Main.qml" line="2310" />
         <source> staat nu in de rij Radio</source>
         <translation> is now in the Radio row</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2231" />
+        <location filename="../qml/Main.qml" line="2314" />
         <source> staat al in de rij Radio</source>
         <translation> is already in the Radio row</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2240" />
+        <location filename="../qml/Main.qml" line="2323" />
         <source>Profiel %1 is gemaakt</source>
         <translation>Profile %1 has been created</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2421" />
+        <location filename="../qml/Main.qml" line="2507" />
         <source>Nog %1 minuten kijktijd voor vandaag</source>
         <translation>%1 minutes of screen time left today</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2241" />
+        <location filename="../qml/Main.qml" line="2324" />
         <source>Nu naar </source>
         <translation>Switch to </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2241" />
+        <location filename="../qml/Main.qml" line="2324" />
         <source> wisselen</source>
         <translation> now</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2242" />
-        <location filename="../qml/Main.qml" line="2752" />
+        <location filename="../qml/Main.qml" line="2325" />
+        <location filename="../qml/Main.qml" line="2838" />
         <source>Later</source>
         <translation>Later</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2247" />
+        <location filename="../qml/Main.qml" line="2330" />
         <source>Foto wordt opgehaald…</source>
         <translation>Fetching photo…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2254" />
+        <location filename="../qml/Main.qml" line="2337" />
         <source>Weer voor </source>
         <translation>Weather for </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2264" />
+        <location filename="../qml/Main.qml" line="2347" />
         <source>● Wordt opgenomen: </source>
         <translation>● Will be recorded: </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2264" />
+        <location filename="../qml/Main.qml" line="2347" />
         <source>Opname geannuleerd: </source>
         <translation>Recording cancelled: </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2346" />
+        <location filename="../qml/Main.qml" line="2429" />
         <source>🔔  Om </source>
         <translation>🔔  At </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2346" />
+        <location filename="../qml/Main.qml" line="2429" />
         <source> op </source>
         <translation> on </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2362" />
+        <location filename="../qml/Main.qml" line="2445" />
         <source>Kijken</source>
         <translation>Watch</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2456" />
+        <location filename="../qml/Main.qml" line="2542" />
         <source>De kijktijd voor vandaag is op</source>
         <translation>Screen time for today is up</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2463" />
+        <location filename="../qml/Main.qml" line="2549" />
         <source>Morgen kan </source>
         <translation>Tomorrow </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2463" />
+        <location filename="../qml/Main.qml" line="2549" />
         <source> weer kijken. Met de pincode kan het nog een half uur.</source>
         <translation> can watch again. With the PIN you can add half an hour.</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2471" />
+        <location filename="../qml/Main.qml" line="2557" />
         <source>Pincode: half uur erbij</source>
         <translation>PIN: half an hour more</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2472" />
+        <location filename="../qml/Main.qml" line="2558" />
         <source>Nog een half uur</source>
         <translation>Half an hour more</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2486" />
+        <location filename="../qml/Main.qml" line="2572" />
         <source>Ander profiel</source>
         <translation>Other profile</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2499" />
+        <location filename="../qml/Main.qml" line="2585" />
         <source>Wie kijkt er?</source>
         <translation>Who is watching?</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2499" />
-        <source>Uitzetten kan in Instellingen → Meer instellingen.</source>
-        <translation>You can turn this off in Settings → More settings.</translation>
-    </message>
-    <message>
-        <location filename="../qml/Main.qml" line="2531" />
+        <location filename="../qml/Main.qml" line="2617" />
         <source>Radio, tv en films stoppen vanzelf</source>
         <translation>Radio, TV and movies stop by themselves</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2597" />
+        <location filename="../qml/Main.qml" line="2683" />
         <source>Uit de lijst halen</source>
         <translation>Remove from the list</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2633" />
+        <location filename="../qml/Main.qml" line="2719" />
         <source>⬇  Nieuwe versie </source>
         <translation>⬇  New version </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2633" />
+        <location filename="../qml/Main.qml" line="2719" />
         <source> wordt op de achtergrond gedownload…</source>
         <translation> is downloading in the background…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2634" />
+        <location filename="../qml/Main.qml" line="2720" />
         <source>✓  Kijkluister </source>
         <translation>✓  Kijkluister </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2634" />
+        <location filename="../qml/Main.qml" line="2720" />
         <source> wordt geïnstalleerd zodra er niets speelt</source>
         <translation> will be installed as soon as nothing is playing</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2635" />
+        <location filename="../qml/Main.qml" line="2721" />
         <source>⟳  Kijkluister </source>
         <translation>⟳  Kijkluister </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2635" />
+        <location filename="../qml/Main.qml" line="2721" />
         <source> wordt geïnstalleerd en start zo opnieuw…</source>
         <translation> is being installed and will restart shortly…</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2748" />
-        <location filename="../qml/Main.qml" line="2750" />
+        <location filename="../qml/Main.qml" line="2834" />
+        <location filename="../qml/Main.qml" line="2836" />
         <source>Kijkluister </source>
         <translation>Kijkluister </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2748" />
+        <location filename="../qml/Main.qml" line="2834" />
         <source> wordt op de achtergrond opgehaald en geïnstalleerd</source>
         <translation> is being downloaded and installed in the background</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2750" />
+        <location filename="../qml/Main.qml" line="2836" />
         <source> is er</source>
         <translation> is available</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2751" />
+        <location filename="../qml/Main.qml" line="2837" />
         <source>Nu bijwerken</source>
         <translation>Update now</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2754" />
+        <location filename="../qml/Main.qml" line="2840" />
         <source>Je hebt nu </source>
         <translation>You now have </translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2754" />
+        <location filename="../qml/Main.qml" line="2840" />
         <source>. Bijwerken duurt ongeveer een minuut; daarna start Kijkluister vanzelf weer.</source>
         <translation>. Updating takes about a minute; then Kijkluister starts again by itself.</translation>
     </message>
     <message>
-        <location filename="../qml/Main.qml" line="2771" />
+        <location filename="../qml/Main.qml" line="2857" />
         <source>📺 Tv-afstandsbediening verbonden</source>
         <translation>📺 TV remote connected</translation>
     </message>
@@ -3194,22 +3397,22 @@ Leave Kijkluister running. You will find the recording under Live TV → Record.
 <context>
     <name>MediaLibrary</name>
     <message>
-        <location filename="../src/medialibrary.cpp" line="433" />
+        <location filename="../src/medialibrary.cpp" line="427" />
         <source>Informatie ophalen: %1 van %2  ·  %3</source>
         <translation>Fetching information: %1 of %2  ·  %3</translation>
     </message>
     <message>
-        <location filename="../src/medialibrary.cpp" line="807" />
+        <location filename="../src/medialibrary.cpp" line="801" />
         <source>%1 films  ·  %2 series</source>
         <translation>%1 movies  ·  %2 series</translation>
     </message>
     <message>
-        <location filename="../src/medialibrary.cpp" line="809" />
+        <location filename="../src/medialibrary.cpp" line="803" />
         <source>  ·  TMDB-sleutel geweigerd, controleer hem via Mappen en sleutel</source>
         <translation>  ·  TMDB key refused, check it via Folders and key</translation>
     </message>
     <message>
-        <location filename="../src/medialibrary.cpp" line="811" />
+        <location filename="../src/medialibrary.cpp" line="805" />
         <source>  ·  zonder TMDB-sleutel alleen filmtitels</source>
         <translation>  ·  without a TMDB key only movie titles</translation>
     </message>

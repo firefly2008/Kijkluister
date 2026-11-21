@@ -29,6 +29,8 @@ public:
     Q_INVOKABLE void externalLaunched();
     // Home-knop of Home-toets: app sluiten/minimaliseren en Kijkluister naar voren
     Q_INVOKABLE void goHome();
+    // Esc in een externe app: "hold" (1 s vasthouden), "double" (twee keer snel) of "direct"
+    Q_INVOKABLE void setEscMode(const QString &mode);
     // Kijkluister naar voren halen zonder iets te sluiten (bv. bij een herinnering)
     Q_INVOKABLE void raiseWindow();
 
@@ -55,6 +57,9 @@ private:
     QWindow *m_main;
     QTimer m_poll;
     QTimer m_escHold;
+    QString m_escMode = QStringLiteral("hold");
+    qint64 m_escLastMs = 0;
+    void escPressed();
     QTimer m_backHold;
     bool m_backFired = false;
     bool m_external = false;

@@ -30,8 +30,9 @@ jobs:
       - name: Bouwen + installer maken
         shell: pwsh
         env:
-          UNSPLASH_KEY: ${{ secrets.UNSPLASH_TOKEN }}
-          TMDB_TOKEN: ${{ secrets.TMDB_TOKEN }}
+          # Alleen voor de tests: het programma zelf bevat geen sleutels meer
+          BIGSCREEN_TEST_UNSPLASH: ${{ secrets.UNSPLASH_TOKEN }}
+          BIGSCREEN_TEST_TMDB: ${{ secrets.TMDB_TOKEN }}
         run: |
           # Branch release/2.0.0 bepaalt het versienummer; gewone pushes heten "dev"
           $version = if ($env:GITHUB_REF_NAME -like 'release/*') { $env:GITHUB_REF_NAME.Substring(8) } else { 'dev' }
@@ -98,7 +99,7 @@ jobs:
           $env:BIGSCREEN_TEST_M3U = "$tv\test.m3u"
           $env:BIGSCREEN_TEST_RECORD_DIR = "$env:RUNNER_TEMP\opnames"
           Get-Content "$tv\test.m3u"
-          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-unsplash', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel', 'librarysetup', 'iptvsources', 'iptvfreeguide', 'mpcplay', 'resume', 'epgrecord', 'welcome', 'libraryunlock', 'radio', 'radiohome', 'search', 'radioadd', 'sleep', 'weather', 'update', 'cec', 'radiobg', 'regional', 'nowplaying', 'sections', 'homekey', 'releaseinfo', 'news', 'photo', 'settingsmenu', 'usage', 'help', 'night', 'collapse', 'libraryesc', 'nowtv', 'guidegrid', 'reminder', 'series', 'prevchannel', 'ambient', 'audio', 'remote', 'backup', 'kidslimit', 'profiles', 'okkey', 'whoswatching', 'english', 'security', 'cleanup', 'parental', 'tabs', 'tabs-apps', 'tabs-tv'
+          $modes = 'home', 'podcasts', 'moveask', 'library', 'iptvbar', 'iptvepg', 'addtile', 'iptvfree', 'frame-chicago', 'frame-met', 'frame-nature', 'frame-unsplash', 'frame-lijst', 'frame-settings', 'frame-esc', 'frame-mouseesc', 'record', 'recordpanel', 'librarysetup', 'iptvsources', 'iptvfreeguide', 'mpcplay', 'resume', 'epgrecord', 'welcome', 'radio', 'radiohome', 'search', 'radioadd', 'sleep', 'weather', 'update', 'cec', 'radiobg', 'regional', 'nowplaying', 'sections', 'homekey', 'releaseinfo', 'news', 'photo', 'settingsmenu', 'usage', 'help', 'night', 'collapse', 'libraryesc', 'nowtv', 'guidegrid', 'reminder', 'series', 'prevchannel', 'ambient', 'audio', 'remote', 'backup', 'kidslimit', 'profiles', 'okkey', 'whoswatching', 'english', 'security', 'cleanup', 'parental', 'tabs', 'tabs-apps', 'tabs-tv', 'keys', 'settingsgroups'
           $manual = '${{ github.ref }}' -like 'refs/heads/screenshots/*'
           if ($manual) {
             # Schermafbeeldingen voor de handleiding, op Full HD
@@ -194,7 +195,7 @@ jobs:
               'libraryesc' = 'Library back; visible false'; 'nowtv' = 'Now tv count ok true'; 'guidegrid' = 'Guide grid opened'; 'reminder' = 'Reminder due';
               'series' = 'Series: checked'; 'prevchannel' = 'Previous channel 0'; 'ambient' = 'Ambient mode'; 'audio' = 'Audio outputs';
               'remote' = 'Remote test down right code 200'; 'backup' = 'Autostart off: false'; 'kidslimit' = 'Kids lock shown true';
-              'okkey' = 'Keyboard OK: Opslaan als'; 'whoswatching' = 'Who is watching:'; 'english' = 'English check: Settings / Now on TV'; 'security' = 'Remote test blocked 429'; 'tabs' = 'Tabs focus tabs-again ok true'; 'tabs-apps' = 'Tabs focus tabs-apps ok true'; 'tabs-tv' = 'Tabs focus tabs-tv ok true'
+              'okkey' = 'Keyboard OK: Opslaan als'; 'whoswatching' = 'Who is watching:'; 'english' = 'English check: Settings / Now on TV'; 'security' = 'Remote test blocked 429'; 'tabs' = 'Tabs focus tabs-again ok true'; 'tabs-apps' = 'Tabs focus tabs-apps ok true'; 'keys' = 'Keys overlay opened true'; 'settingsgroups' = 'Settings group system'; 'tabs-tv' = 'Tabs focus tabs-tv ok true'
             }
             if ($checks.ContainsKey($mode)) {
               Select-String -Path $log -Pattern "Search|Radio|Sleep|Weather|Update|CEC|Cleanup|Parental|Regional|IPTV play|Media first|Section order|Home|Usage|Help|Night|Collapsed|Profile|Library|Now tv|Guide|Reminder|Series|Previous|Ambient|Audio|Remote|Backup|Autostart|Kids|Keyboard|Who is|English|Translator|Security|SecureStore|blocked|Tabs|TypeError|ReferenceError" | ForEach-Object { $_.Line }

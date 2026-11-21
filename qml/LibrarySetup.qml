@@ -18,17 +18,14 @@ FocusScope {
     visible: false
     z: 100
 
-    // De sleutel is ingebouwd en vergrendeld; na de juiste pincode is hij te zien en te wijzigen
-    readonly property bool showKey: !library.keyLocked
-    property bool askPin: false
+    // De eigen TMDB-sleutel staat altijd zichtbaar (ook te wijzigen via Instellingen → Sleutels)
+    readonly property bool showKey: true
 
     function open(isFirstRun) {
         firstRun = isFirstRun
         moviesPaths = library.moviesFolders.slice()
         showsPaths = library.showsFolders.slice()
-        library.lock()
-        askPin = false
-        pinField.text = ""
+        keyField.text = library.apiKey
         warning.text = ""
         visible = true
         moviesButton.forceActiveFocus()
@@ -94,27 +91,7 @@ FocusScope {
     }
 
     function close() {
-        library.lock()
         visible = false
-    }
-
-    function demoPin() {
-        askPin = true
-        pinField.text = "1973"
-        pinField.forceActiveFocus()
-    }
-
-    function tryPin() {
-        if (library.unlock(pinField.text)) {
-            askPin = false
-            warning.text = ""
-            keyField.text = library.effectiveKey()
-            keyField.forceActiveFocus()
-        } else {
-            warning.text = qsTr("Pincode klopt niet.")
-            pinField.text = ""
-            pinField.forceActiveFocus()
-        }
     }
 
     function save() {
@@ -209,90 +186,21 @@ FocusScope {
                     text: qsTr("+ Map toevoegen…")
                     onClicked: showsDialog.open()
                     KeyNavigation.up: moviesButton
-                    KeyNavigation.down: setup.showKey ? keyField : moreButton
+                    KeyNavigation.down: keyField
                 }
             }
             FolderList { kind: "shows"; paths: setup.showsPaths }
 
-            // Sleutel van TMDB: niet nodig om te beginnen, dus ingeklapt
-            Row {
-                visible: !setup.showKey
-                spacing: setup.unit * 1.5
-                Text {
-                    textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
-                    anchors.verticalCenter: parent.verticalCenter
-                    color: "#c4c7cc"
-                    font.pixelSize: (setup.unit * 2.2) * appModel.fontScale
-                    text: qsTr("🔒  Gegevens bij films: ingebouwde sleutel (vergrendeld)")
-                }
-                FocusButton {
-                    id: moreButton
-                    unit: setup.unit
-                    visible: !setup.askPin
-                    text: qsTr("Ontgrendelen…")
-                    onClicked: { setup.askPin = true; pinField.forceActiveFocus() }
-                    KeyNavigation.up: showsButton
-                    KeyNavigation.down: saveButton
-                }
-                // Pincode
-                Rectangle {
-                    visible: setup.askPin
-                    anchors.verticalCenter: parent.verticalCenter
-                    width: setup.unit * 16
-                    height: setup.unit * 6
-                    radius: setup.unit
-                    color: "#0f1115"
-                    border.width: pinField.activeFocus ? 3 : 1
-                    border.color: pinField.activeFocus ? "#e8eaed" : "#33ffffff"
-                    TextInput {
-                        id: pinField
-                        anchors.fill: parent
-                        anchors.margins: setup.unit * 1.5
-                        verticalAlignment: TextInput.AlignVCenter
-                        horizontalAlignment: TextInput.AlignHCenter
-                        color: "white"
-                        font.pixelSize: (setup.unit * 2.6) * appModel.fontScale
-                        font.letterSpacing: setup.unit * 0.6
-                        echoMode: TextInput.Password
-                        maximumLength: 8
-                        inputMethodHints: Qt.ImhDigitsOnly
-                        validator: RegularExpressionValidator { regularExpression: /[0-9]*/ }
-                        onAccepted: setup.tryPin()
-                        KeyNavigation.up: showsButton
-                        KeyNavigation.right: pinOk
-                        KeyNavigation.down: saveButton
-                    }
-                    Text {
-                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
-                        anchors.centerIn: parent
-                        visible: pinField.text === "" && !pinField.activeFocus
-                        color: "#a8acb3"
-                        font.pixelSize: (setup.unit * 2.2) * appModel.fontScale
-                        text: qsTr("Pincode")
-                    }
-                }
-                FocusButton {
-                    id: pinOk
-                    visible: setup.askPin
-                    unit: setup.unit
-                    text: "OK"
-                    onClicked: setup.tryPin()
-                    KeyNavigation.left: pinField
-                    KeyNavigation.down: saveButton
-                }
-            }
             Text {
                 textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
-                visible: setup.showKey
-                width: parent.width
+                                width: parent.width
                 wrapMode: Text.Wrap
                 color: "#9fb4d0"
                 font.pixelSize: (setup.unit * 2.2) * appModel.fontScale
-                text: qsTr("Sleutel van TMDB (ontgrendeld). Leeg laten = de ingebouwde sleutel gebruiken.")
+                text: qsTr("Eigen sleutel van TMDB (voor posters en gegevens bij films en series). Leeg laten mag.")
             }
             Rectangle {
-                visible: setup.showKey
-                width: parent.width
+                                width: parent.width
                 height: setup.unit * 6
                 radius: setup.unit
                 color: "#0f1115"
@@ -323,12 +231,11 @@ FocusScope {
             }
             Text {
                 textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
-                visible: setup.showKey
-                width: parent.width
+                                width: parent.width
                 wrapMode: Text.Wrap
                 color: "#b0b4bb"
                 font.pixelSize: (setup.unit * 1.9) * appModel.fontScale
-                text: qsTr("Sleutel aanvragen: maak een gratis account op themoviedb.org en ga naar Instellingen → API. ")
+                text: qsTr("Sleutel aanvragen: themoviedb.org/settings/api (gratis account). ")
                       + qsTr("Zonder sleutel komen series van TVmaze en tonen films alleen hun titel. ")
                       + qsTr("Dit product gebruikt de TMDB API, maar is niet door TMDB goedgekeurd of gecertificeerd.")
             }
@@ -348,7 +255,7 @@ FocusScope {
                     unit: setup.unit
                     text: qsTr("Opslaan en zoeken")
                     onClicked: setup.save()
-                    KeyNavigation.up: setup.showKey ? keyField : (setup.askPin ? pinField : moreButton)
+                    KeyNavigation.up: keyField
                     KeyNavigation.right: cancelButton
                 }
                 FocusButton {
@@ -359,7 +266,7 @@ FocusScope {
                         setup.close()
                         setup.cancelled()
                     }
-                    KeyNavigation.up: setup.showKey ? keyField : (setup.askPin ? pinField : moreButton)
+                    KeyNavigation.up: keyField
                     KeyNavigation.left: saveButton
                 }
             }

@@ -1,5 +1,23 @@
 [
   {
+    "version": "4.10.0",
+    "date": "2026-11-21",
+    "notes": [
+      "Instellingen opnieuw ingedeeld in zes onderwerpen: Startpagina, Uiterlijk, Gezin en veiligheid, Geluid en apparaten, Opnames en sleutels, Onderhoud en hulp. Overal 'Naam: waarde' en 'Terug'. Je vindt alles op dezelfde plek als voorheen terug onder het juiste onderwerp",
+      "Eigen sleutels: Kijkluister bevat geen sleutels meer voor TMDB (films) en Unsplash (foto's). Vul je eigen gratis sleutel in via Instellingen → Opnames en sleutels → Sleutels, met uitleg, QR-code en een testknop. Zonder sleutel werkt alles nog steeds, alleen met minder plaatjes en gegevens bij films",
+      "Kinderslot beter beschermd: pincode, vergrendelde tegels en kijktijd staan versleuteld en zijn niet meer te lezen of aan te passen in Kladblok. Met kinderslot aan vragen de Instellingen de pincode",
+      "Esc terug naar de startpagina is instelbaar (Instellingen → Geluid en apparaten): vasthouden (kortere tijd), twee keer snel indrukken of direct",
+      "Let op: kijktijd van het kinderprofiel wordt bij de update overgenomen. Controleer hem even"
+    ],
+    "notes_en": [
+      "Settings reorganised into six topics: Home page, Appearance, Family and safety, Sound and devices, Recordings and keys, Maintenance and help. 'Name: value' and 'Back' everywhere. Everything is where you expect it under the right topic",
+      "Your own keys: Kijkluister no longer contains keys for TMDB (movies) and Unsplash (photos). Enter your own free key under Settings → Recordings and keys → Keys, with instructions, a QR code and a test button. Without a key everything still works, with fewer pictures and movie details",
+      "Parental lock better protected: PIN, locked tiles and viewing time are stored encrypted and can no longer be read or changed in Notepad. With the parental lock on, Settings asks for the PIN",
+      "Esc back to the home page is adjustable (Settings → Sound and devices): hold (shorter), press twice quickly or immediately",
+      "Note: the kids profile viewing time is carried over by the update. Please check it"
+    ]
+  },
+  {
     "version": "4.9.0",
     "date": "2026-11-21",
     "notes": [

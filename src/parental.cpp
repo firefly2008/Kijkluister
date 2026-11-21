@@ -13,7 +13,7 @@ Parental::Parental(QObject *parent)
 
 QString Parental::hash(const QString &pin) const
 {
-    QString salt = m_settings.value(QStringLiteral("parental/salt")).toString();
+    QString salt = sval(QStringLiteral("parental/salt")).toString();
     return QString::fromLatin1(QCryptographicHash::hash((salt + QLatin1Char(':') + pin).toUtf8(), QCryptographicHash::Sha256).toHex());
 }
 
@@ -29,10 +29,10 @@ bool Parental::setPin(const QString &pin)
         return false;
     }
     const bool first = !enabled();
-    m_settings.setValue(QStringLiteral("parental/salt"), QString::number(QRandomGenerator::global()->generate64(), 36));
-    m_settings.setValue(QStringLiteral("parental/pin"), hash(pin));
-    if (first && !m_settings.contains(QStringLiteral("parental/locked"))) {
-        m_settings.setValue(QStringLiteral("parental/locked"), QStringList{QStringLiteral("bigscreen:iptv"), QStringLiteral("bigscreen:movies"), QStringLiteral("bigscreen:shows")});
+    sset(QStringLiteral("parental/salt"), QString::number(QRandomGenerator::global()->generate64(), 36));
+    sset(QStringLiteral("parental/pin"), hash(pin));
+    if (first && !m_settings.contains(QStringLiteral("parental/locked_dpapi")) && !m_settings.contains(QStringLiteral("parental/locked"))) {
+        sset(QStringLiteral("parental/locked"), QStringList{QStringLiteral("bigscreen:iptv"), QStringLiteral("bigscreen:movies"), QStringLiteral("bigscreen:shows")});
     }
     m_unlockedUntil = 0;
     qInfo() << "Parental: pin set";
@@ -42,7 +42,7 @@ bool Parental::setPin(const QString &pin)
 
 int Parental::waitSeconds() const
 {
-    return int(qMax<qint64>(0, m_settings.value(QStringLiteral("parental/lockedUntil")).toLongLong() - QDateTime::currentSecsSinceEpoch()));
+    return int(qMax<qint64>(0, sval(QStringLiteral("parental/lockedUntil")).toLongLong() - QDateTime::currentSecsSinceEpoch()));
 }
 
 bool Parental::check(const QString &pin)
@@ -53,24 +53,24 @@ bool Parental::check(const QString &pin)
     // Raden tegengaan: na 5 foute pogingen eerst 1 minuut wachten, daarna steeds langer (max. 15 min);
     // ook na herstarten van Kijkluister
     const qint64 now = QDateTime::currentSecsSinceEpoch();
-    const qint64 lockedUntil = m_settings.value(QStringLiteral("parental/lockedUntil")).toLongLong();
+    const qint64 lockedUntil = sval(QStringLiteral("parental/lockedUntil")).toLongLong();
     if (lockedUntil > now) {
         qInfo() << "Parental: locked for" << (lockedUntil - now) << "s";
         return false;
     }
-    if (hash(pin) != m_settings.value(QStringLiteral("parental/pin")).toString()) {
-        const int fails = m_settings.value(QStringLiteral("parental/fails")).toInt() + 1;
-        m_settings.setValue(QStringLiteral("parental/fails"), fails);
+    if (hash(pin) != sval(QStringLiteral("parental/pin")).toString()) {
+        const int fails = sval(QStringLiteral("parental/fails")).toInt() + 1;
+        sset(QStringLiteral("parental/fails"), fails);
         if (fails >= 5) {
             const qint64 wait = qMin<qint64>(900, 60LL << qMin(fails - 5, 4));
-            m_settings.setValue(QStringLiteral("parental/lockedUntil"), now + wait);
+            sset(QStringLiteral("parental/lockedUntil"), qlonglong(now + wait));
             qInfo() << "Parental: too many wrong pins, waiting" << wait << "s";
         }
         qInfo() << "Parental: wrong pin";
         return false;
     }
-    m_settings.remove(QStringLiteral("parental/fails"));
-    m_settings.remove(QStringLiteral("parental/lockedUntil"));
+    SecureStore::remove(m_settings, QStringLiteral("parental/fails"));
+    SecureStore::remove(m_settings, QStringLiteral("parental/lockedUntil"));
     m_unlockedUntil = QDateTime::currentSecsSinceEpoch() + 3600;
     qInfo() << "Parental: unlocked";
     Q_EMIT changed();
@@ -82,8 +82,8 @@ bool Parental::disable(const QString &pin)
     if (!check(pin)) {
         return false;
     }
-    m_settings.remove(QStringLiteral("parental/pin"));
-    m_settings.remove(QStringLiteral("parental/salt"));
+    SecureStore::remove(m_settings, QStringLiteral("parental/pin"));
+    SecureStore::remove(m_settings, QStringLiteral("parental/salt"));
     qInfo() << "Parental: disabled";
     Q_EMIT changed();
     return true;
@@ -107,7 +107,7 @@ void Parental::setLocked(const QString &path, bool on)
     if (on) {
         list.append(path);
     }
-    m_settings.setValue(QStringLiteral("parental/locked"), list);
+    sset(QStringLiteral("parental/locked"), list);
     Q_EMIT changed();
 }
 

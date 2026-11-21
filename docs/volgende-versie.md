@@ -1,4 +1,8 @@
-# Plan volgende versie (voorgesteld 4.10.0)
+# Plan volgende versie
+
+Gebouwd in 4.10.0: punt 1 (eigen sleutels), 2 (kinderslot versleuteld + instellingen achter pincode), 3 (menu in zes groepen), 4 (Esc instelbaar). Open: punt 5 (code opschonen, 4.11.0).
+
+## (4.10.0, gebouwd) oorspronkelijk plan
 
 Gevraagd op 21-11-2026, nog niet gebouwd ("niet nu").
 

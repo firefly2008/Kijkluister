@@ -34,6 +34,7 @@
 #include "medialibrary.h"
 #include "artframe.h"
 #include "paths.h"
+#include "apikeys.h"
 #include "recorder.h"
 #include "streamrelay.h"
 #include "components.h"
@@ -288,6 +289,7 @@ int main(int argc, char *argv[])
     ArtFrame frame(appDataDir());
     Recorder recorder(appDataDir());
     StreamRelay streamRelay;
+    ApiKeys apiKeys(appDataDir());
     Components components(appDataDir());
     MpcPlayer mpc(appDataDir());
 
@@ -318,6 +320,7 @@ int main(int argc, char *argv[])
     view.rootContext()->setContextProperty(QStringLiteral("frame"), &frame);
     view.rootContext()->setContextProperty(QStringLiteral("recorder"), &recorder);
     view.rootContext()->setContextProperty(QStringLiteral("streamRelay"), &streamRelay);
+    view.rootContext()->setContextProperty(QStringLiteral("apiKeys"), &apiKeys);
     view.rootContext()->setContextProperty(QStringLiteral("mpc"), &mpc);
     view.rootContext()->setContextProperty(QStringLiteral("components"), &components);
     RadioModel radio(appDataDir());
@@ -387,6 +390,7 @@ int main(int argc, char *argv[])
     view.rootContext()->setContextProperty(QStringLiteral("photos"), &photos);
     HomeBridge home(&view);
     view.rootContext()->setContextProperty(QStringLiteral("homeBridge"), &home);
+    home.setEscMode(QSettings(appDataDir() + QStringLiteral("/settings.ini"), QSettings::IniFormat).value(QStringLiteral("global/escMode")).toString());
     QObject::connect(&home, &HomeBridge::homeRequested, &gamepad, &GamepadNavigator::homeRequested);
     QObject::connect(&gamepad, &GamepadNavigator::guidePressed, &home, &HomeBridge::goHome);
     QObject::connect(&cec, &Cec::homeRequested, &home, &HomeBridge::goHome);

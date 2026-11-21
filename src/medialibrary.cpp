@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
-#include "builtinkey.h"
+#include "apikeys.h"
 #include "mpcplayer.h"
 #include "medialibrary.h"
 #include "securestore.h"
@@ -202,10 +202,7 @@ MediaLibrary::MediaLibrary(const QString &dataDir, QObject *parent)
         m_showsFolders << oldShows;
     }
     m_userKey = SecureStore::value(m_settings, QStringLiteral("library/tmdbKey")).toString();
-    if (m_userKey == BuiltinKey::token()) {
-        m_userKey.clear();
-    }
-    m_apiKey = m_userKey.isEmpty() ? BuiltinKey::token() : m_userKey;
+    m_apiKey = m_userKey.isEmpty() ? ApiKeys::testTmdbKey() : m_userKey;
 
     QFile file(m_dataDir + QStringLiteral("/library.json"));
     if (file.open(QIODevice::ReadOnly)) {
@@ -273,11 +270,8 @@ void MediaLibrary::configureFolders(const QStringList &moviesFolders, const QStr
     };
     m_moviesFolders = clean(moviesFolders);
     m_showsFolders = clean(showsFolders);
-    // Alleen na ontgrendelen mag de sleutel veranderen; dezelfde als de ingebouwde = niets opslaan
-    if (m_unlocked) {
-        m_userKey = apiKey.trimmed() == BuiltinKey::token() ? QString() : apiKey.trimmed();
-    }
-    m_apiKey = m_userKey.isEmpty() ? BuiltinKey::token() : m_userKey;
+    m_userKey = apiKey.trimmed();
+    m_apiKey = m_userKey.isEmpty() ? ApiKeys::testTmdbKey() : m_userKey;
     m_keyRejected = false;
     m_settings.setValue(QStringLiteral("library/moviesFolders"), m_moviesFolders);
     m_settings.setValue(QStringLiteral("library/showsFolders"), m_showsFolders);
@@ -286,7 +280,7 @@ void MediaLibrary::configureFolders(const QStringList &moviesFolders, const QStr
     SecureStore::setValue(m_settings, QStringLiteral("library/tmdbKey"), m_userKey);
     m_settings.sync();
     Q_EMIT settingsChanged();
-    qInfo() << "Library folders" << m_moviesFolders << m_showsFolders << "key" << (m_userKey.isEmpty() ? "builtin" : "own");
+    qInfo() << "Library folders" << m_moviesFolders << m_showsFolders << "key" << (m_userKey.isEmpty() ? "none" : "own");
     scan(false);
 }
 
@@ -845,16 +839,16 @@ bool MediaLibrary::play(const QString &path)
     return QDesktopServices::openUrl(QUrl::fromLocalFile(path));
 }
 
-bool MediaLibrary::unlock(const QString &pin)
+void MediaLibrary::setApiKey(const QString &key)
 {
-    m_unlocked = BuiltinKey::pinMatches(pin);
-    qInfo() << "Library key unlock" << (m_unlocked ? "ok" : "wrong pin");
+    m_userKey = key.trimmed();
+    m_apiKey = m_userKey.isEmpty() ? ApiKeys::testTmdbKey() : m_userKey;
+    m_keyRejected = false;
+    SecureStore::setValue(m_settings, QStringLiteral("library/tmdbKey"), m_userKey);
+    m_settings.sync();
     Q_EMIT settingsChanged();
-    return m_unlocked;
-}
-
-void MediaLibrary::lock()
-{
-    m_unlocked = false;
-    Q_EMIT settingsChanged();
+    qInfo() << "TMDB key" << (m_userKey.isEmpty() ? "none" : "set");
+    if (!m_userKey.isEmpty() && configured()) {
+        scan(false);
+    }
 }

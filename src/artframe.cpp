@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: GPL-2.0-or-later
 #include "artframe.h"
-#include "photokey.h"
+#include "apikeys.h"
 
 #include <QCryptographicHash>
 #include <QDir>
@@ -478,12 +478,12 @@ void ArtFrame::fetchCommons(bool paintings)
     });
 }
 
-// Unsplash: gratis natuurfoto's met de ingebouwde sleutel (vroeger Pexels met eigen sleutel)
+// Unsplash: gratis natuurfoto's met de eigen sleutel van de gebruiker (Instellingen → Sleutels)
 void ArtFrame::fetchPexels()
 {
-    const QString key = UnsplashKey::key();
+    const QString key = (ApiKeys::instance() ? ApiKeys::instance()->unsplashKey() : QString());
     if (key.isEmpty()) {
-        setStatus(tr("Unsplash is in deze versie niet beschikbaar"), false);
+        setStatus(tr("Unsplash heeft een eigen sleutel nodig: Instellingen → Sleutels"), false);
         return;
     }
     QUrl url(QStringLiteral("https://api.unsplash.com/search/photos"));

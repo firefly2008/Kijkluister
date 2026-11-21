@@ -5,6 +5,7 @@
 
 #include <QObject>
 #include "paths.h"
+#include "securestore.h"
 #include <QSettings>
 #include <QStringList>
 
@@ -18,9 +19,19 @@ class Parental : public QObject
 public:
     explicit Parental(QObject *parent = nullptr);
 
-    bool enabled() const { return !m_settings.value(QStringLiteral("parental/pin")).toString().isEmpty(); }
+    // Pincode, vergrendelde tegels en kijktijd staan versleuteld (Windows DPAPI) in settings.ini: niet te lezen of
+    // aan te passen met Kladblok. Is de versleutelde pincode wel aanwezig maar onleesbaar (aangepast), dan blijft
+    // het kinderslot aan.
+    bool enabled() const { return !sval(QStringLiteral("parental/pin")).toString().isEmpty() || m_settings.contains(QStringLiteral("parental/pin_dpapi")); }
     bool unlocked() const;
-    QStringList locked() const { return m_settings.value(QStringLiteral("parental/locked")).toStringList(); }
+    QStringList locked() const { return sval(QStringLiteral("parental/locked")).toStringList(); }
+    // Kijktijd van het kinderprofiel (minuten per dag, 0 = onbeperkt) en wat er vandaag al gekeken is
+    Q_INVOKABLE int kidsMinutes() const { return sval(QStringLiteral("parental/kidsMinutes"), 0).toInt(); }
+    Q_INVOKABLE void setKidsMinutes(int minutes) { sset(QStringLiteral("parental/kidsMinutes"), minutes); }
+    Q_INVOKABLE int kidsUsed(const QString &day) const { return sval(QStringLiteral("parental/kidsUsed/") + day, 0).toInt(); }
+    Q_INVOKABLE int kidsExtra(const QString &day) const { return sval(QStringLiteral("parental/kidsExtra/") + day, 0).toInt(); }
+    Q_INVOKABLE void setKidsExtra(const QString &day, int minutes) { sset(QStringLiteral("parental/kidsExtra/") + day, minutes); }
+    Q_INVOKABLE void setKidsUsed(const QString &day, int minutes) { sset(QStringLiteral("parental/kidsUsed/") + day, minutes); }
 
     // Seconden dat de pincode niet geprobeerd kan worden (na 5 foute pogingen)
     Q_INVOKABLE int waitSeconds() const;
@@ -42,7 +53,9 @@ Q_SIGNALS:
 
 private:
     QString hash(const QString &pin) const;
-    QSettings m_settings{appSettingsFile(), QSettings::IniFormat};
+    QVariant sval(const QString &key, const QVariant &fallback = {}) const { return SecureStore::value(m_settings, key, fallback); }
+    void sset(const QString &key, const QVariant &value) const { SecureStore::setValue(m_settings, key, value); }
+    mutable QSettings m_settings{appSettingsFile(), QSettings::IniFormat};
     qint64 m_unlockedUntil = 0;
     bool m_kids = false;
 };
