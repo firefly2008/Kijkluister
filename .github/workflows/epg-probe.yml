@@ -11,23 +11,35 @@ jobs:
         run: |
           set +e
           UA='Mozilla/5.0 (Windows NT 10.0; Win64; x64) Kijkluister-probe'
-          hdr() { echo "=== $1"; curl -s -m 25 -A "$UA" -o /tmp/o -D /tmp/h -w "http %{http_code} %{size_download} bytes %{content_type}\n" "$1"; head -c 400 /tmp/o | tr -d '\r' | head -c 400; echo; }
-          for u in \
-            https://www.open-epg.com/files/netherlands.xml.gz \
-            https://epgshare01.online/epgshare01/epg_ripper_NL1.xml.gz \
-            https://tvprofil.net/xmltv/ \
-            https://www.tvgids.nl/ \
-            https://www.rtl.nl/ \
-            https://www.rtlxl.nl/ \
-            https://www.nporadio2.nl/api/broadcasts \
-            https://www.nporadio2.nl/api/tracks \
-            https://www.nporadio1.nl/api/broadcasts \
-            https://api.nporadio.nl/graphql \
-            https://backstage-api.npo.nl/ \
-            https://backstage-docs.npo.nl/ ; do hdr "$u"; done
-          for f in open-epg epgshare; do :; done
-          echo "=== RTL in open-epg"
-          curl -s -m 60 -A "$UA" https://www.open-epg.com/files/netherlands.xml.gz -o /tmp/oe.gz; ls -l /tmp/oe.gz; gunzip -c /tmp/oe.gz 2>/dev/null > /tmp/oe.xml; wc -c /tmp/oe.xml; grep -o '<channel id="[^"]*"' /tmp/oe.xml | grep -i 'rtl\|npo' | head -30; for c in $(grep -o '<channel id="[^"]*"' /tmp/oe.xml | grep -i 'rtl' | sed 's/.*id="//;s/"//'); do echo "$c programmes: $(grep -c "channel=\"$c\"" /tmp/oe.xml)"; done
-          echo "=== RTL in epgshare"
-          curl -s -m 90 -A "$UA" https://epgshare01.online/epgshare01/epg_ripper_NL1.xml.gz -o /tmp/es.gz; ls -l /tmp/es.gz; gunzip -c /tmp/es.gz 2>/dev/null > /tmp/es.xml; wc -c /tmp/es.xml; grep -o '<channel id="[^"]*"' /tmp/es.xml | grep -i 'rtl' | head; for c in $(grep -o '<channel id="[^"]*"' /tmp/es.xml | grep -i 'rtl' | sed 's/.*id="//;s/"//'); do echo "$c programmes: $(grep -c "channel=\"$c\"" /tmp/es.xml)"; done
-          grep -m3 '<programme' /tmp/es.xml | cut -c1-300
+          st() { printf '%s -> ' "$1"; curl -s -L -m 25 -A "$UA" -o /dev/null -w "http %{http_code} final %{url_effective}\n" "$1"; }
+          for u in https://npo.nl/start/live "https://npo.nl/start/live?channel=npo-1" https://npo.nl/start/live/npo-1 https://www.npostart.nl/live/npo-1 \
+            https://www.rtlxl.nl/live https://www.rtlxl.nl/live/rtl4 https://www.rtlxl.nl/zenders https://www.rtlxl.nl/live/rtl-4 https://www.rtl.nl/rtlxl ; do st "$u"; done
+          echo "=== NPO radio broadcasts (JSON-structuur)"
+          for s in nporadio1.nl nporadio2.nl npo3fm.nl nporadio4.nl nporadio5.nl; do
+            printf '%s: ' $s; curl -s -m 25 -A "$UA" "https://www.$s/api/broadcasts" -o /tmp/b.json -w "%{http_code} %{size_download}\n"
+            python3 - <<'PY'
+import json
+d=json.load(open('/tmp/b.json'))
+items=d.get('data',[])
+print(' n=',len(items),' keys=',sorted(items[0].keys()) if items else None)
+for it in items[:3]:
+    print('  ',{k:(str(v)[:60]) for k,v in it.items() if k in ('title','startdatetime','enddatetime','presenters','broadcaster','description','channel')})
+PY
+          done
+          echo "=== NPO radio tracks keys"
+          curl -s -m 25 -A "$UA" https://www.nporadio2.nl/api/tracks -o /tmp/t.json; python3 - <<'PY'
+import json
+d=json.load(open('/tmp/t.json'))['data']
+print(len(d), sorted(d[0].keys())); print({k:str(v)[:60] for k,v in d[0].items()})
+PY
+          echo "=== epgshare NL1: kanalen en dekking"
+          curl -s -m 90 -A "$UA" https://epgshare01.online/epgshare01/epg_ripper_NL1.xml.gz -o /tmp/es.gz; gunzip -c /tmp/es.gz > /tmp/es.xml
+          grep -o '<channel id="[^"]*"' /tmp/es.xml | grep -i 'npo\|rtl\|3FM\|radio' | sed 's/<channel id=//' | tr '\n' ' '; echo
+          python3 - <<'PY'
+import re
+x=open('/tmp/es.xml',encoding='utf8').read()
+for c in ['RTL.4.nl','NPO.1.nl','NPO.2.nl','NPO.3.nl','RTL.Z.nl']:
+    p=re.findall(r'<programme start="(\d+)[^"]*" stop="(\d+)[^"]*" channel="%s">\s*<title[^>]*>([^<]*)'%re.escape(c),x)
+    print(c,len(p), p[0] if p else None, p[-1] if p else None)
+print(re.findall(r'<programme[^>]*channel="RTL.4.nl">.*?</programme>',x,re.S)[0][:500])
+PY
