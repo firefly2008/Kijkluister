@@ -32,6 +32,25 @@ const QString favoritesGroup = QStringLiteral("Favorieten");
 const QString allGroup = QStringLiteral("Alle zenders");
 const QString regionalGroup = QStringLiteral("Regionale tv");
 const QString otherGroup = QStringLiteral("Overig");
+const QString nlGroup = QStringLiteral("NPO & RTL");
+const QString webPrefix = QStringLiteral("web:");
+
+// NPO- en RTL-zenders: live kijken kan alleen op hun eigen site (beveiligde streams),
+// de tv-gids (nu/straks en omschrijvingen) halen we wel zelf op
+struct NlChannel { const char *name; const char *page; const char *epg; };
+const NlChannel nlChannels[] = {
+    {"NPO 1", "https://npo.nl/start/live/npo-1", "NPO.1.nl"},
+    {"NPO 2", "https://npo.nl/start/live/npo-2", "NPO.2.nl"},
+    {"NPO 3", "https://npo.nl/start/live/npo-3", "NPO.3.nl"},
+    {"NPO 1 Extra", "https://npo.nl/start/live", "NPO.1.Extra.nl"},
+    {"NPO 2 Extra", "https://npo.nl/start/live", "NPO.2.Extra.nl"},
+    {"NPO Politiek en Nieuws", "https://npo.nl/start/live", "NPO.Politiek.en.Nieuws.nl"},
+    {"RTL 4", "https://www.rtl.nl/", "RTL.4.nl"},
+    {"RTL 5", "https://www.rtl.nl/", "RTL.5.nl"},
+    {"RTL 7", "https://www.rtl.nl/", "RTL.7.nl"},
+    {"RTL 8", "https://www.rtl.nl/", "RTL.8.nl"},
+    {"RTL Z", "https://www.rtl.nl/", "RTL.Z.nl"},
+};
 
 // Zelfde kenmerken als open-tv (src-tauri/src/m3u.rs)
 const QRegularExpression nameAttr(QStringLiteral(R"re(tvg-name="([^"]*)")re"));
@@ -170,6 +189,9 @@ IptvModel::IptvModel(const QString &dataDir, QObject *parent)
         if (!m_epgUrls.contains(u)) {
             m_epgUrls << u;
         }
+    }
+    if (!m_epgUrls.contains(nlGuideUrl())) {
+        m_epgUrls << nlGuideUrl();
     }
     m_reminders = m_settings.value(QStringLiteral("iptv/reminders")).toList();
     m_seriesRules = m_settings.value(QStringLiteral("iptv/series")).toList();
@@ -337,6 +359,11 @@ void IptvModel::rebuildGroups()
                          QString::fromUtf8(r.epg), -1, QString()});
     }
     m_all.append(regional);   // achteraan: in "Alle zenders" blijven je eigen zenders vooraan
+    m_all.erase(std::remove_if(m_all.begin(), m_all.end(), [](const Channel &c) { return c.group == nlGroup; }), m_all.end());
+    for (const NlChannel &n : nlChannels) {
+        m_all.append({QString::fromUtf8(n.name), QString(), nlGroup, webPrefix + QString::fromUtf8(n.page),
+                      QString::fromUtf8(n.epg), -1, QString()});
+    }
 
     QStringList groups{favoritesGroup, allGroup};
     QSet<QString> seen;
@@ -349,6 +376,8 @@ void IptvModel::rebuildGroups()
     // Regionale tv als eerste groep na Alle zenders
     groups.removeAll(regionalGroup);
     groups.insert(2, regionalGroup);
+    groups.removeAll(nlGroup);
+    groups.insert(2, nlGroup);
     m_groups = groups;
     // Zolang je zelf nog niets kiest: begin bij de Nederlandse zenders (niet bij ruim 1.000 zenders)
     if (!m_groupChosen && m_group == allGroup && m_groups.contains(QStringLiteral("Nederland"))) {
@@ -741,6 +770,28 @@ QVariantMap IptvModel::channelAt(int row) const
             {QStringLiteral("url"), c.url}, {QStringLiteral("number"), row + 1}};
 }
 
+QString IptvModel::nlGuideUrl()
+{
+    return QStringLiteral("https://epgshare01.online/epgshare01/epg_ripper_NL1.xml.gz");
+}
+
+bool IptvModel::isWebChannel(int row) const
+{
+    return channelAt(row).value(QStringLiteral("url")).toString().startsWith(webPrefix);
+}
+
+// NPO/RTL: de zender op de site van de omroep openen
+bool IptvModel::openWeb(int row)
+{
+    const QString url = channelAt(row).value(QStringLiteral("url")).toString();
+    if (!url.startsWith(webPrefix)) {
+        return false;
+    }
+    const bool ok = QDesktopServices::openUrl(QUrl(url.mid(webPrefix.size())));
+    qInfo() << "IPTV web channel" << channelAt(row).value(QStringLiteral("name")).toString() << (ok ? "opened" : "FAILED");
+    return ok;
+}
+
 bool IptvModel::openExternal(int row)
 {
     const QString url = channelAt(row).value(QStringLiteral("url")).toString();
@@ -762,7 +813,7 @@ void IptvModel::saveCache() const
 {
     QJsonArray array;
     for (const Channel &c : m_all) {
-        if (c.group == regionalGroup) {
+        if (c.group == regionalGroup || c.group == nlGroup) {
             continue;
         }
         array.append(QJsonArray{c.name, c.logo, c.group, c.url, c.epgId, c.xtreamSource, c.streamId});
@@ -805,6 +856,10 @@ void IptvModel::reloadEpg()
         return;
     }
     m_shortEpgRequested.clear();
+    // Gids voor de NPO- en RTL-zenders (gratis, ook zonder eigen zenderlijst)
+    if (!m_epgUrls.contains(nlGuideUrl())) {
+        m_epgUrls << nlGuideUrl();
+    }
     if (m_epgUrls.isEmpty()) {
         m_epg = {};
         m_epgBase.clear();

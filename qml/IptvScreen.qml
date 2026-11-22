@@ -140,6 +140,13 @@ FocusScope {
         if (!ch.url) {
             return
         }
+        // NPO en RTL: live kijken kan alleen op de site van de omroep
+        if (iptv.isWebChannel(row)) {
+            if (iptv.openWeb(row)) {
+                console.info("IPTV web channel", ch.name)
+            }
+            return
+        }
         if (playing && channel.url && channel.url !== ch.url) {
             previousUrl = channel.url
         }
@@ -296,6 +303,9 @@ FocusScope {
     }
 
     function openRecord(row) {
+        if (row >= 0 && iptv.isWebChannel(row)) {
+            return   // NPO en RTL lopen via hun eigen site: niet op te nemen
+        }
         recordPanel.open(row >= 0 ? iptv.channelAt(row) : channel, playing ? playerView : grid)
     }
 

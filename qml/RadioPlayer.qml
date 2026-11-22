@@ -131,6 +131,7 @@ FocusScope {
         row = radio.isStation(stationRow) ? stationRow : radio.nextStation(stationRow, 1)
         streamIndex = 0
         playStream()
+        radio.requestProgramme(row)
     }
 
     function playStream() {
@@ -196,6 +197,14 @@ FocusScope {
             // Sommige zenders sturen hun eigen naam of een slogan als titel
             radioPlayer.nowPlaying = text.toLowerCase().indexOf(radio.nameAt(radioPlayer.row).toLowerCase()) >= 0 ? "" : text
         }
+    }
+
+    // Programma-info (NPO-zenders) elke minuut verversen
+    Timer {
+        interval: 60000
+        repeat: true
+        running: radioPlayer.visible && radioPlayer.row >= 0
+        onTriggered: radio.requestProgramme(radioPlayer.row)
     }
 
     // Blijft het te lang laden: volgend adres
@@ -330,6 +339,38 @@ FocusScope {
             text: radioPlayer.row >= 0 ? radio.subtitleAt(radioPlayer.row) : ""
             color: "#c9ccd1"
             font.pixelSize: radioPlayer.unit * 2.8 * appModel.fontScale
+        }
+
+        // Programma van de zender (NPO Radio): nu en straks
+        Column {
+            id: programmeBox
+            readonly property var info: radio.programme
+            readonly property bool shown: info.title !== undefined && info.title !== "" && info.station === (radioPlayer.row >= 0 ? radio.nameAt(radioPlayer.row) : "")
+            anchors.horizontalCenter: parent.horizontalCenter
+            visible: shown
+            spacing: radioPlayer.unit * 0.4
+            Text {
+                textFormat: Text.PlainText
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: Math.min(implicitWidth, radioPlayer.width * 0.8)
+                elide: Text.ElideRight
+                horizontalAlignment: Text.AlignHCenter
+                text: programmeBox.shown ? programmeBox.info.title + (programmeBox.info.presenters ? "  ·  " + programmeBox.info.presenters : "") : ""
+                color: "#ffffff"
+                font.pixelSize: radioPlayer.unit * 3.2 * appModel.fontScale
+                font.weight: Font.DemiBold
+            }
+            Text {
+                textFormat: Text.PlainText
+                anchors.horizontalCenter: parent.horizontalCenter
+                width: Math.min(implicitWidth, radioPlayer.width * 0.8)
+                elide: Text.ElideRight
+                horizontalAlignment: Text.AlignHCenter
+                visible: programmeBox.shown && programmeBox.info.nextTitle !== undefined && programmeBox.info.nextTitle !== ""
+                text: visible ? qsTr("Straks %1: %2").arg(Qt.formatDateTime(new Date(programmeBox.info.nextStart * 1000), "HH:mm")).arg(programmeBox.info.nextTitle) : ""
+                color: "#aeb3ba"
+                font.pixelSize: radioPlayer.unit * 2.4 * appModel.fontScale
+            }
         }
 
         Row {

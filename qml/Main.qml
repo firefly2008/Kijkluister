@@ -1261,6 +1261,16 @@ Rectangle {
                 radioPlayer.close()
                 Qt.callLater(() => focusSection(sectionDefs.findIndex(d => d.model === appModel), 0, false))
             })
+        } else if (selfTest === "radioprogramme") {
+            radioPlayer.open(0, mediaGrid())
+        } else if (selfTest === "nlchannels") {
+            iptvScreen.open(mediaGrid(), "NPO & RTL")
+            testStep.run(30000, () => {
+                let withGuide = 0
+                for (let r = 0; r < iptv.count; ++r) if (iptv.nowNext(r).nowTitle) ++withGuide
+                console.info("NL guide", withGuide >= 8 ? "ok" : "fail", withGuide, "of", iptv.count)
+                console.info("NL web channels", iptv.isWebChannel(0))
+            })
         } else if (selfTest === "radiodrift") {
             radioPlayer.idleMs = 2000
             radioPlayer.open(0, mediaGrid())

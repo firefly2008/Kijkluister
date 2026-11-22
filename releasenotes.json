@@ -1,5 +1,19 @@
 [
   {
+    "version": "4.12.0",
+    "date": "2026-11-22",
+    "notes": [
+      "Live tv: nieuwe groep \"NPO & RTL\" met NPO 1, 2, 3 (en de extra zenders) en RTL 4, 5, 7, 8 en Z, met tv-gids (nu, straks en omschrijving). Live kijken opent de site van de omroep, want hun streams zijn beveiligd",
+      "Radio: bij NPO Radio 1, 2, 3FM, Klassiek, 5 en FunX zie je het programma en de presentator, met wat er straks komt",
+      "Onder de motorkap: de oude NPO Backstage-API voor radio bestaat niet meer; we gebruiken de open gegevens van de zender-sites"
+    ],
+    "notes_en": [
+      "Live tv: new group \"NPO & RTL\" with NPO 1, 2, 3 (and the extra channels) and RTL 4, 5, 7, 8 and Z, with a TV guide (now, next and description). Watching live opens the broadcaster's site, because their streams are protected",
+      "Radio: NPO Radio 1, 2, 3FM, Klassiek, 5 and FunX show the programme and presenter, plus what is on next",
+      "Under the hood: the old NPO Backstage API for radio no longer exists; we use the open data from the station sites"
+    ]
+  },
+  {
     "version": "4.11.0",
     "date": "2026-11-21",
     "notes": [

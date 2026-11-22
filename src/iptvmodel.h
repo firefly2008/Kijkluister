@@ -77,6 +77,10 @@ public:
     Q_INVOKABLE bool isFavorite(int row) const;
     Q_INVOKABLE QVariantMap channelAt(int row) const;
     Q_INVOKABLE bool openExternal(int row);
+    // NPO- en RTL-zenders (live kijken op de site van de omroep)
+    Q_INVOKABLE bool isWebChannel(int row) const;
+    Q_INVOKABLE bool openWeb(int row);
+    static QString nlGuideUrl();
     Q_INVOKABLE QString localPath(const QUrl &url) const;
 
     // Gids: wat er nu en straks op een zender is, en het hele overzicht

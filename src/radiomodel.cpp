@@ -11,6 +11,8 @@
 #include <QJsonObject>
 #include <QSet>
 #include <QSettings>
+#include <QTimeZone>
+#include <QDateTime>
 #include <QFile>
 #include <QImage>
 #include <QNetworkReply>
@@ -566,4 +568,86 @@ void RadioModel::fetchLogos()
             Q_EMIT revisionChanged();
         });
     }
+}
+
+// Programma-info van de NPO-zenders. De sites van de zenders geven open JSON (geen sleutel nodig);
+// de oude Backstage-API voor radio bestaat niet meer.
+void RadioModel::requestProgramme(int row)
+{
+    const int token = ++m_programmeToken;
+    QString host;
+    QString name;
+    if (isStation(row)) {
+        name = st(row).name;
+        const QString site = st(row).site;
+        if (site.contains(QLatin1String("npoklassiek"))) {
+            host = QStringLiteral("www.nporadio4.nl");
+        } else if (site.contains(QLatin1String("nporadio1.nl")) || site.contains(QLatin1String("nporadio2.nl"))
+                   || site.contains(QLatin1String("nporadio5.nl")) || site.contains(QLatin1String("npo3fm.nl"))
+                   || site.contains(QLatin1String("funx.nl"))) {
+            host = site;
+        }
+    }
+    if (host.isEmpty()) {
+        if (!m_programme.isEmpty()) {
+            m_programme.clear();
+            Q_EMIT programmeChanged();
+        }
+        return;
+    }
+    QNetworkRequest request(QUrl(QStringLiteral("https://%1/api/broadcasts").arg(host)));
+    request.setHeader(QNetworkRequest::UserAgentHeader, QStringLiteral("Kijkluister"));
+    request.setTransferTimeout(15000);
+    QNetworkReply *reply = m_network.get(request);
+    connect(reply, &QNetworkReply::finished, this, [this, reply, token, name] {
+        reply->deleteLater();
+        if (token != m_programmeToken) {
+            return;   // intussen een andere zender
+        }
+        QVariantMap result;
+        if (reply->error() == QNetworkReply::NoError) {
+            const QJsonArray items = QJsonDocument::fromJson(reply->readAll()).object().value(QStringLiteral("data")).toArray();
+            QTimeZone zone(QByteArrayLiteral("Europe/Amsterdam"));
+            auto seconds = [&zone](const QString &text) -> qint64 {
+                QDateTime t = QDateTime::fromString(text.left(19), Qt::ISODate);
+                if (!t.isValid()) {
+                    return 0;
+                }
+                t.setTimeZone(zone.isValid() ? zone : QTimeZone::LocalTime);
+                return t.toSecsSinceEpoch();
+            };
+            const qint64 now = QDateTime::currentSecsSinceEpoch();
+            for (int i = 0; i < items.size(); ++i) {
+                const QJsonObject o = items.at(i).toObject();
+                const qint64 start = seconds(o.value(QStringLiteral("startdatetime")).toString());
+                qint64 stop = seconds(o.value(QStringLiteral("stopdatetime")).toString());
+                if (i + 1 < items.size()) {
+                    const qint64 nextStart = seconds(items.at(i + 1).toObject().value(QStringLiteral("startdatetime")).toString());
+                    if (stop <= start || stop > nextStart) {
+                        stop = nextStart;
+                    }
+                }
+                if (start == 0 || start > now || (stop != 0 && stop <= now)) {
+                    continue;
+                }
+                result = {{QStringLiteral("station"), name},
+                          {QStringLiteral("title"), o.value(QStringLiteral("title")).toString()},
+                          {QStringLiteral("presenters"), o.value(QStringLiteral("presenters")).toString()},
+                          {QStringLiteral("broadcaster"), o.value(QStringLiteral("broadcaster")).toString()},
+                          {QStringLiteral("start"), double(start)},
+                          {QStringLiteral("stop"), double(stop)}};
+                if (i + 1 < items.size()) {
+                    const QJsonObject n = items.at(i + 1).toObject();
+                    result.insert(QStringLiteral("nextTitle"), n.value(QStringLiteral("title")).toString());
+                    result.insert(QStringLiteral("nextStart"), double(seconds(n.value(QStringLiteral("startdatetime")).toString())));
+                }
+                break;
+            }
+        } else {
+            qWarning() << "Radio programme failed" << name << reply->errorString();
+        }
+        qInfo() << "Radio programme" << (result.isEmpty() ? "none" : "ok") << name << result.value(QStringLiteral("title")).toString();
+        m_programme = result;
+        Q_EMIT programmeChanged();
+    });
 }

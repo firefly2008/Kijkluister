@@ -7,6 +7,7 @@
 #include <QAbstractListModel>
 #include <QNetworkAccessManager>
 #include <QStringList>
+#include <QVariantMap>
 
 class RadioModel : public QAbstractListModel
 {
@@ -17,6 +18,8 @@ class RadioModel : public QAbstractListModel
     Q_PROPERTY(QVariantList results READ results NOTIFY resultsChanged)
     Q_PROPERTY(bool searching READ searching NOTIFY resultsChanged)
     Q_PROPERTY(int hiddenCount READ hiddenCount NOTIFY countChanged)
+    // Programma-info van NPO-zenders (nporadioX.nl/api/broadcasts): nu en straks
+    Q_PROPERTY(QVariantMap programme READ programme NOTIFY programmeChanged)
 
 public:
     enum Roles { NameRole = Qt::UserRole + 1, IconRole, AccentRole, PathRole };
@@ -32,6 +35,8 @@ public:
     bool searching() const { return m_searching; }
     int hiddenCount() const;
     int revision() const { return m_revision; }
+    QVariantMap programme() const { return m_programme; }
+    Q_INVOKABLE void requestProgramme(int row);
 
     Q_INVOKABLE QString nameAt(int row) const;
     Q_INVOKABLE QString iconAt(int row) const;
@@ -60,6 +65,7 @@ public:
 
 Q_SIGNALS:
     void revisionChanged();
+    void programmeChanged();
     void countChanged();
     void resultsChanged();
     void playRequested(int row);
@@ -92,4 +98,6 @@ private:
     bool m_searching = false;
     QNetworkAccessManager m_network;
     int m_revision = 0;
+    QVariantMap m_programme;
+    int m_programmeToken = 0;
 };
