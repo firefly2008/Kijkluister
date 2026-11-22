@@ -1262,7 +1262,7 @@ Rectangle {
                 Qt.callLater(() => focusSection(sectionDefs.findIndex(d => d.model === appModel), 0, false))
             })
         } else if (selfTest === "radioprogramme") {
-            radioPlayer.open(0, mediaGrid())
+            radioPlayer.open(Math.max(0, radio.rowOfName("NPO Radio 2")), mediaGrid())
         } else if (selfTest === "nlchannels") {
             iptvScreen.open(mediaGrid(), "NPO & RTL")
             testStep.run(30000, () => {
