@@ -84,6 +84,7 @@ FocusScope {
                     id: removeButton
                     unit: setup.unit
                     text: qsTr("Weg")
+                    onActiveFocusChanged: if (activeFocus) flick.ensureVisible(this)
                     onClicked: setup.removePath(fl.kind, index)
                 }
             }
@@ -131,18 +132,39 @@ FocusScope {
         id: panel
         anchors.centerIn: parent
         width: Math.min(parent.width * 0.9, setup.unit * 125)
-        height: content.height + setup.unit * 8
+        height: Math.min(content.height + setup.unit * 8, setup.height * 0.94)
         radius: setup.unit * 2
         color: "#1b1d22"
         border.color: "#33ffffff"
         border.width: 1
 
+        Flickable {
+            id: flick
+            anchors.fill: parent
+            anchors.margins: setup.unit * 4
+            contentHeight: content.height
+            clip: true
+            boundsBehavior: Flickable.StopAtBounds
+            flickableDirection: Flickable.VerticalFlick
+
+            // Zorg dat het item met focus in beeld blijft bij navigeren met de afstandsbediening
+            function ensureVisible(item) {
+                if (!item) {
+                    return
+                }
+                const p = item.mapToItem(content, 0, 0)
+                const top = p.y - setup.unit * 2
+                const bottom = p.y + item.height + setup.unit * 2
+                if (top < contentY) {
+                    contentY = Math.max(0, top)
+                } else if (bottom > contentY + height) {
+                    contentY = Math.min(Math.max(0, contentHeight - height), bottom - height)
+                }
+            }
+
         Column {
             id: content
-            anchors.top: parent.top
-            anchors.left: parent.left
-            anchors.right: parent.right
-            anchors.margins: setup.unit * 4
+            width: flick.width
             spacing: setup.unit * 1.6
 
             Text {
@@ -171,6 +193,7 @@ FocusScope {
                     unit: setup.unit
                     text: qsTr("+ Map toevoegen…")
                     onClicked: moviesDialog.open()
+                    onActiveFocusChanged: if (activeFocus) flick.ensureVisible(this)
                     KeyNavigation.down: showsButton
                 }
             }
@@ -185,6 +208,7 @@ FocusScope {
                     unit: setup.unit
                     text: qsTr("+ Map toevoegen…")
                     onClicked: showsDialog.open()
+                    onActiveFocusChanged: if (activeFocus) flick.ensureVisible(this)
                     KeyNavigation.up: moviesButton
                     KeyNavigation.down: keyField
                 }
@@ -217,6 +241,7 @@ FocusScope {
                     selectByMouse: true
                     KeyNavigation.up: showsButton
                     KeyNavigation.down: saveButton
+                    onActiveFocusChanged: if (activeFocus) flick.ensureVisible(parent)
                     onAccepted: setup.save()
                 }
                 Text {
@@ -255,6 +280,7 @@ FocusScope {
                     unit: setup.unit
                     text: qsTr("Opslaan en zoeken")
                     onClicked: setup.save()
+                    onActiveFocusChanged: if (activeFocus) flick.ensureVisible(this)
                     KeyNavigation.up: keyField
                     KeyNavigation.right: cancelButton
                 }
@@ -266,10 +292,12 @@ FocusScope {
                         setup.close()
                         setup.cancelled()
                     }
+                    onActiveFocusChanged: if (activeFocus) flick.ensureVisible(this)
                     KeyNavigation.up: keyField
                     KeyNavigation.left: saveButton
                 }
             }
+        }
         }
     }
 }

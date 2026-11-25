@@ -21,6 +21,13 @@ FocusScope {
     readonly property var current: detail !== null ? detail
                                   : (grid.currentIndex >= 0 && grid.currentIndex < items.length ? items[grid.currentIndex] : null)
 
+    // De aflevering die nu focus heeft in de serie-detail (voor plot + achtergrond)
+    readonly property var focusedEpisode:
+        (detail && detail.kind === "show" && detail.episodes
+         && episodeList.activeFocus && episodeList.currentIndex >= 0
+         && episodeList.currentIndex < detail.episodes.length)
+        ? detail.episodes[episodeList.currentIndex] : null
+
     anchors.fill: parent
     visible: false
     z: 50
@@ -110,6 +117,24 @@ FocusScope {
         return h > 0 ? h + "u " + (m < 10 ? "0" : "") + m + "m" : m + "m"
     }
 
+    function episodeMeta(e) {
+        if (!e) {
+            return ""
+        }
+        const parts = []
+        if (e.air) {
+            const d = new Date(e.air)
+            parts.push(isNaN(d.getTime()) ? e.air : Qt.formatDate(d, "d MMM yyyy"))
+        }
+        if (e.runtime) {
+            parts.push(formatRuntime(e.runtime))
+        }
+        if (e.rating) {
+            parts.push("★ " + Number(e.rating).toFixed(1))
+        }
+        return parts.join("   ·   ")
+    }
+
     function metaLine(item) {
         if (!item) {
             return ""
@@ -181,7 +206,9 @@ FocusScope {
     Image {
         id: backdrop
         anchors.fill: parent
-        source: lib.current ? (lib.current.backdrop || "") : ""
+        source: lib.focusedEpisode && lib.focusedEpisode.still
+                ? lib.focusedEpisode.still
+                : (lib.current ? (lib.current.backdrop || "") : "")
         sourceSize.width: 1920
         fillMode: Image.PreserveAspectCrop
         asynchronous: true
@@ -529,7 +556,8 @@ FocusScope {
                 elide: Text.ElideRight
                 color: "#d0d3d8"
                 font.pixelSize: (lib.unit * 2.3) * appModel.fontScale
-                text: lib.metaLine(lib.detail)
+                text: (lib.focusedEpisode && lib.episodeMeta(lib.focusedEpisode))
+                      ? lib.episodeMeta(lib.focusedEpisode) : lib.metaLine(lib.detail)
             }
             Text {
                 textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
@@ -549,7 +577,9 @@ FocusScope {
                 color: "#e8eaed"
                 font.pixelSize: (lib.unit * 2.3) * appModel.fontScale
                 lineHeight: 1.15
-                text: lib.detail ? (lib.detail.overview || qsTr("Geen beschrijving gevonden.")) : ""
+                text: lib.focusedEpisode && lib.focusedEpisode.overview
+                      ? lib.focusedEpisode.code + "  " + lib.focusedEpisode.overview
+                      : (lib.detail ? (lib.detail.overview || qsTr("Geen beschrijving gevonden.")) : "")
             }
             Item { width: 1; height: lib.unit * 0.5 }
             Row {
@@ -606,28 +636,42 @@ FocusScope {
                 required property var modelData
                 readonly property bool focused: episodeList.activeFocus && episodeList.currentIndex === index
                 width: episodeList.width
-                height: lib.unit * 5
+                height: lib.unit * 6.4
                 radius: lib.unit * 0.8
                 color: focused ? "#e8eaed" : (index % 2 === 0 ? "#400b0c0f" : "#200b0c0f")
-                Row {
+                Column {
                     anchors.verticalCenter: parent.verticalCenter
                     anchors.left: parent.left
+                    anchors.right: parent.right
                     anchors.leftMargin: lib.unit * 1.5
-                    spacing: lib.unit * 2
-                    Text {
-                        textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
-                        color: episodeRow.focused ? "#111318" : "#9fb4d0"
-                        font.pixelSize: (lib.unit * 2.2) * appModel.fontScale
-                        font.weight: Font.DemiBold
-                        text: episodeRow.modelData.code
+                    anchors.rightMargin: lib.unit * 1.5
+                    spacing: lib.unit * 0.3
+                    Row {
+                        spacing: lib.unit * 2
+                        Text {
+                            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
+                            color: episodeRow.focused ? "#111318" : "#9fb4d0"
+                            font.pixelSize: (lib.unit * 2.2) * appModel.fontScale
+                            font.weight: Font.DemiBold
+                            text: episodeRow.modelData.code
+                        }
+                        Text {
+                            textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
+                            width: episodeList.width - lib.unit * 16
+                            elide: Text.ElideRight
+                            color: episodeRow.focused ? "#111318" : "white"
+                            font.pixelSize: (lib.unit * 2.2) * appModel.fontScale
+                            text: episodeRow.modelData.title || qsTr("Aflevering ") + episodeRow.modelData.episode
+                        }
                     }
                     Text {
                         textFormat: Text.PlainText   // geen HTML uit zenderlijsten/gidsen uitvoeren
-                        width: episodeList.width - lib.unit * 16
+                        visible: text !== ""
+                        width: episodeList.width - lib.unit * 3
                         elide: Text.ElideRight
-                        color: episodeRow.focused ? "#111318" : "white"
-                        font.pixelSize: (lib.unit * 2.2) * appModel.fontScale
-                        text: episodeRow.modelData.title || qsTr("Aflevering ") + episodeRow.modelData.episode
+                        color: episodeRow.focused ? "#3a3f47" : "#9aa0a8"
+                        font.pixelSize: (lib.unit * 1.7) * appModel.fontScale
+                        text: lib.episodeMeta(episodeRow.modelData)
                     }
                 }
                 MouseArea {

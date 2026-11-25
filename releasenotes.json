@@ -1,5 +1,19 @@
 [
   {
+    "version": "4.13.0",
+    "date": "2026-11-25",
+    "notes": [
+      "Films & Series: kies je een serie, dan zie je per aflevering de beschrijving, de uitzenddatum, de duur en het cijfer, met een afbeelding van de aflevering op de achtergrond",
+      "Mappen kiezen: het scherm scrolt nu mee wanneer je meer mappen toevoegt dan er op het scherm passen",
+      "Afleveringsplots komen uit TMDB (met Engelse terugval als het Nederlands ontbreekt) of TVmaze; bestaande series vullen zich bij de eerstvolgende scan aan"
+    ],
+    "notes_en": [
+      "Movies & Series: when you pick a series you now see each episode's description, air date, duration and rating, with a still of the episode in the background",
+      "Choose folders: the screen now scrolls when you add more folders than fit on screen",
+      "Episode plots come from TMDB (with an English fallback when Dutch is missing) or TVmaze; existing series fill in on the next scan"
+    ]
+  },
+  {
     "version": "4.12.0",
     "date": "2026-11-22",
     "notes": [

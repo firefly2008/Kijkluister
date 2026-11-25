@@ -183,6 +183,77 @@ QString toFolder(const QString &value)
     return path.isEmpty() ? QString() : QDir::fromNativeSeparators(QDir::cleanPath(path));
 }
 
+// Per aflevering titel + info (plot, uitzenddatum, duur, cijfer, afbeelding) uit een
+// TMDB tv-antwoord met season/N append_to_response. Sleutel: "seizoen-aflevering".
+void collectTmdbEpisodes(const QJsonObject &show, const QList<int> &seasons, QJsonObject &titles, QJsonObject &info)
+{
+    for (int n : seasons) {
+        const QJsonArray eps = show.value(QStringLiteral("season/%1").arg(n)).toObject().value(QStringLiteral("episodes")).toArray();
+        for (const QJsonValue &e : eps) {
+            const QJsonObject ep = e.toObject();
+            const QString key = QStringLiteral("%1-%2").arg(n).arg(ep.value(QStringLiteral("episode_number")).toInt());
+            const QString name = ep.value(QStringLiteral("name")).toString();
+            if (!name.isEmpty()) {
+                titles.insert(key, name);
+            }
+            QJsonObject m;
+            m.insert(QStringLiteral("overview"), ep.value(QStringLiteral("overview")).toString());
+            const QString air = ep.value(QStringLiteral("air_date")).toString();
+            if (!air.isEmpty()) {
+                m.insert(QStringLiteral("air"), air);
+            }
+            const int runtime = ep.value(QStringLiteral("runtime")).toInt();
+            if (runtime > 0) {
+                m.insert(QStringLiteral("runtime"), runtime);
+            }
+            const double rating = ep.value(QStringLiteral("vote_average")).toDouble();
+            if (rating > 0) {
+                m.insert(QStringLiteral("rating"), qRound(rating * 10) / 10.0);
+            }
+            const QString still = tmdbImage(ep.value(QStringLiteral("still_path")), "w780");
+            if (!still.isEmpty()) {
+                m.insert(QStringLiteral("still"), still);
+            }
+            info.insert(key, m);
+        }
+    }
+}
+
+// Engelse terugval invullen: alleen lege velden aanvullen, Nederlands blijft voorgaan.
+void fillEpisodeGaps(const QJsonObject &titles2, const QJsonObject &info2, QJsonObject &titles, QJsonObject &info)
+{
+    for (auto it = info2.constBegin(); it != info2.constEnd(); ++it) {
+        const QString key = it.key();
+        if (titles.value(key).toString().isEmpty() && !titles2.value(key).toString().isEmpty()) {
+            titles.insert(key, titles2.value(key));
+        }
+        QJsonObject m = info.value(key).toObject();
+        const QJsonObject en = it.value().toObject();
+        if (m.value(QStringLiteral("overview")).toString().isEmpty()) {
+            m.insert(QStringLiteral("overview"), en.value(QStringLiteral("overview")));
+        }
+        for (const char *field : {"air", "runtime", "rating", "still"}) {
+            if (!m.contains(QLatin1String(field)) && en.contains(QLatin1String(field))) {
+                m.insert(QLatin1String(field), en.value(QLatin1String(field)));
+            }
+        }
+        info.insert(key, m);
+    }
+}
+
+// Afleveringen die op schijf staan maar (nog) geen plot hebben: dan Engelse terugval halen.
+bool hasEmptyOverview(const QJsonObject &entry, const QJsonObject &info)
+{
+    for (const QJsonValue &e : entry.value(QStringLiteral("episodes")).toArray()) {
+        const QJsonObject ep = e.toObject();
+        const QString key = QStringLiteral("%1-%2").arg(ep.value(QStringLiteral("season")).toInt()).arg(ep.value(QStringLiteral("episode")).toInt());
+        if (info.value(key).toObject().value(QStringLiteral("overview")).toString().isEmpty()) {
+            return true;
+        }
+    }
+    return false;
+}
+
 } // namespace
 
 MediaLibrary::MediaLibrary(const QString &dataDir, QObject *parent)
@@ -298,6 +369,13 @@ void MediaLibrary::scan(bool refreshAll)
             || (entry.value(QStringLiteral("kind")).toString() == QLatin1String("show") && source == QLatin1String("tvmaze")
                 && canImprove && !entry.value(QStringLiteral("tmdbTried")).toBool());
     };
+    // Eenmalig: eerder gescrapete series zonder afleveringsinfo opnieuw ophalen,
+    // zónder de bestaande gegevens te wissen (requeue, geen skelet).
+    auto wantsEpisodeInfo = [](const QJsonObject &entry) {
+        const QString source = entry.value(QStringLiteral("source")).toString();
+        return !entry.isEmpty() && !entry.contains(QStringLiteral("episodeInfo"))
+            && (source == QLatin1String("tmdb") || source == QLatin1String("tvmaze"));
+    };
 
     QJsonObject fresh;
     QStringList queue;
@@ -384,6 +462,9 @@ void MediaLibrary::scan(bool refreshAll)
                     {QStringLiteral("searchTitle"), name.title},
                     {QStringLiteral("year"), name.year},
                 };
+                queue << key;
+            } else if (wantsEpisodeInfo(entry)) {
+                // Bestaande serie bijwerken: gegevens behouden, alleen opnieuw ophalen
                 queue << key;
             }
             entry[QStringLiteral("episodes")] = episodes;
@@ -624,7 +705,7 @@ void MediaLibrary::scrapeShowTmdb(const QString &key, bool withYear)
         }
         tmdb(QStringLiteral("tv/%1").arg(id),
              {{QStringLiteral("language"), QStringLiteral("nl-NL")}, {QStringLiteral("append_to_response"), appends.join(QLatin1Char(','))}},
-             [this, key, id, sorted](const QJsonDocument &doc, int status) {
+             [this, key, id, sorted, appends](const QJsonDocument &doc, int status) {
                  QJsonObject entry = m_cache.value(key).toObject();
                  if (status != 200) {
                      finish(key, entry, QStringLiteral("none"));
@@ -647,16 +728,35 @@ void MediaLibrary::scrapeShowTmdb(const QString &key, bool withYear)
                  entry[QStringLiteral("maker")] = joinNames(s.value(QStringLiteral("created_by")).toArray()).replace(QStringLiteral(" / "), QStringLiteral(", "));
                  entry[QStringLiteral("makerLabel")] = QStringLiteral("Bedenker");
                  QJsonObject titles;
-                 for (int n : sorted) {
-                     const QJsonArray eps = s.value(QStringLiteral("season/%1").arg(n)).toObject().value(QStringLiteral("episodes")).toArray();
-                     for (const QJsonValue &e : eps) {
-                         const QJsonObject ep = e.toObject();
-                         titles.insert(QStringLiteral("%1-%2").arg(n).arg(ep.value(QStringLiteral("episode_number")).toInt()),
-                                       ep.value(QStringLiteral("name")).toString());
-                     }
-                 }
+                 QJsonObject info;
+                 collectTmdbEpisodes(s, sorted, titles, info);
                  entry[QStringLiteral("episodeTitles")] = titles;
-                 finish(key, entry, QStringLiteral("tmdb"));
+                 entry[QStringLiteral("episodeInfo")] = info;
+                 // Veel Nederlandse afleveringsplots zijn leeg: dan Engels bijhalen en lege velden invullen.
+                 if (!hasEmptyOverview(entry, info)) {
+                     finish(key, entry, QStringLiteral("tmdb"));
+                     return;
+                 }
+                 // Nederlandse gegevens vast bewaren zodat de Engelse terugval ze kan aanvullen
+                 if (m_cache.contains(key)) {
+                     m_cache.insert(key, entry);
+                 }
+                 tmdb(QStringLiteral("tv/%1").arg(id),
+                      {{QStringLiteral("language"), QStringLiteral("en-US")}, {QStringLiteral("append_to_response"), appends.join(QLatin1Char(','))}},
+                      [this, key, sorted](const QJsonDocument &enDoc, int enStatus) {
+                          QJsonObject entry = m_cache.value(key).toObject();
+                          if (enStatus == 200) {
+                              QJsonObject titles = entry.value(QStringLiteral("episodeTitles")).toObject();
+                              QJsonObject info = entry.value(QStringLiteral("episodeInfo")).toObject();
+                              QJsonObject titles2;
+                              QJsonObject info2;
+                              collectTmdbEpisodes(enDoc.object(), sorted, titles2, info2);
+                              fillEpisodeGaps(titles2, info2, titles, info);
+                              entry[QStringLiteral("episodeTitles")] = titles;
+                              entry[QStringLiteral("episodeInfo")] = info;
+                          }
+                          finish(key, entry, QStringLiteral("tmdb"));
+                      });
              });
     });
 }
@@ -705,12 +805,35 @@ void MediaLibrary::scrapeShowTvmaze(const QString &key)
         }
         entry[QStringLiteral("cast")] = cast;
         QJsonObject titles;
+        QJsonObject info;
         for (const QJsonValue &e : embedded.value(QStringLiteral("episodes")).toArray()) {
             const QJsonObject ep = e.toObject();
-            titles.insert(QStringLiteral("%1-%2").arg(ep.value(QStringLiteral("season")).toInt()).arg(ep.value(QStringLiteral("number")).toInt()),
-                          ep.value(QStringLiteral("name")).toString());
+            const QString epKey = QStringLiteral("%1-%2").arg(ep.value(QStringLiteral("season")).toInt()).arg(ep.value(QStringLiteral("number")).toInt());
+            const QString name = ep.value(QStringLiteral("name")).toString();
+            if (!name.isEmpty()) {
+                titles.insert(epKey, name);
+            }
+            QString sum = ep.value(QStringLiteral("summary")).toString();
+            sum.remove(QRegularExpression(QStringLiteral("<[^>]*>")));
+            QJsonObject m;
+            m.insert(QStringLiteral("overview"), sum.trimmed());
+            const QString air = ep.value(QStringLiteral("airdate")).toString();
+            if (!air.isEmpty()) {
+                m.insert(QStringLiteral("air"), air);
+            }
+            const int runtime = ep.value(QStringLiteral("runtime")).toInt();
+            if (runtime > 0) {
+                m.insert(QStringLiteral("runtime"), runtime);
+            }
+            const QJsonObject epImage = ep.value(QStringLiteral("image")).toObject();
+            const QString still = epImage.value(QStringLiteral("original")).toString(epImage.value(QStringLiteral("medium")).toString());
+            if (!still.isEmpty()) {
+                m.insert(QStringLiteral("still"), still);
+            }
+            info.insert(epKey, m);
         }
         entry[QStringLiteral("episodeTitles")] = titles;
+        entry[QStringLiteral("episodeInfo")] = info;
         entry[QStringLiteral("maker")] = QString();
         // Achtergrondafbeelding staat in een aparte lijst
         getJson(QNetworkRequest(QUrl(QStringLiteral("https://api.tvmaze.com/shows/%1/images").arg(id))),
@@ -751,21 +874,29 @@ void MediaLibrary::publish()
         }
         if (entry.value(QStringLiteral("kind")).toString() == QLatin1String("show")) {
             const QJsonObject titles = entry.value(QStringLiteral("episodeTitles")).toObject();
+            const QJsonObject info = entry.value(QStringLiteral("episodeInfo")).toObject();
             QVariantList episodes;
             for (const QJsonValue &e : entry.value(QStringLiteral("episodes")).toArray()) {
                 const QJsonObject ep = e.toObject();
                 const int season = ep.value(QStringLiteral("season")).toInt();
                 const int number = ep.value(QStringLiteral("episode")).toInt();
+                const QJsonObject ei = info.value(QStringLiteral("%1-%2").arg(season).arg(number)).toObject();
                 episodes.append(QVariantMap{
                     {QStringLiteral("season"), season},
                     {QStringLiteral("episode"), number},
                     {QStringLiteral("code"), QStringLiteral("S%1E%2").arg(season, 2, 10, QLatin1Char('0')).arg(number, 2, 10, QLatin1Char('0'))},
                     {QStringLiteral("title"), titles.value(QStringLiteral("%1-%2").arg(season).arg(number)).toString()},
                     {QStringLiteral("path"), ep.value(QStringLiteral("path")).toString()},
+                    {QStringLiteral("overview"), ei.value(QStringLiteral("overview")).toString()},
+                    {QStringLiteral("air"), ei.value(QStringLiteral("air")).toString()},
+                    {QStringLiteral("runtime"), ei.value(QStringLiteral("runtime")).toInt()},
+                    {QStringLiteral("rating"), ei.value(QStringLiteral("rating")).toDouble()},
+                    {QStringLiteral("still"), ei.value(QStringLiteral("still")).toString()},
                 });
             }
             item[QStringLiteral("episodes")] = episodes;
             item.remove(QStringLiteral("episodeTitles"));
+            item.remove(QStringLiteral("episodeInfo"));
             shows.append(item);
         } else {
             movies.append(item);

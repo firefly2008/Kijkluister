@@ -1145,6 +1145,19 @@ Rectangle {
         } else if (selfTest === "librarydetail") {
             libraryScreen.autoOpen = "detail"
             libraryScreen.open("shows", mediaGrid())
+        } else if (selfTest === "libraryepisodes") {
+            libraryScreen.open("shows", mediaGrid())
+            testStep.run(30000, () => {
+                const shows = library.shows
+                let withInfo = 0
+                for (let i = 0; i < shows.length; ++i) {
+                    const eps = shows[i].episodes || []
+                    for (let j = 0; j < eps.length; ++j) {
+                        if (eps[j].overview) { ++withInfo; break }
+                    }
+                }
+                console.info("Episode info", withInfo >= 1 ? "ok" : "fail", withInfo, "of", shows.length)
+            })
         } else if (selfTest === "iptv" || selfTest === "iptvplay" || selfTest === "iptvsources") {
             // Test: openbare lijst met vrij beschikbare Nederlandse zenders (iptv-org)
             if (iptv.sources.length === 0) {
